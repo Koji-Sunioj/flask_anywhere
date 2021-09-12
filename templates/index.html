@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+  #bi_header{
+    padding: 20px;background-color: white; text-align: center;
+  };
+</style>
+
+<body onload="bi_dashboard()" style="background-color: lightblue">
+  
+  <h1 id="bi_header">Welcome to my Business Intelligence Presentation Bitch</h1>
+  <div class="container " id = "content" >
+    <div class="row rounded" style="background-color: white;" >
+      <form> 
+        <h3>Customize graph</h3>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="column">
+          <label class="form-check-label" for="inlineRadio1">bar</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="line">
+          <label class="form-check-label" for="inlineRadio2">line</label>
+        </div>
+    </form>
+    </div>
+    <br>
+    <div class="row rounded" style="background-color: white;">
+      <div class="card">
+        <div class="card-body">
+          <div id="sales"  class="card">
+
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+ 
+</body>
+{% endblock %}  
