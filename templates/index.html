@@ -10,18 +10,36 @@
   
   <h1 id="bi_header">Welcome to my Business Intelligence Presentation Bitch</h1>
   <div class="container " id = "content" >
-    <div class="row rounded" style="background-color: white;" >
-      <form> 
+    <br>
+    <div class="row rounded " style="background-color: white; ">
         <h3>Customize graph</h3>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="column">
-          <label class="form-check-label" for="inlineRadio1">bar</label>
+        <div class="input-group"  style="margin-bottom: 20px;"> 
+          <select class="form-select">
+            <option selected disabled>Visual</option>
+            <option value='column'>Bar</option>
+            <option value='line'>Line</option>
+            <option value='area'>Area (%)</option>
+            <option value='%Y'>Scatter</option>
+          </select>
+          <select class="form-select" id="col_count">
+            <option selected disabled>Categories</option>
+          </select>
+          <select class="form-select">
+            <option selected disabled>Date Type</option>
+            <option value='%d-%m-Y'>Full date</option>
+            <option value='%m-%Y'>Month-Year</option>
+            <option value='%Y'>Year</option>
+            <option value='%m'>Month</option>
+          </select>
+          <select class="form-select">
+            <option selected disabled>Value</option>
+            <option value='%d-%m-Y'>Full date</option>
+            <option value='%m-%Y'>Month-Year</option>
+            <option value='%Y'>Year</option>
+            <option value='%m'>Month</option>
+          </select>
         </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="line">
-          <label class="form-check-label" for="inlineRadio2">line</label>
-        </div>
-    </form>
+        
     </div>
     <br>
     <div class="row rounded" style="background-color: white;">
