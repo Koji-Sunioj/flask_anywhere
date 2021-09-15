@@ -4,13 +4,13 @@ import pandas as pd
 import numpy as np
 con = pymysql.connect(host='localhost', user='root',password='Karelia',database= 'w3')
 
-#customer - CustomerName, City, Country
+#customer - CustomerName, CustomerCity, CustomerCountry
 #category - CategoryName
-#employee - FirstName, LastName
+#employee - EmployeeName
 #orders - OrderID, OrderDetailID (many)
 #Products - ProductName (many)
 #shippers - ShipperName
-#supplier - SupplierName, Country
+#supplier - SupplierName, SupplierCountry
 
 #time series analysis: 
 #1. choose time series type (datetime,year-month,month, year)

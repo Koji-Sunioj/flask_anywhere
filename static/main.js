@@ -2,17 +2,18 @@ function bi_dashboard()
 {
     $.get( "bi_data", function(data) {
         
-        
+        //send the columns to select input
         $(data.meta_data).each(function(index,value)
         {   
-            //console.log(value);
             $('#col_count').append(`<option value=${value.name}>${value.name} (${value.count})</option>`)
         });
-       //console.log(data.series)
+     
+       
+    
+       //render the chart
       Highcharts.chart('sales', {
-
         title: {
-            text: `sales between ${data.xAxis.categories[0]} and ${data.xAxis.categories[data.xAxis.categories.length - 1]}`
+            text: data.title
         },
     
         subtitle: {

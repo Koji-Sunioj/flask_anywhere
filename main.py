@@ -23,9 +23,8 @@ def profile_validation():
 	meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
 	
 	#plug in the variables
-	json_data = external_functions.translate_data(data,'EmployeeName','Total','sum','line','%m-%Y')
+	json_data = external_functions.translate_data(data,'CustomerCountry','Total','sum','column',date_string='%m-%Y')
 	json_data['meta_data'] = meta_data	
-
 	return jsonify(json_data)
 
 @app.route("/")
