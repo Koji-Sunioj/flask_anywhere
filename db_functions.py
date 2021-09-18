@@ -27,6 +27,6 @@ def sales():
 	con.close()
 	field_names = [i[0] for i in select_main.description]
 	sales = pd.DataFrame(sales,columns=field_names)
-	sales = sales.set_index('OrderDate')
-	sales.index = pd.to_datetime(sales.index)
+	#sales = sales.set_index('OrderDate')
+	#sales.index = pd.to_datetime(sales.index)
 	return sales

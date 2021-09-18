@@ -15,19 +15,36 @@ function bi_dashboard()
         title: {
             text: data.title
         },
-    
-        subtitle: {
-            text: 'Source: thesolarfoundation.com'
+        chart: {
+            type: data.type
         },
     
         yAxis: {
             title: {
-                text: 'sales'
+                text:  data.yAxis.title
             }
         },
     
         xAxis: data.xAxis,
     
+        
+       /* tooltip: {
+            formatter: function(){
+            if (data.type == 'scatter') 
+            {
+                {
+                    var string='<strong>'+this.series.name + '</strong><br>'+data.xAxis.title.text+': '+ this.x+'<br>'+this.y;
+                   
+                }
+            }
+            else
+            {
+                var string='x: '+this.x+', <br>: '+this.y+', date: '+this.series.name;
+            }
+                return string;
+            }
+            
+        },*/
         legend: {
             layout: 'vertical',
             align: 'right',

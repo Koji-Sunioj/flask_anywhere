@@ -23,9 +23,12 @@ def profile_validation():
 	meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
 	
 	#plug in the variables
-	json_data = external_functions.translate_data(data,'CustomerCountry','Total','sum','column',date_string='%m-%Y')
-	json_data['meta_data'] = meta_data	
-	return jsonify(json_data)
+	highchart = external_functions.Highcharts('ShipperName','OrderID','column',agg_type='nunique',date_string='%B')
+	new_data = highchart.frame_for_json(data)
+	new_json = highchart.frame_to_json(new_data)
+	new_json['meta_data'] = meta_data
+	
+	return jsonify(new_json)
 
 @app.route("/")
 def hello_world():

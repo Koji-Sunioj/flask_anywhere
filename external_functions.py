@@ -2,49 +2,57 @@ import pandas as pd
 import datetime
 import numpy as np
 
-def translate_data(data,column_name,agg_target,agg_type,visual,date_string=False):
-	
-	#date requests always have index and column, but no dates have no column
-	#level adding for OrderID with subsequent grouping makes sure the values are correct 
-	#since the order has OrderDetailID which is a child of OrderID
-	grouper = [column_name,'OrderID']
-	grouper = list(dict.fromkeys(grouper))
-	if date_string:
-		data.index = data.index.strftime(date_string)
-		data = pd.pivot_table(data,index=data.index,columns=grouper,values=agg_target,aggfunc='sum').groupby(level=0,axis=1).agg(agg_type)
-		title = 'sales {} {} for {} between {} and {}'.format(agg_type,agg_target,column_name,data.index[0],data.index[-1])
-	else:
-		data = pd.pivot_table(data,columns=grouper,values=agg_target,aggfunc='sum').groupby(level=0,axis=1).agg(agg_type)
-		title = 'sales {} {} for {}'.format(agg_type,agg_target,column_name)
-	data = data.fillna(0).round(2).sort_index()
-	
-	#create a json serializable array which can be read on the highcharts app, with both axis
-	series = []
-	data = data[data.sum().sort_values(ascending=False).index]
-	for i in np.arange(0,len(data.columns)):
-		stuff = {'name':str(data.columns[i]),'data':[ round(i,2) if i > 0 else 'null' for i in data[data.columns[i]]],'type':visual}
-		series.append(stuff)
-	
-	xAxis = {'categories':[i for i in data.index],'title':data.index.name}
-	json_data = {'series':series,'xAxis':xAxis,'title':title}
-	return json_data
-    
+class Highcharts:
+	def __init__(highchart,x,y,visual,agg_type=False,date_string=False,title=False):
+		highchart.x = x
+		highchart.y = y
+		highchart.visual = visual
+		highchart.agg_type = agg_type
+		highchart.date_string = date_string
+		highchart.title = title
+		
+	def frame_for_json(highchart,data):
+		if highchart.agg_type:
+			grouper = [highchart.x,'OrderID']
+			grouper = list(dict.fromkeys(grouper))
+			if highchart.date_string:
+				data = data.set_index('OrderDate')
+				data.index = pd.to_datetime(data.index)
+				data.index = data.index.strftime(highchart.date_string)
+				data = pd.pivot_table(data,index=data.index,columns=grouper,values=highchart.y,aggfunc='sum').groupby(level=0,axis=1).agg(highchart.agg_type)
+				title = '{} {} for {} between {} and {}'
+				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x,data.index[0],data.index[-1])
+			else:
+				data = pd.pivot_table(data,columns=grouper,values=highchart.y,aggfunc='sum').groupby(level=0,axis=1).agg(highchart.agg_type)
+				title = 'sales {} {} for {}'
+				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x)
+		else:
+			data = data[[highchart.x,highchart.y]].set_index(highchart.x)
+			title = 'Correlation between {} and {}'
+			highchart.title = title.format(highchart.x,highchart.y)
+		
+		data = data.fillna(0).round(2).sort_index()
+		return data
+		
+	def frame_to_json(highchart,new_data):
+		series = []
+		new_data = new_data[new_data.sum().sort_values(ascending=False).index]
+		if highchart.visual != 'line':
+			for i in np.arange(0,len(new_data.columns)):
+				stuff = {'name':str(new_data.columns[i]),'data':[ round(col,2) if col > 0 else 'null' for col in new_data[new_data.columns[i]]]}
+				series.append(stuff)
+		else:
+			for i in np.arange(0,len(new_data.columns)):
+				stuff = {'name':str(new_data.columns[i]),'data':[ round(col,2) for col in new_data[new_data.columns[i]]]}
+				series.append(stuff)
+		
+		json_data = {'series':series,'title':highchart.title,'yAxis':{'title':highchart.y},'type':highchart.visual}
+		
+		if (len(new_data)) > 1:	
+			xAxis = {'categories':[i for i in new_data.index],'title': {'text':new_data.index.name}}
+			json_data['xAxis'] = xAxis
+		else:
+			json_data['xAxis'] = {'categories':[highchart.x]}
+		#json_data = {'series':series,'xAxis':xAxis,'title':highchart.title,'yAxis':{'title':highchart.y},'type':highchart.visual}
+		return json_data
 
-'''
-
-def translate_data(data,date_string,column_name,agg_target,agg_type,visual,accum=False):
-	data.index = data.index.strftime(date_string)
-	data = pd.pivot_table(data,index=data.index,columns=[column_name],values=agg_target,aggfunc=agg_type).fillna(0)
-	
-	series = []
-	data = data[data.sum().sort_values(ascending=False).index]
-	for i in np.arange(0,len(data.columns)):
-		stuff = {'name':data.columns[i],'data':[ round(i,2)  for i in data[data.columns[i]]],'type':visual}
-		series.append(stuff)
-	
-	xAxis = {'categories':[i for i in data.index],'title':data.index.name}
-	json_data = {'series':series,'xAxis':xAxis}
-	
-	return json_data
-    
-'''
