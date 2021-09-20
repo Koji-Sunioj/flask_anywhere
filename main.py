@@ -16,18 +16,20 @@ app = Flask(__name__)
 app.secret_key = 'ironpond_2'
 
 @app.route('/bi_data', methods=['GET'])
-def profile_validation():
+def bi_data():
 	data = db_functions.sales()
 	
 	#get the name, count and data type for the select inputs on the page
 	meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
 	
 	#plug in the variables
-	highchart = external_functions.Highcharts('ShipperName','OrderID','column',agg_type='nunique',date_string='%B')
-	new_data = highchart.frame_for_json(data)
+	highchart = external_functions.Highcharts('OrderDate','Total','line','time_series',agg_type='sum',date_string='%Y-%m-%d')
+	if highchart.chart_type == 'correlation':
+		new_data = highchart.corr_to_json(data)
+	else:
+		new_data = highchart.frame_for_json(data)
 	new_json = highchart.frame_to_json(new_data)
 	new_json['meta_data'] = meta_data
-	
 	return jsonify(new_json)
 
 @app.route("/")

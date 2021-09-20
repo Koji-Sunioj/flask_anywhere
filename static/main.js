@@ -3,10 +3,10 @@ function bi_dashboard()
     $.get( "bi_data", function(data) {
         
         //send the columns to select input
-        $(data.meta_data).each(function(index,value)
-        {   
-            $('#col_count').append(`<option value=${value.name}>${value.name} (${value.count})</option>`)
-        });
+        //$(data.meta_data).each(function(index,value)
+       // {   
+       //     $('#col_count').append(`<option value=${value.name}>${value.name} (${value.count})</option>`)
+       // });
      
        
     
