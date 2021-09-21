@@ -23,7 +23,7 @@ def bi_data():
 	meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
 	
 	#plug in the variables
-	highchart = external_functions.Highcharts('OrderDate','Total','line','time_series',agg_type='sum',date_string='%Y-%m-%d')
+	highchart = external_functions.Highcharts('OrderDate','Quantity','line','timeseries',agg_type='sum',date_string='%Y-%m-%d')
 	if highchart.chart_type == 'correlation':
 		new_data = highchart.corr_to_json(data)
 	else:

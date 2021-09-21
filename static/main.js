@@ -8,7 +8,7 @@ function bi_dashboard()
        //     $('#col_count').append(`<option value=${value.name}>${value.name} (${value.count})</option>`)
        // });
      
-       
+       console.log(data);
     
        //render the chart
       Highcharts.chart('sales', {
@@ -19,11 +19,8 @@ function bi_dashboard()
             type: data.type
         },
     
-        yAxis: {
-            title: {
-                text:  data.yAxis.title
-            }
-        },
+        yAxis: data.yAxis,
+       
     
         xAxis: data.xAxis,
     
