@@ -26,6 +26,8 @@ class Highcharts:
 		#if there is correlativate categoy, and both axes are numerical: make a pivot table with top index as column, followed by numerics
 		if highchart.corr_cat and all(highchart.check_vals):
 			data = pd.pivot_table(data,index=data.index,values=[highchart.x,highchart.y],columns=[highchart.corr_cat]).swaplevel(0, 1, axis=1).sort_index(axis=1)
+		elif highchart.corr_cat and not all(highchart.check_vals):
+			data = pd.pivot_table(data,columns=highchart.x,index=highchart.y,values=highchart.corr_cat,aggfunc='sum')
 		elif all(highchart.check_vals):
 			data = data[[highchart.x,highchart.y]].set_index(highchart.x)
 		elif any(highchart.check_vals):
@@ -69,17 +71,27 @@ class Highcharts:
 		new_data = new_data[new_data.sum().sort_values(ascending=False).index]
 		if highchart.chart_type == 'correlation':
 			#during a categorical correlation, both axes must be numeric, so it's assumed. control to be handled from interface
-			if highchart.corr_cat:
+			if highchart.corr_cat and all(highchart.check_vals):
 				for i in new_data.columns.levels[0]:
 					stuff = {'name':i ,'data':[[x[0],x[1]] for x in new_data[i][[highchart.x,highchart.y]].values if x[0] > 0 and x[1] >0]}
 					series.append(stuff)
 				json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'xAxis':{'title':{'text':highchart.x}},'yAxis':{'title':{'text':highchart.y}}}
+			#correlative with strings as axes, correlation category is numeric
+			elif highchart.corr_cat and not all(highchart.check_vals):
+				for i in np.arange(0,len(new_data.columns)):
+					stuff = {'name':str(new_data.columns[i]),'data':[[int(i),int(s[0])] for s in enumerate(new_data[new_data.columns[i]]) if s[1] > 0 ]}
+					series.append(stuff)
+				print(new_data.index)
+				xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
+				yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.index]}
+				json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis}	
 			#normal correlation
 			elif all(highchart.check_vals):
 				for i in np.arange(0,len(new_data.columns)):
 					stuff = {'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values]}
 					series.append(stuff)
 				json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':{'title':{'text':highchart.y}},'xAxis':{'title':{'text':highchart.x}}}
+				
 			#if one of the axes is string, then we calculate depending on the axes data type
 			elif any(highchart.check_vals):
 				if highchart.check_vals[0] == False:
