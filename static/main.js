@@ -48,8 +48,25 @@ function bi_dashboard()
             verticalAlign: 'middle'
         },
     
-        plotOptions: {
-            series: {
+        plotOptions: { 
+
+                series: {
+                    //marker: {
+                    //    radius: 6
+                    //},
+                    point: {
+                        events: {
+                            click: function () {
+                                console.log('Category: ' + this.category + ', value: ' + this.y);
+                            }
+                        }
+                    },
+                }
+            
+            /*
+            series: { marker: {
+                radius: 1
+            },
                 point: {
                     events: {
                         click: function () {
@@ -57,14 +74,14 @@ function bi_dashboard()
                         }
                     }
                 },
-                linewidth: .5,
+               
                 enableMouseTracking: true,
                 marker: {
                     enabled: true
                 },dataGrouping: {
                     enabled: false
                  }
-            }
+            }*/
         },
     
         series: data.series,
