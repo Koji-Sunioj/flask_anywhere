@@ -19,23 +19,23 @@
         
         <div class="input-group"  style="margin-bottom: 20px;">
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio1" value="option1">
-            <label class="form-check-label" for="inlineRadio1">Correlation</label>
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="correlation" value="correlation">
+            <label class="form-check-label" for="correlation">Correlation</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="inlineRadio2" value="option2">
-            <label class="form-check-label" for="inlineRadio2">Aggregate</label>
-          </div> 
-          <!--<select class="form-select">
-            <option selected disabled>Visual</option>
-            <option value='column'>Bar</option>
-            <option value='line'>Line</option>
-            <option value='area'>Area (%)</option>
-            <option value='scatter'>Scatter</option>
+            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="aggregate" value="aggregate">
+            <label class="form-check-label" for="aggregate">Aggregate</label>
+          </div>
+          <select class="form-select" disabled id="x_select">
+            <option selected disabled>X-Axis</option>
           </select>
-          <select class="form-select" id="col_count">
-            <option selected disabled>Categories</option>
+          <select class="form-select" disabled id="y_select">
+            <option selected disabled>Y-Axis</option>
+          </select>  
+          <select class="form-select" id="variable_column" style="visibility: hidden;">
+            <option selected disabled></option>
           </select>
+          <!--
           <select class="form-select">
             <option selected disabled>Date Type</option>
             <option value='%d-%m-Y'>Day-Month-Year</option>
@@ -54,6 +54,7 @@
      
     </div> 
     <br>
+ 
     <div class="row rounded" style="background-color: white;">
       <div class="card">
         <div class="card-body">
