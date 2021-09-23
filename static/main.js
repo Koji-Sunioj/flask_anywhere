@@ -7,8 +7,15 @@ function bi_dashboard()
        // {   
        //     $('#col_count').append(`<option value=${value.name}>${value.name} (${value.count})</option>`)
        // });
-     
-       console.log(data);
+       console.log(data.legend)
+       if (data.type == 'scatter')
+       {
+           var symbol = 'circle'
+       }
+       else 
+       {
+        var symbol = symbol
+       }
     
        //render the chart
       Highcharts.chart('sales', {
@@ -45,15 +52,17 @@ function bi_dashboard()
         legend: {
             layout: 'vertical',
             align: 'right',
-            verticalAlign: 'middle'
+            verticalAlign: 'middle',
+            title: {text: data.legend}
         },
     
         plotOptions: { 
 
                 series: {
-                    //marker: {
-                    //    radius: 6
-                    //},
+                    marker: {
+                       symbol: symbol,
+                       radius: 5
+                    },
                     point: {
                         events: {
                             click: function () {

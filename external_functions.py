@@ -19,10 +19,14 @@ class Highcharts:
 		highchart.check_vals = check_vals
 		
 	def bool_scatter(highchart,new_data):
-		bool_point = new_data.melt()
-		bool_point = np.sort(bool_point.select_dtypes(np.number).values,axis=None)
-		bool_point = pd.cut(bool_point, 4,include_lowest=True).unique()
-		bool_point = {val:enum+4 for enum,val in enumerate(bool_point)}
+		#this is specifically for scatter charts with string axes to inrease size based on category
+		bool_point = new_data.copy()
+		bool_point = bool_point[bool_point.columns].replace({0:np.nan})
+		bool_point.index = np.arange(len(new_data.index))
+		bool_point.columns = np.arange(len(new_data.columns))
+		bool_point = bool_point.melt(ignore_index=False).reset_index()
+		bool_point['bin'] = pd.cut(bool_point['value'],5)
+		bool_point = bool_point.dropna()
 		return bool_point
 		
 		
@@ -54,6 +58,7 @@ class Highcharts:
 		title = 'Correlation between {} and {}'
 		highchart.title = title.format(highchart.x,highchart.y)
 		data = data.fillna(0).round(2).sort_index()
+		
 		return data
 
 	def agg_frame(highchart,data):
@@ -83,18 +88,25 @@ class Highcharts:
 		#no date string, normal aggregate
 		else:
 			data = data.groupby(grouper).aggregate({highchart.y:'sum'}).groupby(level=0,axis=0).agg(highchart.agg_type)
-			data = data.sort_values(highchart.y)
-			print(data)
 			title = 'sales {} {} for {}'
 			highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x)
 		data = data.fillna(0).round(2).sort_index()
+		
 		return data
 
 	def agg_to_json(highchart,new_data):
+		#series list is the array highcharts will interact with
 		series = []
-		#print(new_data)
-		#new_data = new_data.sort_values(highchart.y, ascending=False)
-		#new_data = new_data[new_data.sum().sort_values(ascending=False).index]
+		
+		#if there is one column, sort the values of the numerical column
+		if len(new_data.columns) == 1 and highchart.x !='OrderDate':
+			new_data = new_data.sort_values(highchart.y, ascending=False)
+			
+		#sort the columns according to whichever columns has the highest aggregate total
+		else:
+			new_data = new_data[new_data.sum().sort_values(ascending=False).index]
+		
+		#loop through the items as normal
 		for i in np.arange(0,len(new_data.columns)):
 			stuff = {'name':str(new_data.columns[i]),'data':[ round(col,2) for col in new_data[new_data.columns[i]]]}
 			series.append(stuff)
@@ -114,11 +126,67 @@ class Highcharts:
 				stuff = {'name':i ,'data':[[x[0],x[1]] for x in new_data[i][[highchart.x,highchart.y]].values if x[0] > 0 and x[1] >0]}
 				series.append(stuff)
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'xAxis':{'title':{'text':highchart.x}},'yAxis':{'title':{'text':highchart.y}}}
+		
 		#correlative with strings as axes, correlation category is numeric
 		elif highchart.corr_cat and not all(highchart.check_vals):
+			#base the name of the highchart category on the numerical bin the aggregate falls in
+			bool_scatter = highchart.bool_scatter(new_data)
+			for i in bool_scatter['bin'].unique():
+				selected = bool_scatter[bool_scatter['bin'] == i]
+				data = [[i[1],i[0]] for i in selected.values]
+				stuff = {'name':'{} - {}'.format(int(i.left),int(i.right)),'data':data}
+				series.append(stuff)
+			xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
+			yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.index]}
+			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis,'legend':highchart.corr_cat}	
+			
+			
+		
+		#normal correlation
+		elif all(highchart.check_vals):
+			for i in np.arange(0,len(new_data.columns)):
+				stuff = {'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values]}
+				series.append(stuff)
+			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':{'title':{'text':highchart.y}},'xAxis':{'title':{'text':highchart.x}}}
+		
+		#if one of the axes is string, then we calculate depending on the axes data type
+		elif any(highchart.check_vals):
+			
+			if highchart.check_vals[0] == False:
+				print('con 1')
+				print(highchart.check_vals)
+				for s,i in enumerate(new_data.columns):
+					temp = [[s,x] for x in new_data[i].values if x > 0]
+					series.extend(temp)
+				yAxis = {'title':{'text':highchart.y}}
+				xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
+			elif highchart.check_vals[1] == False:
+				print('con 2')
+				print(highchart.check_vals)
+				for s,i in enumerate(new_data.columns):
+					temp = [[x,s] for x in new_data[i].values if x > 0]
+					series.extend(temp)
+				yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.columns]}
+				xAxis = {'title':{'text':highchart.x}}
+			series = [{'name':'{} vs {}'.format(highchart.x,highchart.y),'data':series}]
+			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis}
+		return json_data
+
+'''
+
+def bool_scatter(highchart,new_data):
+		#this is specifically for scatter charts with string axes to inrease size based on category
+		bool_point = new_data.melt()
+		bool_point = np.sort(bool_point.select_dtypes(np.number).values,axis=None)
+		bool_point = pd.cut(bool_point, 4,include_lowest=True).unique()
+		bool_point = {val:enum+4 for enum,val in enumerate(bool_point)}
+		return bool_point
+
+elif highchart.corr_cat and not all(highchart.check_vals):
 			bool_point = highchart.bool_scatter(new_data)
 			for i in np.arange(0,len(new_data.columns)):
-				data = [{'x':int(i),'y':int(s[0]),'marker':{'symbol':'cirlce','radius':[item for key,item in bool_point.items() if s[1] in key][0]}} for s in enumerate(new_data[new_data.columns[i]]) if s[1] > 0 ]
+				
+				data = [{'x':int(i),'y':int(s[0]),'marker':{'symbol':'circle','radius':[item for key,item in bool_point.items() if s[1] in key][0]}} for s in enumerate(new_data[new_data.columns[i]]) if s[1] > 0 ]
 				stuff = {'name':str(new_data.columns[i]),'data':data}
 				series.append(stuff)
 			
@@ -126,31 +194,4 @@ class Highcharts:
 			yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.index]}
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis}	
 		#normal correlation
-		elif all(highchart.check_vals):
-			for i in np.arange(0,len(new_data.columns)):
-				stuff = {'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values]}
-				series.append(stuff)
-			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':{'title':{'text':highchart.y}},'xAxis':{'title':{'text':highchart.x}}}
-			
-		#if one of the axes is string, then we calculate depending on the axes data type
-		elif any(highchart.check_vals):
-			if highchart.check_vals[0] == False:
-				for s,i in enumerate(new_data.columns):
-					stuff = {'name':i}
-					temp = [[s,x] for x in new_data[i].values if x > 0]
-					stuff['data']= temp
-					series.append(stuff)
-					yAxis = {'title':{'text':highchart.y}}
-					xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
-				
-			elif highchart.check_vals[1] == False:
-				for s,i in enumerate(new_data.columns):
-					stuff = {'name':i}
-					temp = [[x,s] for x in new_data[i].values if x > 0]
-					stuff['data']= temp
-					series.append(stuff)
-					yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.T.index]}
-					xAxis = {'title':{'text':highchart.x}}
-			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis}
-		
-		return json_data
+'''
