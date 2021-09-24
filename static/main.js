@@ -4,8 +4,8 @@ function bi_dashboard()
     $.get( "bi_data", function(data) {
         $(data.meta_data).each(function(index,value)
         {   var option = `<option value=${value.name} dtype=${value.dtype}>${value.name} (${value.count})</option>`
-            $('#x_select').append(option)
-            $('#y_select').append(option)
+            $('#x_select').append(option);
+            $('#y_select').append(option);
 
         });
         if (data.type == 'scatter')
@@ -72,12 +72,136 @@ function bi_dashboard()
         $('#y_select').prop('disabled',false);
     });
    
+    function manage_corr_cat()
+    {
 
+        var x_axis =  $('#x_select').find(":selected").attr('dtype');
+        var y_axis =  $('#y_select').find(":selected").attr('dtype');
+        //if both
+        if ([x_axis,y_axis].map(e => e === 'object').every(Boolean))
+        {   
+
+            if ($('#variable_column').attr('name') =='category')
+            {
+                $('#variable_column option').not(':first').remove();  
+            }
+
+            $('#variable_column').attr('name','value')
+            $('#variable_column').css('visibility','')
+            if($('#variable_column option').length == 1)
+            {   $('#variable_column option:first').text('Value').prop('disabled',true)
+                $('#x_select option').each(function(index,value)
+                { 
+                   if ($(value).attr('dtype') == 'int64' || $(value).attr('dtype') == 'float64' )
+                   { 
+                     $('#variable_column').append($(value).clone())
+                   }
+                })
+            }   
+        }
+
+        else if ([x_axis,y_axis].map(e => e === 'int64' || e === 'float64' ).every(Boolean))
+        {
+            if ($('#variable_column').attr('name') =='value')
+            {
+                $('#variable_column option').not(':first').remove();  
+            }
+            $('#variable_column').attr('name','category')
+            $('#variable_column').css('visibility','')
+            if($('#variable_column option').length == 1)
+            {
+                {$('#variable_column option:first').text('Category').prop('disabled',true)
+                $('#x_select option').each(function(index,value)
+                { 
+                   if ($(value).attr('dtype') == 'object')
+                   { 
+                     $('#variable_column').append($(value).clone())
+                   }
+                })
+            }
+            }
+            
+        }
+
+        else 
+        {
+            $('#variable_column').css('visibility','hidden')
+        }/**/
+
+    }
     //event listener for handling disabling select of same column in other axis. 
+    $(document).on('change','#x_select',function()
+    {   
+        $('#y_select option').css('color','black')
+        var x_selected = $('#x_select').val();
+        var y_selected = $('#y_select').val();
+        
+        $('#y_select').find('option').each(function(index,value)
+        {  
+            if (x_selected == $(value).val())
+            {
+                $(value).css('color','green').attr('title','selected in X Axis');
+            }        
+        });
+        
+        if (x_selected == y_selected)
+        {
+            $('#x_select').css('color','red').attr('title','both Axes are the same')
+            $('#y_select').css('color','red').attr('title','both Axes are the same')
+        }
+        else
+        {
+            $('#x_select').css('color','black').attr('title','')
+            $('#y_select').css('color','black').attr('title','')
+        }
+
+
+        manage_corr_cat();
+     
+    });
+
+    $(document).on('change','#y_select',function()
+    {   
+        $('#x_select option').css('color','black')
+        var x_selected = $('#x_select').val();
+        var y_selected = $('#y_select').val();
+
+        $('#x_select').find('option').each(function(index,value)
+        {  
+            if (y_selected == $(value).val())
+            {
+                $(value).css('color','green').attr('title','selected in Y Axis');
+            }        
+        });
+
+        if (x_selected == y_selected)
+        {
+            $('#x_select').css('color','red').attr('title','both Axes are the same');
+            $('#y_select').css('color','red').attr('title','both Axes are the same');
+        }
+        else
+        {
+            $('#x_select').css('color','black').attr('title','');
+            $('#y_select').css('color','black').attr('title','');
+        }
+
+        manage_corr_cat();
+     
+    });
+};
+
+/*
+//event listener for handling disabling select of same column in other axis. 
     $(document).on('change',['#x_select','#y_select'],function()
     {
 
         var x_selected = $('#x_select').val();
+        var y_selected = $('#y_select').val();
+        //("#target").val($("#target option:first").val());
+
+
+
+        
         $('#y_select').find('option').each(function(index,value)
         {  
             if (x_selected == $(value).val() || $(value).val() == 'Y-Axis')
@@ -102,19 +226,6 @@ function bi_dashboard()
             }
         })
 
-        //we show another column based on the data type of that selected option
-        var x_axis =  $('#x_select').find(":selected").attr('dtype');
-        var y_axis =  $('#y_select').find(":selected").attr('dtype');
-       
-        if (x_axis == 'object' && y_axis == 'object')
-        {
-           $('#variable_column').css('visibility','')
-        }
-        else 
-        {
-            $('#variable_column').css('visibility','hidden')
-        }
+        manage_corr_cat()
      
-    });
-
-};
+    });*/

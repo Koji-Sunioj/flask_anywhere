@@ -35,6 +35,20 @@
           <select class="form-select" id="variable_column" style="visibility: hidden;">
             <option selected disabled></option>
           </select>
+          <select class="form-select" id="aggregate" style="visibility: hidden;">
+            <option selected disabled>Value</option>
+            <option value="sum">Sum</option>
+            <option value="mean">Mean</option>
+            <option value="max">Max</option>
+            <option value="min">Min</option>
+            <option value="nunique">Count</option>
+          </select>
+          <select class="form-select" id="date" style="visibility: hidden;">
+            <option selected disabled>Date</option>
+            <option value="%Y">Year</option>
+            <option value="%Y-%m">Year-Month</option>
+            <option value="%Y-%m-%d">Year-Month-Day</option>
+          </select>
           <!--
           <select class="form-select">
             <option selected disabled>Date Type</option>
