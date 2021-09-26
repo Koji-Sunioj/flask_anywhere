@@ -20,13 +20,12 @@ def bi_data():
 	if 'state' not in session:
 		#grab db data
 		data = db_functions.sales()
-		
 		#get the name, count and data type for the select inputs on the page
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
 		meta_data.reverse()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('ShipperName','CategoryName','scatter','correlation',corr_cat='Total')
+		highchart = external_functions.Highcharts('ShipperName','Total','scatter','correlation')
 		
 		if highchart.chart_type == 'correlation':
 			new_data = highchart.corr_frame(data)
