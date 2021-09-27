@@ -17,7 +17,7 @@
     <div class="row rounded" style="background-color: white; ">
         <h3>Customize graph</h3>
         <div class="input-group">
-          <div class="form-check form-check-inline" >
+          <div class="form-check form-check-sm form-check-inline" >
             <input class="form-check-input" type="radio" name="inlineRadioOptions" id="correlation" value="correlation">
             <label class="form-check-label" for="correlation">Correlation</label>
           </div>
@@ -25,17 +25,17 @@
             <input class="form-check-input" type="radio" name="inlineRadioOptions" id="aggregate" value="aggregate">
             <label class="form-check-label" for="aggregate">Aggregate</label>
           </div>
-          <select class="form-select" disabled id="x_select">
+          <select class="form-select form-select-sm" disabled id="x_select">
             <option selected disabled>X-Axis</option>
           </select>
-          <select class="form-select" disabled id="y_select">
+          <select class="form-select form-select-sm" disabled id="y_select">
             <option selected disabled>Y-Axis</option>
           </select>
          
-          <select class="form-select" id="variable_column"style="visibility: hidden;" >
+          <select class="form-select form-select-sm" id="variable_column"style="visibility: hidden;" >
             <option selected disabled></option>
           </select>
-          <select class="form-select" id="aggregate" style="visibility: hidden;">
+          <select class="form-select form-select-sm" id="aggregate" style="visibility: hidden;">
             <option selected disabled>Value</option>
             <option value="sum">Sum</option>
             <option value="mean">Mean</option>
@@ -43,7 +43,7 @@
             <option value="min">Min</option>
             <option value="nunique">Count</option>
           </select>
-          <select class="form-select" id="date" style="visibility: hidden;" >
+          <select class="form-select form-select-sm" id="date" style="visibility: hidden;" >
             <option selected disabled>Date</option>
             <option value="%Y">Year</option>
             <option value="%Y-%m">Year-Month</option>
