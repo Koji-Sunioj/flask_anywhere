@@ -95,6 +95,9 @@ class Highcharts:
 		return data
 
 	def agg_to_json(highchart,new_data):
+		#highcharts uses aggregate data as series, as opposed to scatter with two points
+		#therefore strings will only be employed on the x axis with y axis for numerical aggregates
+		
 		#series list is the array highcharts will interact with
 		series = []
 		

@@ -1,14 +1,14 @@
 
 from flask import Flask, redirect, url_for, request,json,session,render_template,jsonify
-import re
-import datetime
-import pandas as pd
-import numpy as np
-import json
+#import re
+#import datetime
+#import pandas as pd
+#import numpy as np
+#import json
 import db_functions
-import requests
+#import requests
 import pymysql
-import os
+#import os
 import external_functions
 
 
