@@ -25,8 +25,16 @@ class Highcharts:
 		bool_point.index = np.arange(len(new_data.index))
 		bool_point.columns = np.arange(len(new_data.columns))
 		bool_point = bool_point.melt(ignore_index=False).reset_index()
-		bool_point['bin'] = pd.cut(bool_point['value'],5)
-		bool_point = bool_point.dropna()
+		
+		steps = 5
+		divisible = 100 / steps
+		steps = np.arange(0,100,step=divisible,dtype=int)
+		steps = np.append(steps,100)
+		cutter = [np.percentile(bool_point['value'].dropna(), perc) for perc in steps]
+
+		bool_point['bin'] = pd.cut(bool_point['value'],bins=cutter)
+		bool_point = bool_point.dropna().sort_values('bin')
+		
 		return bool_point
 		
 		
@@ -35,24 +43,28 @@ class Highcharts:
 		
 		#boolean list to be used later: checks which axes are numerical
 		test = [data.reset_index()[highchart.x].dtype.name,data.reset_index()[highchart.y].dtype.name]
-		test = [i not in ['object','datetime64[ns]'] for i in test]
-		highchart.check_vals = test
+		#test = [i not in ['object','datetime64[ns]'] for i in test]
+		highchart.check_vals = {'bools':[i not in ['object','datetime64[ns]'] for i in test],'test':test}
+		
 		#if there is correlativate categoy, and both axes are numerical: make a pivot table with top index as column, followed by numerics
-		if highchart.corr_cat and all(highchart.check_vals):
+		if highchart.corr_cat and all(highchart.check_vals['bools']):
 			data = pd.pivot_table(data,index=data.index,values=[highchart.x,highchart.y],columns=[highchart.corr_cat]).swaplevel(0, 1, axis=1).sort_index(axis=1)
 		
 		#dataframe with string columns as axes
-		elif highchart.corr_cat and not all(highchart.check_vals):
-			data = pd.pivot_table(data,columns=highchart.x,index=highchart.y,values=highchart.corr_cat,aggfunc='sum')
-		
+		#elif highchart.corr_cat and not all(highchart.check_vals):
+		elif highchart.check_vals['test'] == ['object','object']:
+			value = highchart.corr_cat if highchart.corr_cat else 'OrderID'
+			aggregate = 'sum' if highchart.corr_cat else 'nunique'
+			data = pd.pivot_table(data,columns=highchart.x,index=highchart.y,values=value,aggfunc=aggregate)
+			
 		#normal correlation
-		elif all(highchart.check_vals):
+		elif all(highchart.check_vals['bools']):
 			data = data[[highchart.x,highchart.y]].set_index(highchart.x)
 		
 		#frame with one axes as string and other as numerical
-		elif any(highchart.check_vals):
-			string_axes = [highchart.x,highchart.y][highchart.check_vals.index(False)]
-			numerical_axes = [highchart.x,highchart.y][highchart.check_vals.index(True)]
+		elif any(highchart.check_vals['bools']):
+			string_axes = [highchart.x,highchart.y][highchart.check_vals['bools'].index(False)]
+			numerical_axes = [highchart.x,highchart.y][highchart.check_vals['bools'].index(True)]
 			data = pd.pivot_table(data,columns=[string_axes],values=numerical_axes,index=data.index)
 
 		title = 'Correlation between {} and {}'
@@ -124,48 +136,43 @@ class Highcharts:
 		series = []
 		
 		#during a categorical correlation, both axes must be numeric, so it's assumed. control to be handled from interface
-		if highchart.corr_cat and all(highchart.check_vals):
+		if highchart.corr_cat and all(highchart.check_vals['bools']):
 			for i in new_data.columns.levels[0]:
 				stuff = {'name':i ,'data':[[x[0],x[1]] for x in new_data[i][[highchart.x,highchart.y]].values if x[0] > 0 and x[1] >0]}
 				series.append(stuff)
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'xAxis':{'title':{'text':highchart.x}},'yAxis':{'title':{'text':highchart.y}}}
 		
 		#correlative with strings as axes, correlation category is numeric
-		elif highchart.corr_cat and not all(highchart.check_vals):
+		elif highchart.check_vals['test'] == ['object','object']:
 			#base the name of the highchart category on the numerical bin the aggregate falls in
 			bool_scatter = highchart.bool_scatter(new_data)
 			for i in bool_scatter['bin'].unique():
 				selected = bool_scatter[bool_scatter['bin'] == i]
-				data = [[i[1],i[0]] for i in selected.values]
-				stuff = {'name':'{} - {}'.format(int(i.left),int(i.right)),'data':data}
+				data = [[i[1],i[0]] for i in selected.values]  
+				stuff = {'name':'{} - {}'.format(f'{int(i.left):,}',f'{int(i.right):,}'),'data':data}
 				series.append(stuff)
 			xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
 			yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.index]}
-			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis,'legend':highchart.corr_cat}	
+			legend = highchart.corr_cat if highchart.corr_cat else 'Occurrences'
+			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis,'legend':legend}	
 			
-			
-		
 		#normal correlation
-		elif all(highchart.check_vals):
+		elif all(highchart.check_vals['bools']):
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values]}
 				series.append(stuff)
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':{'title':{'text':highchart.y}},'xAxis':{'title':{'text':highchart.x}}}
 		
 		#if one of the axes is string, then we calculate depending on the axes data type
-		elif any(highchart.check_vals):
+		elif any(highchart.check_vals['bools']):
 			
-			if highchart.check_vals[0] == False:
-				print('con 1')
-				print(highchart.check_vals)
+			if highchart.check_vals['bools'][0] == False:
 				for s,i in enumerate(new_data.columns):
 					temp = [[s,x] for x in new_data[i].values if x > 0]
 					series.extend(temp)
 				yAxis = {'title':{'text':highchart.y}}
 				xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
-			elif highchart.check_vals[1] == False:
-				print('con 2')
-				print(highchart.check_vals)
+			elif highchart.check_vals['bools'][1] == False:
 				for s,i in enumerate(new_data.columns):
 					temp = [[x,s] for x in new_data[i].values if x > 0]
 					series.extend(temp)

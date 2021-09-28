@@ -9,11 +9,14 @@ function bi_dashboard()
         {
             var symbol = symbol
         }
-    
+        //Highcharts.setOptions({
+        //    colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4']
+        //});
        //render the chart
         Highcharts.chart('sales', {
+            
             title: {text: data.title},
-            chart: {type: data.type},
+            chart: {type: data.type,},
             yAxis: data.yAxis,
             xAxis: data.xAxis,
             legend: {
@@ -23,6 +26,7 @@ function bi_dashboard()
                 title: {text: data.legend}
             },
             plotOptions: { 
+                
                 series: {
                     marker: {
                        symbol: symbol,
@@ -46,7 +50,7 @@ function bi_dashboard()
                     chartOptions: {
                         legend: {
                             layout: 'horizontal',
-                            align: 'center',
+                            align: 'left',
                             verticalAlign: 'bottom'
                         }
                     }
@@ -68,13 +72,12 @@ function bi_dashboard()
     //get request ends here  
     })
 
-    
-
-
     //undisable the select once clicked on
     $(document).on('click','#correlation',function()
     {
+        $("#x_select option[dtype$='64']").show();
         $('#x_select').prop('disabled',false);
+        $("#y_select option[dtype='object'],option[dtype*='date']").show();
         $('#y_select').prop('disabled',false);
         $('#send_values').css('visibility','');
     });
@@ -83,7 +86,9 @@ function bi_dashboard()
     {
         $('#variable_column').css('visibility','hidden')
         $('#variable_column').removeAttr('name');
-        $('#variable_column option').not(':first').remove();
+        
+        //$('#variable_column option:eq(2)').after().remove();
+        $('#variable_column option').not('.keep_col').remove();
         $('#variable_column option:first').text('');
         $("#variable_column:selected").prop("selected", false)
     };
@@ -112,7 +117,7 @@ function bi_dashboard()
 
             $('#variable_column').attr('name',new_category)
             $('#variable_column').css('visibility','')
-            if($('#variable_column option').length == 1)
+            if($('#variable_column option').length == 2)
             {   $('#variable_column option:first').text(new_category.charAt(0).toUpperCase() +new_category.substring(1)).prop('disabled',true) //.css('text-transform','capitalize')
                 //$('#variable_column').css('text-transform','capitalize')
                 $('#x_select option').each(function(index,value)
@@ -137,20 +142,16 @@ function bi_dashboard()
     }
 
     function manage_val_column(x_selected,y_selected)
-    {
-        if ($('#variable_column[name=value]').val() != null && x_selected != null  &&  y_selected != null && x_selected != y_selected )
+    {   
+        if (x_selected != null  &&  y_selected != null && x_selected != y_selected )
         {
             $('#send_values').prop('disabled',false)
         }
-    
-        else if ($('#variable_column[name=value]').length == 0 && x_selected != null  &&  y_selected != null && x_selected != y_selected )
-        {  
-            $('#send_values').prop('disabled',false) 
-        }
+
         else 
         {
             $('#send_values').prop('disabled',true)
-        } 
+        }
     }
     $(document).on('click','#send_values', function() {
 
@@ -162,7 +163,7 @@ function bi_dashboard()
                 visual : 'scatter',
                 type : 'correlation'
             }
-            if ($('#variable_column').val())
+            if ($('#variable_column').val() &&  $('#variable_column').val() != 'None')
             {
                 data.category = $('#variable_column').val()
             }
@@ -187,6 +188,15 @@ function bi_dashboard()
         var y_selected = $('#y_select').val();
         //handle visibility of submit button
         manage_val_column(x_selected,y_selected);
+    });
+
+    $(document).on('click','#aggregate',function()
+    {
+        $("#x_select option[dtype$='64']").hide();
+        $('#x_select').prop('disabled',false); 
+        $("#y_select option[dtype='object'],option[dtype*='date']").hide();
+        $('#y_select').prop('disabled',false);
+        $('#send_values').css('visibility','');
     });
     
     $(document).on('change','#x_select',function()
@@ -224,6 +234,11 @@ function bi_dashboard()
             { 
                 manage_corr_cat('64','value','category','object');
             }
+        }
+
+        else if ($('#aggregate').is(':checked'))
+        {
+            console.log('asd')
         }
         //handle visibility of submit button
         manage_val_column(x_selected,y_selected)

@@ -36,6 +36,7 @@ def bi_data():
 			new_data = highchart.corr_frame(data)
 			new_json = highchart.corr_to_json(new_data)
 		new_json['meta_data'] = meta_data
+		session.pop('state',None)
 		session['state'] = new_json
 		return jsonify(new_json)
 		
@@ -47,7 +48,7 @@ def bi_data():
 		meta_data.reverse()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('Price','Quantity','scatter','correlation',corr_cat='CategoryName')
+		highchart = external_functions.Highcharts('CategoryName','ShipperName','scatter','correlation',corr_cat='Total')
 		
 		if highchart.chart_type == 'correlation':
 			new_data = highchart.corr_frame(data)
