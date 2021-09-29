@@ -17,16 +17,16 @@ app.secret_key = 'ironpond_2'
 
 @app.route('/bi_data', methods=['GET','POST'])
 def bi_data():
+	#grab the data as usual
+	data = db_functions.sales()
+	
+	#we need metadata for the html elements and save in cookies
+	meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
+	meta_data.reverse()
+	
 	if request.method == 'POST':
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
-		
-		#grab the data as usual
-		data = db_functions.sales()
-		
-		#we need metadata for the html elements and save in cookies
-		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
-		meta_data.reverse()
 		
 		#handle the chart types
 		if send_values['type'] == 'correlation':
@@ -35,38 +35,56 @@ def bi_data():
 				highchart.corr_cat = send_values['category']
 			new_data = highchart.corr_frame(data)
 			new_json = highchart.corr_to_json(new_data)
+		elif send_values['type'] == 'timeseries':
+			highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['type'])
+			highchart.agg_type = send_values['agg_type']
+			new_data = highchart.agg_frame(data)
+			new_json = highchart.agg_to_json(new_data)
+		
+		#grab the meta data for the html divs
 		new_json['meta_data'] = meta_data
+		#{'x_axis': 'SupplierCountry', 'y_axis': 'Total', 'visual': 'column', 'type': 'timeseries', 'agg_type': 'sum'}
+
+		#remove last cookie, reload it with new class attributes
 		session.pop('state',None)
-		session['state'] = new_json
+		session['state'] = {'meta_data':meta_data,'class_attr':vars(highchart)}
 		return jsonify(new_json)
 		
 	if request.method == 'GET' and 'state' not in session:
-		#grab db data
-		data = db_functions.sales()
-		#get the name, count and data type for the select inputs on the page
-		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
-		meta_data.reverse()
-		
 		#plug in the variables
-		highchart = external_functions.Highcharts('CategoryName','ShipperName','scatter','correlation',corr_cat='Total')
+		highchart = external_functions.Highcharts('CustomerCountry','Total','column','timeseries',agg_type='sum',date_string='%Y')
 		
+		#for the cookies
+		for_next = {'meta_data':meta_data,'class_attr':vars(highchart)}
+		
+		#create the suitable frame, and json worthy array thereafter
 		if highchart.chart_type == 'correlation':
 			new_data = highchart.corr_frame(data)
 			new_json = highchart.corr_to_json(new_data)
 		else:
 			new_data = highchart.agg_frame(data)
 			new_json = highchart.agg_to_json(new_data)
+		
+		#meta data for the html elements, sake the cookies
 		new_json['meta_data'] = meta_data
-		session['state'] = new_json
+		session['state'] = for_next
 		print('fresh load')
 		return jsonify(new_json)
 	elif request.method == 'GET' and session['state']:
-		new_json = session['state']
+		for_next = session['state']
+		highchart = external_functions.Highcharts(**for_next['class_attr'])
+		if highchart.chart_type == 'correlation':
+			new_data = highchart.corr_frame(data)
+			new_json = highchart.corr_to_json(new_data)
+		else:
+			new_data = highchart.agg_frame(data)
+			new_json = highchart.agg_to_json(new_data)
 		print('already loaded')
+		new_json['meta_data'] = meta_data
 		return jsonify(new_json)
 
 @app.route("/")
-def hello_world():
+def bi_page():
 	#session.pop('state',None)
 	return render_template('index.html')
 

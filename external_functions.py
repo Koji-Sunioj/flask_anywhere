@@ -31,8 +31,8 @@ class Highcharts:
 		steps = np.arange(0,100,step=divisible,dtype=int)
 		steps = np.append(steps,100)
 		cutter = [np.percentile(bool_point['value'].dropna(), perc) for perc in steps]
-
-		bool_point['bin'] = pd.cut(bool_point['value'],bins=cutter)
+		
+		bool_point['bin'] = pd.cut(bool_point['value'],bins=np.unique(cutter))
 		bool_point = bool_point.dropna().sort_values('bin')
 		
 		return bool_point
@@ -93,6 +93,7 @@ class Highcharts:
 			else:
 				data = data.set_index('OrderDate')
 				data.index = data.index.strftime(highchart.date_string)
+				
 				data = pd.pivot_table(data,index=data.index,columns=grouper,values=highchart.y,aggfunc='sum').groupby(level=0,axis=1).agg(highchart.agg_type)
 				title = '{} {} for {} between {} and {}'
 				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x,data.index[0],data.index[-1])
@@ -100,6 +101,7 @@ class Highcharts:
 		#no date string, normal aggregate
 		else:
 			data = data.groupby(grouper).aggregate({highchart.y:'sum'}).groupby(level=0,axis=0).agg(highchart.agg_type)
+			
 			title = 'sales {} {} for {}'
 			highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x)
 		data = data.fillna(0).round(2).sort_index()
