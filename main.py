@@ -37,6 +37,8 @@ def bi_data():
 			new_json = highchart.corr_to_json(new_data)
 		elif send_values['type'] == 'timeseries':
 			highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['type'])
+			if 'date_string' in send_values:
+				highchart.date_string = send_values['date_string']
 			highchart.agg_type = send_values['agg_type']
 			new_data = highchart.agg_frame(data)
 			new_json = highchart.agg_to_json(new_data)
@@ -52,7 +54,7 @@ def bi_data():
 		
 	if request.method == 'GET' and 'state' not in session:
 		#plug in the variables
-		highchart = external_functions.Highcharts('CustomerCountry','Total','column','timeseries',agg_type='sum',date_string='%Y')
+		highchart = external_functions.Highcharts('OrderDate','Total','line','timeseries',agg_type='sum',date_string='%Y-%m-%d')
 		
 		#for the cookies
 		for_next = {'meta_data':meta_data,'class_attr':vars(highchart)}
@@ -70,7 +72,7 @@ def bi_data():
 		session['state'] = for_next
 		print('fresh load')
 		return jsonify(new_json)
-	elif request.method == 'GET' and session['state']:
+	elif request.method == 'GET' and 'state' in session:
 		for_next = session['state']
 		highchart = external_functions.Highcharts(**for_next['class_attr'])
 		if highchart.chart_type == 'correlation':
@@ -92,3 +94,4 @@ def bi_page():
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
 #highchart = external_functions.Highcharts('CustomerCountry','Total','column','timeseries',agg_type='sum',date_string='%Y')
+#need to adjust: auto height and width depending values, css gradient for scatter bool_points, dynamic sql select of columns

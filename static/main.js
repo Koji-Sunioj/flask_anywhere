@@ -14,12 +14,9 @@ function bi_dashboard()
         //});
        //render the chart
         Highcharts.chart('sales', {
-            loading: {
-                hideDuration: 1000,
-                showDuration: 1000
-            },
+            //http://jsfiddle.net/b6r8fvwm/1/
             title: {text: data.title},
-            chart: {type: data.type,},
+            chart: {type: data.type},
             yAxis: data.yAxis,
             xAxis: data.xAxis,
             legend: {
@@ -44,28 +41,16 @@ function bi_dashboard()
                     },
                 }
             },
-            series: data.series,
-            responsive: {
-                rules: [{
-                    condition: {
-                        maxWidth: 500
-                    },
-                    chartOptions: {
-                        legend: {
-                            layout: 'horizontal',
-                            align: 'left',
-                            verticalAlign: 'bottom'
-                        }
-                    }
-                }]
-            }
+            series: data.series
         //highchart ends here 
         });   
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
         $(data.meta_data).each(function(index,value)
-        {   var option = `<option value=${value.name} dtype=${value.dtype}>${value.name} (${value.count})</option>`
+        {   
+            console.log(value.name.split(/^[A-Z][a-z$]*/))
+            var option = `<option value=${value.name} dtype=${value.dtype}>${value.name} (${value.count})</option>`
             $('#x_select').append(option);
             $('#y_select').append(option);
 
@@ -78,19 +63,20 @@ function bi_dashboard()
     $(document).on('click','#correlation',function()
     {
         $("#x_select option:first").prop("selected", true)
-        $("#x_select option[dtype$='64']").show();
+        $("#x_select option").show();
+        $("#y_select option").show();
         $('#x_select').prop('disabled',false);
         $("#y_select option:first").prop("selected", true)
-        $("#y_select option[dtype='object'],option[dtype*='date']").show();
         $('#y_select').prop('disabled',false);
         $('#send_values').css('visibility','');
         normalize_variable_column();
         $('#variable_column option:contains(None)').show();
-        
         $('#x_select option').css('color','black')
         $('#y_select option').css('color','black')
         $('#send_values').prop('disabled',true)
         $('#aggregate_column').css('visibility','hidden');
+        $('#date_column').css('visibility','hidden');
+        $("#date_column:first").prop("selected", true);
     });
    
     function normalize_variable_column()
@@ -169,10 +155,20 @@ function bi_dashboard()
     {   
         var visual = $('#variable_column').val();
         var agg = $('#aggregate_column').val();
-        console.log()
+        var x_is_date = $('#x_select').find(":selected").attr('dtype');
+        console.log($('#date_column').val())
         if (x_selected != null  &&  y_selected != null && visual && agg)
         {
-            $('#send_values').prop('disabled',false)
+            //$('#send_values').prop('disabled',false)
+            if (x_is_date == 'datetime64[ns]' && $('#date_column').val() == null)
+            {
+                $('#send_values').prop('disabled',true)
+            }
+
+            else 
+            {
+                $('#send_values').prop('disabled',false)
+            }
         }
 
         else 
@@ -181,6 +177,7 @@ function bi_dashboard()
         }
     }
     $(document).on('click','#send_values', function() {
+        $('#send_values').prop('disabled',true);
 
         if ($('#correlation').is(':checked'))
         {
@@ -204,6 +201,11 @@ function bi_dashboard()
                 type : 'timeseries',
                 agg_type : $('#aggregate_column').val()
             }
+
+            if ($('#date_column').val() != null)
+            {
+                data.date_string = $('#date_column').val();
+            }
             
         }
 		
@@ -216,11 +218,20 @@ function bi_dashboard()
         .done(function(data){ 
             {
              update_highchart(data)
+             $('#send_values').prop('disabled',false);
             }  
         });
     })
 
     $(document).on('change','#variable_column[name=value]',function()
+    { 
+        var x_selected = $('#x_select').val();
+        var y_selected = $('#y_select').val();
+        //handle visibility of submit button
+        manage_val_column(x_selected,y_selected);
+    });
+
+    $(document).on('change','#date_column',function()
     { 
         var x_selected = $('#x_select').val();
         var y_selected = $('#y_select').val();
@@ -241,6 +252,7 @@ function bi_dashboard()
     { 
         var x_selected = $('#x_select').val();
         var y_selected = $('#y_select').val();
+        
         //handle visibility of submit button
         manage_agg_columns(x_selected,y_selected);
     });
@@ -249,16 +261,19 @@ function bi_dashboard()
     $(document).on('click','#aggregate',function()
     {   
         $("#x_select option:first").prop("selected", true);
-        $("#x_select option[dtype$='64']").hide();
+        $("#x_select option[dtype='int64']").hide();
+        $("#x_select option[dtype='float64']").hide();
         $('#x_select').prop('disabled',false); 
         $("#y_select option:first").prop("selected", true);
-        $("#y_select option[dtype='object'],option[dtype*='date']").hide();
+        $("#y_select option[dtype='object']").hide();
+        $("#y_select option[dtype='datetime64[ns]']").hide();
         $('#y_select').prop('disabled',false);
         normalize_variable_column();
         $('#send_values').css('visibility','');
         $('#x_select option').css('color','black')
         $('#y_select option').css('color','black')
         $('#send_values').prop('disabled',true)
+       
         
         //handle the variable column to have chart types
         var visuals = ['column','bar','line','scatter']
@@ -272,6 +287,8 @@ function bi_dashboard()
         $('#variable_column').attr('name','visual')
         $('#variable_column').css('visibility','');
         $('#aggregate_column').css('visibility','');
+        $('#date_column').css('visibility','');
+        $("#date_column option:first").prop("selected", true);
     });
     
     $(document).on('change','#x_select',function()
@@ -315,7 +332,12 @@ function bi_dashboard()
         }
 
         else if ($('#aggregate').is(':checked'))
-        {
+        {  
+            //$('#date_column').css('visibility','')
+            /*if ($('#x_select').find(":selected").attr('dtype') == 'datetime64[ns]')
+            {
+                $('#date_column').css('visibility','')
+            }*/
             manage_agg_columns(x_selected,y_selected)
         }
         //handle visibility of submit button
@@ -362,6 +384,7 @@ function bi_dashboard()
         }
         else if ($('#aggregate').is(':checked'))
         {
+           
             manage_agg_columns(x_selected,y_selected)
         }
         //handle visibility of submit button
