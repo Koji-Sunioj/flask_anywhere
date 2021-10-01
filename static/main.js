@@ -48,9 +48,13 @@ function bi_dashboard()
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
         $(data.meta_data).each(function(index,value)
-        {   //new RegExp(/[a-z*][A-Z][a-z$]*/);
+        {   
+            var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
+            fixed_name = fixed_name.join(' ');
+            
+            //new RegExp(/[a-z*][A-Z][a-z$]*/);
             //console.log(value.name.split(/^[A-Z][a-z$]*/))
-            var option = `<option value=${value.name} title='${value.count} values' dtype=${value.dtype}>${value.name}</option>`
+            var option = `<option value=${value.name} title='${value.count} values' dtype=${value.dtype}>${fixed_name}</option>`
             $('#x_select').append(option);
             $('#y_select').append(option);
 
