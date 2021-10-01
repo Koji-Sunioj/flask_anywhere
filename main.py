@@ -84,3 +84,4 @@ if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
 #highchart = external_functions.Highcharts('CustomerCountry','Total','column','timeseries',agg_type='sum',date_string='%Y')
 #need to adjust: auto height and width depending values, css gradient for scatter bool_points, dynamic sql select of columns,change appearance of drop drown
+#set up alert box
