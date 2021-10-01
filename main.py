@@ -28,61 +28,50 @@ def bi_data():
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
 		
-		#handle the chart types
-		if send_values['type'] == 'correlation':
-			highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['type'])
-			if 'category' in send_values:
-				highchart.corr_cat = send_values['category']
-			new_data = highchart.corr_frame(data)
-			new_json = highchart.corr_to_json(new_data)
-		elif send_values['type'] == 'timeseries':
-			highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['type'])
-			if 'date_string' in send_values:
-				highchart.date_string = send_values['date_string']
-			highchart.agg_type = send_values['agg_type']
-			new_data = highchart.agg_frame(data)
-			new_json = highchart.agg_to_json(new_data)
+		#set the attributes from the data
+		highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['type'])
+		highchart.corr_cat = send_values['category'] if 'category' in send_values else False
+		highchart.agg_type = send_values['agg_type'] if send_values['type'] == 'aggregate' else False
+		highchart.date_string = send_values['date_string'] if 'date_string' in send_values else False
 		
-		#grab the meta data for the html divs
+		#create the frame and array.grab the meta data for the html divs.
+		new_data = highchart.corr_frame(data) if highchart.chart_type == 'correlation' else highchart.agg_frame(data)
+		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
 		new_json['meta_data'] = meta_data
-		#{'x_axis': 'SupplierCountry', 'y_axis': 'Total', 'visual': 'column', 'type': 'timeseries', 'agg_type': 'sum'}
 
 		#remove last cookie, reload it with new class attributes
 		session.pop('state',None)
-		session['state'] = {'meta_data':meta_data,'class_attr':vars(highchart)}
+		session['state'] = vars(highchart)
+
 		return jsonify(new_json)
 		
-	if request.method == 'GET' and 'state' not in session:
+	elif request.method == 'GET' and 'state' not in session:
 		#plug in the variables
-		highchart = external_functions.Highcharts('OrderDate','Total','line','timeseries',agg_type='sum',date_string='%Y-%m-%d')
+		highchart = external_functions.Highcharts('OrderDate','Total','line','aggregate',agg_type='sum',date_string='%Y-%m-%d')
 		
 		#for the cookies
-		for_next = {'meta_data':meta_data,'class_attr':vars(highchart)}
+		for_next = vars(highchart)
 		
-		#create the suitable frame, and json worthy array thereafter
-		if highchart.chart_type == 'correlation':
-			new_data = highchart.corr_frame(data)
-			new_json = highchart.corr_to_json(new_data)
-		else:
-			new_data = highchart.agg_frame(data)
-			new_json = highchart.agg_to_json(new_data)
-		
-		#meta data for the html elements, sake the cookies
+		#create the frame and json array. meta data and state for html interfacing
+		new_data = highchart.corr_frame(data) if highchart.chart_type == 'correlation' else highchart.agg_frame(data)
+		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
 		new_json['meta_data'] = meta_data
+		new_json['state'] = vars(highchart)
+		
+		#save attributes to cookies
 		session['state'] = for_next
-		print('fresh load')
 		return jsonify(new_json)
+		
 	elif request.method == 'GET' and 'state' in session:
+		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
-		highchart = external_functions.Highcharts(**for_next['class_attr'])
-		if highchart.chart_type == 'correlation':
-			new_data = highchart.corr_frame(data)
-			new_json = highchart.corr_to_json(new_data)
-		else:
-			new_data = highchart.agg_frame(data)
-			new_json = highchart.agg_to_json(new_data)
-		print('already loaded')
+		highchart = external_functions.Highcharts(**for_next)
+		
+		#create the frame and json array. meta data and state for html interfacing
+		new_data = highchart.corr_frame(data) if highchart.chart_type == 'correlation' else highchart.agg_frame(data)
+		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
 		new_json['meta_data'] = meta_data
+		new_json['state'] = vars(highchart)
 		return jsonify(new_json)
 
 @app.route("/")
@@ -94,4 +83,4 @@ def bi_page():
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
 #highchart = external_functions.Highcharts('CustomerCountry','Total','column','timeseries',agg_type='sum',date_string='%Y')
-#need to adjust: auto height and width depending values, css gradient for scatter bool_points, dynamic sql select of columns
+#need to adjust: auto height and width depending values, css gradient for scatter bool_points, dynamic sql select of columns,change appearance of drop drown
