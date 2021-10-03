@@ -1,6 +1,8 @@
 import pandas as pd
 import datetime
 import numpy as np
+import matplotlib
+from matplotlib import cm
 
 #we offer: 
 #1. correlative (x,y axis with category being optional)
@@ -46,6 +48,13 @@ class Highcharts:
 		
 		return bool_point
 		
+	def color_gradient(highchart,bins):
+		cmap = cm.get_cmap('coolwarm',len(bins)) 
+		colors = []
+		for i in range(cmap.N):
+			rgba = cmap(i)
+			colors.append(matplotlib.colors.rgb2hex(rgba))
+		return colors
 		
 	def corr_frame(highchart,data):
 		#from the correlative perspective, date should just be a string
@@ -158,14 +167,16 @@ class Highcharts:
 		elif highchart.check_vals['test'] == ['object','object']:
 			#base the name of the highchart category on the numerical bin the aggregate falls in
 			bool_scatter = highchart.bool_scatter(new_data)
-			for cat in bool_scatter['bin'].unique():
+			colors = highchart.color_gradient(bool_scatter['bin'].unique())
+			
+			for cat,color in zip(bool_scatter['bin'].unique(),colors):
 				selected = bool_scatter[bool_scatter['bin'] == cat]
 				data = [[axes[1],axes[0]] for axes in selected.values]
 				#if the cut is only several digits, highchart category is the digit, not the range
 				if type(cat).__name__ == 'float':
-					stuff = {'name':cat,'data':data}
+					stuff = {'name':cat,'data':data,'color':color}
 				else:
-					stuff = {'name':'{} - {}'.format(f'{round(cat.left):,}',f'{round(cat.right):,}'),'data':data}
+					stuff = {'name':'{} - {}'.format(f'{round(cat.left):,}',f'{round(cat.right):,}'),'data':data,'color':color}
 				series.append(stuff)
 			xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
 			yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.index]}

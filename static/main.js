@@ -228,8 +228,6 @@ function bi_dashboard()
         // else if ([x_axis,y_axis].map(e => e.includes(String(dtype))).every(Boolean))
         else if (axis_arr.map(e => e.endsWith(dtype)).every(Boolean))
         {   
-            console.log(dtype)
-            console.log('shit');
             if ($('#variable_column').attr('name') ==prev_category)
             {
                 normalize_variable_column();
