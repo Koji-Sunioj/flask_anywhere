@@ -51,9 +51,6 @@ function bi_dashboard()
         {   
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
             fixed_name = fixed_name.join(' ');
-            
-            //new RegExp(/[a-z*][A-Z][a-z$]*/);
-            //console.log(value.name.split(/^[A-Z][a-z$]*/))
             var option = `<option value=${value.name} title='${value.count} values' dtype=${value.dtype}>${fixed_name}</option>`
             $('#x_select').append(option);
             $('#y_select').append(option);
@@ -213,7 +210,12 @@ function bi_dashboard()
     {
         var x_axis =  $('#x_select').find(":selected").attr('dtype');
         var y_axis =  $('#y_select').find(":selected").attr('dtype');
-        
+        var axis_arr = [x_axis,y_axis]
+
+        if (axis_arr.includes('datetime64[ns]'))
+        {
+            axis_arr[axis_arr.indexOf('datetime64[ns]')] = 'object';
+        }
         //if any value is not selected, it will be undefined. hide column but make sure it's empty.
         //needs to be first because one column is always unselected on the first drop
         if (x_axis == undefined || y_axis == undefined)
@@ -221,10 +223,13 @@ function bi_dashboard()
             normalize_variable_column();
             return true
         }
-
+        
         //if both axes are the same data type, load the column with the opposite type
-        else if ([x_axis,y_axis].map(e => e.includes(String(dtype))).every(Boolean))
+        // else if ([x_axis,y_axis].map(e => e.includes(String(dtype))).every(Boolean))
+        else if (axis_arr.map(e => e.endsWith(dtype)).every(Boolean))
         {   
+            console.log(dtype)
+            console.log('shit');
             if ($('#variable_column').attr('name') ==prev_category)
             {
                 normalize_variable_column();
@@ -336,100 +341,64 @@ function bi_dashboard()
 
 
    
+    function col_bools()
+    {
+        {   
+            var x_selected = $('#x_select').val();
+            var y_selected = $('#y_select').val();
+            
+            //visuals from the column level, highlight error and disable button
+            $('#x_select option').css('color','black')
+            $('#y_select option').css('color','black')
+            //disable button if both values are the same
+            if (x_selected == y_selected)
+            {
+                $('#x_select').css('color','red');
+                $('#x_select option:selected').css('color','red');
+                $('#y_select').css('color','red');
+                $('#y_select option:selected').css('color','red');
+                $('#send_values').prop('disabled',true)
+            
+            }
+            else
+            {
+                $('#x_select').css('color','');
+                $('#x_select option:selected').css('color','green');
+                $('#y_select').css('color','');
+                $('#y_select option:selected').css('color','green');
+            }
+        
+            //handling the variable column if both axes are the same data type
+            if ($('#correlation').is(':checked'))
+            { 
+                //first run checks if both axes are objects
+                var check_failed = manage_corr_cat('object','category','value','64');
+                //second one for pandas integer types
+                if (check_failed)
+                { 
+                    manage_corr_cat('64','value','category','object');
+                }
+                manage_val_column(x_selected,y_selected)
+            }
+
+            else if ($('#aggregate').is(':checked'))
+            {  
+                manage_agg_columns(x_selected,y_selected)
+            }
+            
+        
+        } 
+    }
+
     
     $(document).on('change','#x_select',function()
     {   
-        var x_selected = $('#x_select').val();
-        var y_selected = $('#y_select').val();
-        
-        //visuals from the column level, highlight error and disable button
-        $('#x_select option').css('color','black')
-        $('#y_select option').css('color','black')
-        //disable button if both values are the same
-        if (x_selected == y_selected)
-        {
-            $('#x_select').css('color','red');
-            $('#x_select option:selected').css('color','red');
-            $('#y_select').css('color','red');
-            $('#y_select option:selected').css('color','red');
-            $('#send_values').prop('disabled',true)
-        
-        }
-        else
-        {
-            $('#x_select').css('color','');
-            $('#x_select option:selected').css('color','green');
-            $('#y_select').css('color','');
-            $('#y_select option:selected').css('color','green');
-        }
-    
-        //handling the variable column if both axes are the same data type
-        if ($('#correlation').is(':checked'))
-        { 
-            //first run checks if both axes are objects
-            var check_failed = manage_corr_cat('object','category','value','64');
-            //second one for pandas integer types
-            if (check_failed)
-            { 
-                manage_corr_cat('64','value','category','object');
-            }
-            manage_val_column(x_selected,y_selected)
-        }
-
-        else if ($('#aggregate').is(':checked'))
-        {  
-            manage_agg_columns(x_selected,y_selected)
-        }
-        
-       
+        col_bools()
     });
 
     $(document).on('change','#y_select',function()
     {   
-        var x_selected = $('#x_select').val();
-        var y_selected = $('#y_select').val();
-
-        //visuals from the column level, highlight error and disable button
-        $('#x_select option').css('color','black')
-        $('#y_select option').css('color','black')
-
-        //disable button if both values are the same
-        if (x_selected == y_selected)
-        {
-            $('#x_select').css('color','red');
-            $('#x_select option:selected').css('color','red');
-            $('#y_select').css('color','red');
-            $('#y_select option:selected').css('color','red');
-            $('#send_values').prop('disabled',true)
-        }
-
-        else
-        {
-            $('#x_select').css('color','');
-            $('#x_select option:selected').css('color','green');
-            $('#y_select').css('color','');
-            $('#y_select option:selected').css('color','green');
-        }
-
-        //handle visibility of other columns depending on chart type
-        if ($('#correlation').is(':checked'))
-        {   
-            //first run checks if both axes are objects 
-            var check_failed = manage_corr_cat('object','category','value','64');
-            //second one for pandas integer types
-            if (check_failed)
-            { 
-                manage_corr_cat('64','value','category','object');
-            }
-            manage_val_column(x_selected,y_selected)
-        }
-        else if ($('#aggregate').is(':checked'))
-        {
-           
-            manage_agg_columns(x_selected,y_selected)
-        }
-       
-       
+        col_bools() 
     });
 };
 
