@@ -74,6 +74,7 @@ def bi_data():
 		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
 		new_json['meta_data'] = meta_data
 		new_json['state'] = vars(highchart)
+		print(new_json['state'])
 		return jsonify(new_json)
 
 @app.route("/")

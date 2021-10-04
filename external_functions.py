@@ -30,18 +30,21 @@ class Highcharts:
 		
 		steps = 5
 		divisible = 100 / steps
-		steps = np.arange(0,100,step=divisible,dtype=int)
-		steps = np.append(steps,100)
-		cutter = [np.percentile(bool_point['value'].dropna(), perc) for perc in steps]
+		new_steps = np.arange(0,100,step=divisible,dtype=int)
+		new_steps = np.append(new_steps,100)
+		cutter = [np.percentile(bool_point['value'].dropna(), perc) for perc in new_steps]
 		
 		#we need to check if the cut array is only several digits long, in which case the highchart category is just the digit
-		test_sparse = np.diff(bool_point['value'].dropna().unique())
+		test_sparse = np.unique(np.sort(bool_point['value'].dropna().unique()) )
+		test_diff = np.unique(np.diff(test_sparse))
 		labels = None
-		
+	
 		#if there is only two numbers, meaning one category, add zero
-		if len(test_sparse) == 1 and test_sparse[0] == 1:
-			labels = np.unique(cutter)
-			cutter.append(0)
+		if test_sparse.size <=steps and test_diff.size == 1:
+			labels = test_sparse
+			test_sparse = np.insert(test_sparse,0,0)
+			cutter = test_sparse
+		
 		
 		bool_point['bin'] = pd.cut(bool_point['value'],bins=np.unique(cutter),include_lowest=True,labels=labels)
 		bool_point = bool_point.dropna().sort_values('bin')

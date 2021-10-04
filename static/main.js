@@ -1,20 +1,24 @@
 function bi_dashboard()
 {   function update_highchart(data)
-    {
+    {   
+        console.log(data)
         if (data.type == 'scatter')
         {
            var symbol = 'circle'
+           /*var tooltip = {
+            formatter: function () {
+                return 'The value for <b>' + this.x +
+                    '</b> is <b>' + this.y + '</b>';
+                }
+            }*/
         }
         else 
         {
-            var symbol = symbol
+            var symbol = symbol;
         }
-        //Highcharts.setOptions({
-        //    colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4']
-        //});
+
        //render the chart
-        Highcharts.chart('sales', {
-            //http://jsfiddle.net/b6r8fvwm/1/
+        let chart = Highcharts.chart('sales', {
             title: {text: data.title},
             chart: {type: data.type},
             yAxis: data.yAxis,
@@ -41,9 +45,43 @@ function bi_dashboard()
                     },
                 }
             },
-            series: data.series
+            series: data.series,
+            tooltip: {
+                formatter: function (tooltip) {
+                    if (data.type == 'scatter' && data.xAxis.categories && data.yAxis.categories) {
+                        console.log(this);
+                        return `<strong style='color:${this.point.color}'>`+data.legend +'</strong>: <strong>'+this.series.name + '</strong><br>'+data.xAxis.title.text +': '+ this.series.xAxis.categories[this.point.x] +'<br>'+data.yAxis.title.text +': '+this.series.yAxis.categories[this.point.y];
+                    }
+                    // If not null, use the default formatter
+                    return tooltip.defaultFormatter.call(this, tooltip);
+                }
+            }
+           
         //highchart ends here 
-        });   
+        }); 
+        console.log(chart.tooltip);
+        /*if (chart.userOptions.chart.type == 'scatter')
+        {
+            chart.tooltip = {
+                formatter: function () {
+                    return 'The value for <b>' + this.x +
+                        '</b> is <b>' + this.y + '</b>';
+                    }
+                }
+        };*/
+            //edit the chart after load
+        var w = $('#sales').width();
+        var cat_len = chart.yAxis[0].categories.length;
+        if (cat_len * 20 < 400)
+        {
+            var new_height = 400  
+        }
+
+        else 
+        {
+            var new_height = chart.yAxis[0].categories.length * 20
+        }
+        chart.setSize(w,new_height,animation=false);
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
