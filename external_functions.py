@@ -53,13 +53,13 @@ class Highcharts:
 			test_sparse = np.insert(test_sparse,0,0)
 			cutter = test_sparse
 		
-		
 		bool_point['bin'] = pd.cut(bool_point['value'],bins=np.unique(cutter),include_lowest=True,labels=labels)
 		bool_point = bool_point.dropna().sort_values('bin')
 		
 		return bool_point
 		
 	def color_gradient(highchart,bins):
+		#create a gradient of color depending on bins
 		cmap = cm.get_cmap('coolwarm',len(bins)) 
 		colors = []
 		for i in range(cmap.N):
@@ -204,19 +204,22 @@ class Highcharts:
 		
 		#if one of the axes is string, then we calculate depending on the axes data type
 		elif any(highchart.check_vals['bools']):
+			#create frame with two columns, map columns with index number. drop nulls
+			points = new_data.copy()
+			points.columns = np.arange(0,len(points.columns))
+			points = points.melt()
+			points['value'] = points['value'].replace({0:np.nan})
+			points = points.dropna(subset=['value'])
 			
-			if highchart.check_vals['bools'][0] == False:
-				for s,i in enumerate(new_data.columns):
-					temp = [[s,x] for x in new_data[i].values if x > 0]
-					series.extend(temp)
-				yAxis = {'title':{'text':highchart.y}}
-				xAxis = {'title':{'text':highchart.regex_labels(highchart.x)},'categories':[i for i in new_data.columns]}
-			elif highchart.check_vals['bools'][1] == False:
-				for s,i in enumerate(new_data.columns):
-					temp = [[x,s] for x in new_data[i].values if x > 0]
-					series.extend(temp)
-				yAxis = {'title':{'text':highchart.regex_labels(highchart.y)},'categories':[i for i in new_data.columns]}
-				xAxis = {'title':{'text':highchart.x}}
+			#map the x,y axis depending on which value is string
+			series = [[i[0],i[1]]  if highchart.check_vals['bools'][0] == False else [i[1],i[0]] for i in points.values]
+			yAxis = {'title':{'text':highchart.y}}
+			xAxis = {'title':{'text':highchart.x}}
+			
+			#create categories key depending on string positioning
+			bool_mapper = [yAxis,xAxis]
+			bool_mapper[highchart.check_vals['bools'].index(True)]['categories'] = [i for i in new_data.columns]
+			
 			series = [{'name':'{} vs {}'.format(highchart.x,highchart.y),'data':series}]
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis}
 		return json_data

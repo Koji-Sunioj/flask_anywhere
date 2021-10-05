@@ -44,7 +44,6 @@ def bi_data():
 		#remove last cookie, reload it with new class attributes
 		session.pop('state',None)
 		session['state'] = vars(highchart)
-		print(new_json)
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
