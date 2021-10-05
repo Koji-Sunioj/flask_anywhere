@@ -1,34 +1,55 @@
 function bi_dashboard()
 {   function update_highchart(data)
     {   
-        console.log(data)
+        /*data.yAxis.scrollbar =  {
+            enabled: true
+        }*/
+        
         if (data.type == 'scatter')
         {
            var symbol = 'circle'
-           /*var tooltip = {
-            formatter: function () {
-                return 'The value for <b>' + this.x +
-                    '</b> is <b>' + this.y + '</b>';
-                }
-            }*/
         }
         else 
         {
             var symbol = symbol;
         }
+        
 
-       //render the chart
-        let chart = Highcharts.chart('sales', {
-            title: {text: data.title},
-            chart: {type: data.type},
-            yAxis: data.yAxis,
-            xAxis: data.xAxis,
-            legend: {
+        if (data.yAxis.categories && data.yAxis.categories.length * 20 < 400 || !data.yAxis.categories)
+        {
+            var new_height = 400  
+        }
+
+        else 
+        {
+            var new_height = data.yAxis.categories.length * 20
+        }
+
+        if (data.series.length > 24)
+        {
+            var new_legend = {
                 layout: 'vertical',
                 align: 'right',
                 verticalAlign: 'middle',
                 title: {text: data.legend}
-            },
+            }
+
+        }
+
+        else 
+        {
+            var new_legend = {
+                title: {text: data.legend}
+            }
+        }
+       //render the chart
+        let chart = Highcharts.chart('sales', {
+           
+            title: {text: data.title},
+            chart: {type: data.type, animation: false,height:new_height},
+            yAxis: data.yAxis,
+            xAxis: data.xAxis,
+            legend: new_legend,
             plotOptions: { 
                 
                 series: {
@@ -36,52 +57,33 @@ function bi_dashboard()
                        symbol: symbol,
                        radius: 3
                     },
+                    /*
                     point: {
                         events: {
                             click: function () {
                                 console.log('Category: ' + this.category + ', value: ' + this.y);
                             }
                         }
-                    },
+                    },*/
                 }
             },
             series: data.series,
             tooltip: {
+                
                 formatter: function (tooltip) {
+                    
                     if (data.type == 'scatter' && data.xAxis.categories && data.yAxis.categories) {
-                        console.log(this);
-                        return `<strong style='color:${this.point.color}'>`+data.legend +'</strong>: <strong>'+this.series.name + '</strong><br>'+data.xAxis.title.text +': '+ this.series.xAxis.categories[this.point.x] +'<br>'+data.yAxis.title.text +': '+this.series.yAxis.categories[this.point.y];
+                        
+                        return `<strong style='color:${this.point.color}'>&#9679</strong> ${data.legend}: <strong>`+this.series.name + '</strong><br>'+data.xAxis.title.text +': '+ this.series.xAxis.categories[this.point.x] +'<br>'+data.yAxis.title.text +': '+this.series.yAxis.categories[this.point.y];
                     }
                     // If not null, use the default formatter
+                    console.log(tooltip)
                     return tooltip.defaultFormatter.call(this, tooltip);
                 }
             }
            
         //highchart ends here 
-        }); 
-        console.log(chart.tooltip);
-        /*if (chart.userOptions.chart.type == 'scatter')
-        {
-            chart.tooltip = {
-                formatter: function () {
-                    return 'The value for <b>' + this.x +
-                        '</b> is <b>' + this.y + '</b>';
-                    }
-                }
-        };*/
-            //edit the chart after load
-        var w = $('#sales').width();
-        var cat_len = chart.yAxis[0].categories.length;
-        if (cat_len * 20 < 400)
-        {
-            var new_height = 400  
-        }
-
-        else 
-        {
-            var new_height = chart.yAxis[0].categories.length * 20
-        }
-        chart.setSize(w,new_height,animation=false);
+        });
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {

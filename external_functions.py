@@ -3,6 +3,7 @@ import datetime
 import numpy as np
 import matplotlib
 from matplotlib import cm
+import re
 
 #we offer: 
 #1. correlative (x,y axis with category being optional)
@@ -20,8 +21,15 @@ class Highcharts:
 		highchart.corr_cat = corr_cat
 		highchart.check_vals = check_vals
 		
+	def regex_labels(highchart,label):
+		new_label = re.split("([A-Z][a-z]+||[A-Z][A-Z]+)", label)
+		new_label = [word for word in  new_label if word]
+		new_label = " ".join(new_label)
+		return new_label
+	
 	def bool_scatter(highchart,new_data):
 		#this is specifically for scatter charts with string axes to inrease size based on category
+		#new_data = new_data[new_data.sum().sort_values().index]
 		bool_point = new_data.copy()
 		bool_point = bool_point[bool_point.columns].replace({0:np.nan})
 		bool_point.index = np.arange(len(new_data.index))
@@ -36,11 +44,11 @@ class Highcharts:
 		
 		#we need to check if the cut array is only several digits long, in which case the highchart category is just the digit
 		test_sparse = np.unique(np.sort(bool_point['value'].dropna().unique()) )
-		test_diff = np.unique(np.diff(test_sparse))
+		#test_diff = np.unique(np.diff(test_sparse))
 		labels = None
 	
 		#if there is only two numbers, meaning one category, add zero
-		if test_sparse.size <=steps and test_diff.size == 1:
+		if test_sparse.size <=steps:
 			labels = test_sparse
 			test_sparse = np.insert(test_sparse,0,0)
 			cutter = test_sparse
@@ -88,7 +96,7 @@ class Highcharts:
 			data = pd.pivot_table(data,columns=[string_axes],values=numerical_axes,index=data.index)
 
 		title = 'Correlation between {} and {}'
-		highchart.title = title.format(highchart.x,highchart.y)
+		highchart.title = title.format(highchart.regex_labels(highchart.x),highchart.regex_labels(highchart.y))
 		data = data.fillna(0).round(2).sort_index()
 		
 		return data
@@ -107,7 +115,7 @@ class Highcharts:
 				data.index = data.index.strftime(highchart.date_string)
 				data = data.groupby(data.index).aggregate({highchart.y:highchart.agg_type})
 				title = 'sales {} {} for {}'
-				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x)
+				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x))
 			
 			#axes is string and numerical, aggregate where index is set as date
 			else:
@@ -115,13 +123,13 @@ class Highcharts:
 				data.index = data.index.strftime(highchart.date_string)
 				data = pd.pivot_table(data,index=data.index,columns=grouper,values=highchart.y,aggfunc='sum').groupby(level=0,axis=1).agg(highchart.agg_type)
 				title = '{} {} for {} between {} and {}'
-				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x,data.index[0],data.index[-1])
+				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x),data.index[0],data.index[-1])
 		
 		#no date string, normal aggregate
 		else:
 			data = data.groupby(grouper).aggregate({highchart.y:'sum'}).groupby(level=0,axis=0).agg(highchart.agg_type)
 			title = 'sales {} {} for {}'
-			highchart.title = title.format(highchart.agg_type,highchart.y,highchart.x)
+			highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x))
 		data = data.fillna(0).round(2).sort_index()
 		
 		return data
@@ -158,16 +166,17 @@ class Highcharts:
 	def corr_to_json(highchart,new_data):
 		#series list is the array highcharts will interact with
 		series = []
-		
 		#during a categorical correlation, both axes must be numeric, so it's assumed. control to be handled from interface
 		if highchart.corr_cat and all(highchart.check_vals['bools']):
 			for i in new_data.columns.levels[0]:
 				stuff = {'name':i ,'data':[[x[0],x[1]] for x in new_data[i][[highchart.x,highchart.y]].values if x[0] > 0 and x[1] >0]}
 				series.append(stuff)
-			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'xAxis':{'title':{'text':highchart.x}},'yAxis':{'title':{'text':highchart.y}}}
+			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'xAxis':{'title':{'text':highchart.x}},'yAxis':{'title':{'text':highchart.y}},'legend':highchart.regex_labels(highchart.corr_cat)}
 		
 		#correlative with strings as axes, correlation category is numeric
 		elif highchart.check_vals['test'] == ['object','object']:
+			#remove columns which are null on both axes
+			new_data = new_data[new_data.sum().sort_values().index].dropna(how='all')  if 'OrderDate' not in [highchart.x,highchart.y] else new_data.dropna(how='all') 
 			#base the name of the highchart category on the numerical bin the aggregate falls in
 			bool_scatter = highchart.bool_scatter(new_data)
 			colors = highchart.color_gradient(bool_scatter['bin'].unique())
@@ -181,8 +190,8 @@ class Highcharts:
 				else:
 					stuff = {'name':'{} - {}'.format(f'{round(cat.left):,}',f'{round(cat.right):,}'),'data':data,'color':color}
 				series.append(stuff)
-			xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
-			yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.index]}
+			xAxis = {'title':{'text':highchart.regex_labels(highchart.x)},'categories':[i for i in new_data.columns]}
+			yAxis = {'title':{'text':highchart.regex_labels(highchart.y)},'categories':[i for i in new_data.index]}
 			legend = highchart.corr_cat if highchart.corr_cat else 'Orders'
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis,'legend':legend}	
 			
@@ -195,17 +204,18 @@ class Highcharts:
 		
 		#if one of the axes is string, then we calculate depending on the axes data type
 		elif any(highchart.check_vals['bools']):
+			
 			if highchart.check_vals['bools'][0] == False:
 				for s,i in enumerate(new_data.columns):
 					temp = [[s,x] for x in new_data[i].values if x > 0]
 					series.extend(temp)
 				yAxis = {'title':{'text':highchart.y}}
-				xAxis = {'title':{'text':highchart.x},'categories':[i for i in new_data.columns]}
+				xAxis = {'title':{'text':highchart.regex_labels(highchart.x)},'categories':[i for i in new_data.columns]}
 			elif highchart.check_vals['bools'][1] == False:
 				for s,i in enumerate(new_data.columns):
 					temp = [[x,s] for x in new_data[i].values if x > 0]
 					series.extend(temp)
-				yAxis = {'title':{'text':highchart.y},'categories':[i for i in new_data.columns]}
+				yAxis = {'title':{'text':highchart.regex_labels(highchart.y)},'categories':[i for i in new_data.columns]}
 				xAxis = {'title':{'text':highchart.x}}
 			series = [{'name':'{} vs {}'.format(highchart.x,highchart.y),'data':series}]
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis}

@@ -44,7 +44,7 @@ def bi_data():
 		#remove last cookie, reload it with new class attributes
 		session.pop('state',None)
 		session['state'] = vars(highchart)
-
+		print(new_json)
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
@@ -86,7 +86,9 @@ def bi_page():
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
 #highchart = external_functions.Highcharts('CustomerCountry','Total','column','timeseries',agg_type='sum',date_string='%Y')
-#need to adjust: auto height and width depending values, css gradient for scatter bool_points, dynamic sql select of columns
+#need to adjust: auto height and width depending values
+#set scroll for large x axis
+#refactor the code string on number function
 #set up alert box
 '''
 this is how to send a customized query
