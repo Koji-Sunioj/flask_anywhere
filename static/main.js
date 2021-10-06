@@ -296,7 +296,7 @@ function bi_dashboard()
                 $('#x_select option').each(function(index,value)
                 { 
                     
-                   if ( String($(value).attr('dtype')).includes(String(opp_dtype))  && !String($(value).attr('dtype')).includes(String('date')))
+                   if ( String($(value).attr('dtype')).includes(opp_dtype) && !String($(value).attr('dtype')).includes('date') && !String($(value).val()).includes('Order'))
                    { 
                      $('#variable_column').append($(value).clone())
                    }
