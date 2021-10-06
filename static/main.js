@@ -220,6 +220,7 @@ function bi_dashboard()
         $('#x_select').prop('disabled',false); 
         $("#y_select option:first").prop("selected", true);
         $("#y_select option[dtype='object']").hide();
+        $("#y_select option:contains(Order)").hide();
         $("#y_select option[dtype='datetime64[ns]']").hide();
         $('#y_select').prop('disabled',false);
         normalize_variable_column();

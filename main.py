@@ -38,9 +38,8 @@ def bi_data():
 		#create the frame and array.grab the meta data for the html divs.
 		new_data = highchart.corr_frame(data) if highchart.chart_type == 'correlation' else highchart.agg_frame(data)
 		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
-
 		new_json['meta_data'] = meta_data
-
+		
 		#remove last cookie, reload it with new class attributes
 		session.pop('state',None)
 		session['state'] = vars(highchart)

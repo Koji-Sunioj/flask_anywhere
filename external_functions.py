@@ -90,6 +90,7 @@ class Highcharts:
 		#normal correlation
 		elif all(highchart.check_vals['bools']):
 			data = data[[highchart.x,highchart.y]].set_index(highchart.x)
+			print(data)
 		
 		#frame with one axes as string and other as numerical
 		elif any(highchart.check_vals['bools']):
@@ -198,8 +199,11 @@ class Highcharts:
 			
 		#normal correlation
 		elif all(highchart.check_vals['bools']):
-			series = [{'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values]}]
+			#float 64 is json serializable
+			new_data = new_data.astype('float64')
+			series = [{'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values if i[0] > 0 and i[1] >0]}]
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':{'title':{'text':highchart.y}},'xAxis':{'title':{'text':highchart.x}}}
+			
 		
 		#if one of the axes is string, then we calculate depending on the axes data type
 		elif any(highchart.check_vals['bools']):
