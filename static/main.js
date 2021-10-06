@@ -7,11 +7,19 @@ function bi_dashboard()
         
         if (data.type == 'scatter')
         {
-           var symbol = 'circle'
+            var marker = 
+               {
+                    symbol: 'circle',
+                    radius: 3,
+                    
+                 }
+            //var symbol = 'circle';
         }
         else 
         {
-            var symbol = symbol;
+            var marker = {
+                enabled: false
+            };
         }
         
 
@@ -42,8 +50,8 @@ function bi_dashboard()
                 title: {text: data.legend}
             }
         }
-       //render the chart
-        let chart = Highcharts.chart('sales', {
+       //render the chartlet chart = 
+        Highcharts.chart('sales', {
            
             title: {text: data.title},
             chart: {type: data.type, animation: false,height:new_height},
@@ -53,10 +61,8 @@ function bi_dashboard()
             plotOptions: { 
                 
                 series: {
-                    marker: {
-                       symbol: symbol,
-                       radius: 3
-                    },
+                    marker: marker,
+                    }
                     /*
                     point: {
                         events: {
@@ -64,8 +70,8 @@ function bi_dashboard()
                                 console.log('Category: ' + this.category + ', value: ' + this.y);
                             }
                         }
-                    },*/
-                }
+                    },
+                }*/
             },
             series: data.series,
             tooltip: {
@@ -77,7 +83,7 @@ function bi_dashboard()
                         return `<strong style='color:${this.point.color}'>&#9679</strong> ${data.legend}: <strong>`+this.series.name + '</strong><br>'+data.xAxis.title.text +': '+ this.series.xAxis.categories[this.point.x] +'<br>'+data.yAxis.title.text +': '+this.series.yAxis.categories[this.point.y];
                     }
                     // If not null, use the default formatter
-                    console.log(tooltip)
+                   // console.log(tooltip)
                     return tooltip.defaultFormatter.call(this, tooltip);
                 }
             }
@@ -179,6 +185,12 @@ function bi_dashboard()
         });
     })
 
+    $('#modalshow').on('click',function()
+    
+    {
+        $('#exampleModal').modal('show')
+    })
+
     //interface for correlative chart type
     $(document).on('click','#correlation',function()
     {
@@ -251,7 +263,7 @@ function bi_dashboard()
         var x_axis =  $('#x_select').find(":selected").attr('dtype');
         var y_axis =  $('#y_select').find(":selected").attr('dtype');
         var axis_arr = [x_axis,y_axis]
-
+        
         if (axis_arr.includes('datetime64[ns]'))
         {
             axis_arr[axis_arr.indexOf('datetime64[ns]')] = 'object';
@@ -266,6 +278,8 @@ function bi_dashboard()
         
         //if both axes are the same data type, load the column with the opposite type
         // else if ([x_axis,y_axis].map(e => e.includes(String(dtype))).every(Boolean))
+        
+        
         else if (axis_arr.map(e => e.endsWith(dtype)).every(Boolean))
         {   
             if ($('#variable_column').attr('name') ==prev_category)
@@ -275,9 +289,10 @@ function bi_dashboard()
 
             $('#variable_column').attr('name',new_category)
             $('#variable_column').css('visibility','')
+            console.log($('#variable_column').attr('name'),prev_category)
             if($('#variable_column option').length == 2)
             {   $('#variable_column option:first').text(new_category.charAt(0).toUpperCase() +new_category.substring(1)).prop('disabled',true) //.css('text-transform','capitalize')
-                //$('#variable_column').css('text-transform','capitalize')
+                console.log('fill')
                 $('#x_select option').each(function(index,value)
                 { 
                     
@@ -292,9 +307,15 @@ function bi_dashboard()
         }
 
         //this handles nulls and if both axes are different
-        else 
+        else if ($('#variable_column').attr('name') !=prev_category)
         {   
             normalize_variable_column();
+            return true
+        }
+
+        else 
+        {
+            
             return true
         }
     }
@@ -414,6 +435,7 @@ function bi_dashboard()
                 //second one for pandas integer types
                 if (check_failed)
                 { 
+                    //console.log('asd')
                     manage_corr_cat('64','value','category','object');
                 }
                 manage_val_column(x_selected,y_selected)

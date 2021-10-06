@@ -70,6 +70,8 @@ class Highcharts:
 	def corr_frame(highchart,data):
 		#from the correlative perspective, date should just be a string
 		data['OrderDate'] = data['OrderDate'].astype(str)
+		#data['OrderID'] = data['OrderID'].astype(int)
+		#data['OrderDetailID'] = data['OrderDetailID'].astype(int)
 		
 		#boolean list to be used later: checks which axes are numerical
 		test = [data.reset_index()[highchart.x].dtype.name,data.reset_index()[highchart.y].dtype.name]
@@ -149,7 +151,6 @@ class Highcharts:
 		else:
 			new_data = new_data[new_data.sum().sort_values(ascending=False).index]
 		
-		
 		#loop through the items as normal. scatter chart does not include zeros, otherwise the chart is cluttered
 		for i in np.arange(0,len(new_data.columns)):
 			if highchart.visual == 'scatter':
@@ -197,9 +198,7 @@ class Highcharts:
 			
 		#normal correlation
 		elif all(highchart.check_vals['bools']):
-			for i in np.arange(0,len(new_data.columns)):
-				stuff = {'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values]}
-				series.append(stuff)
+			series = [{'name':'{} vs {}'.format(highchart.x,highchart.y),'data':[ [i[0],i[1]] for i in new_data.reset_index().values]}]
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':{'title':{'text':highchart.y}},'xAxis':{'title':{'text':highchart.x}}}
 		
 		#if one of the axes is string, then we calculate depending on the axes data type

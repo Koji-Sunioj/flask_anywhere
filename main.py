@@ -48,7 +48,7 @@ def bi_data():
 		
 	elif request.method == 'GET' and 'state' not in session:
 		#plug in the variables
-		highchart = external_functions.Highcharts('OrderDate','Total','line','aggregate',agg_type='sum',date_string='%Y-%m-%d')
+		highchart = external_functions.Highcharts('Total','Price','scatter','correlation')
 		
 		#for the cookies
 		for_next = vars(highchart)
@@ -73,7 +73,6 @@ def bi_data():
 		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
 		new_json['meta_data'] = meta_data
 		new_json['state'] = vars(highchart)
-		print(new_json['state'])
 		return jsonify(new_json)
 
 @app.route("/")

@@ -1,17 +1,50 @@
 {% extends "layout.html" %}
 {% block content %}
-<style>
-  #bi_header{
-    padding: 20px;background-color: white; text-align: center;
-  };
-  
-</style>
+
 
 <body onload="bi_dashboard()" style="background-color: lightblue">
-  
-  <h1 id="bi_header">Welcome to my Business Intelligence Presentation</h1>
- 
-  
+<!-- Button trigger modal -->
+
+
+<!-- Modal -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <span class="navbar-text" >W3 Schools Business Intelligence Presentation -></span>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link active" href="#"data-bs-toggle="modal" data-bs-target="#exampleModal" id="modalshow">About</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">The Data</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p>This data represented here is based on the <a href="https://www.w3schools.com/sql/default.asp">W3 schools SQL tutorial</a>, which is a fictional company with customers, suppliers and several other details common in a business.</p>
+        <p>The use case for this interface is a sales associate or decision maker in the company wanting to visualize the performance, in which case all values and categories are centered around the client's order details.</p> 
+        <p>There are two different plot types available: correlative and aggregate.</p> 
+        <p>Correlative simply plots one sales value or category vs. another, and is more of a utility to view where data is clustered, and by category (if one is chosen).</p>
+        <p>Aggregate plotting is more refined, offering clear insights of plotted data with typical line, column plots where aggregate types (sum, average) and time series can by filtered.</p>
+        <p>Some sales categories have a lot of data points and work is being done to simplify the visualizations to make it more readable.</p>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        
+      </div>
+    </div>
+  </div>
+</div>
   <div class="container " id = "content" >
    
     <br>
