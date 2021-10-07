@@ -219,7 +219,7 @@ function bi_dashboard()
         $("#x_select option[dtype='float64']").hide();
         $('#x_select').prop('disabled',false); 
         $("#y_select option:first").prop("selected", true);
-        $("#y_select option[dtype='object']").hide();
+        //$("#y_select option[dtype='object']").hide();
         $("#y_select option:contains(Order)").hide();
         $("#y_select option[dtype='datetime64[ns]']").hide();
         $('#y_select').prop('disabled',false);
@@ -242,6 +242,9 @@ function bi_dashboard()
         $('#variable_column').attr('name','visual')
         $('#variable_column').css('visibility','');
         $('#aggregate_column').css('visibility','');
+        $('#aggregate_column .unique').prop('disabled',true);
+        $('#aggregate_column .agg').prop('disabled',true);
+        $('#aggregate_column option:first').prop("selected", true)
         $('#date_column').css('visibility','');
         $("#date_column option:first").prop("selected", true);
     });
@@ -290,7 +293,7 @@ function bi_dashboard()
 
             $('#variable_column').attr('name',new_category)
             $('#variable_column').css('visibility','')
-            console.log($('#variable_column').attr('name'),prev_category)
+           
             if($('#variable_column option').length == 2)
             {   $('#variable_column option:first').text(new_category.charAt(0).toUpperCase() +new_category.substring(1)).prop('disabled',true) //.css('text-transform','capitalize')
                 console.log('fill')
@@ -336,16 +339,39 @@ function bi_dashboard()
     }
 
     //button visibility: fires only for aggregate chart type
-    function manage_agg_columns(x_selected,y_selected)
+    function manage_agg_columns()
     {   
-        var visual = $('#variable_column').val();
-        var agg = $('#aggregate_column').val();
-        var x_is_date = $('#x_select').find(":selected").attr('dtype');
+        
+        
+         var y_axis =  $('#y_select').find(":selected").attr('dtype');
+
+        if (y_axis == 'object')
+        {
+            $('#aggregate_column .agg').prop('disabled',true);
+            $('#aggregate_column .unique').prop('disabled',false);
+        }
+
+        else if (String(y_axis).includes('64'))
+        {
+
+            $('#aggregate_column .unique').prop('disabled',true);
+            $('#aggregate_column .agg').prop('disabled',false);
+        }
+        
+
+      //console.log($('#aggregate_column option').is(':hidden'))
+       if ($('#aggregate_column option:selected').prop('disabled') == true )
+        {
+           //console.log($('#aggregate_column option:selected').prop('disabled') == true)
+            $('#aggregate_column option:first').prop("selected", true)
+        }
+        
+          /* 
         //console.log($('#date_column').val())
         if (x_selected != null  &&  y_selected != null && visual && agg)
         {
             //$('#send_values').prop('disabled',false)
-            if (x_is_date == 'datetime64[ns]' && $('#date_column').val() == null)
+            if (x_axis == 'datetime64[ns]' && $('#date_column').val() == null)
             {
                 $('#send_values').prop('disabled',true)
             }
@@ -359,9 +385,35 @@ function bi_dashboard()
         else 
         {
             $('#send_values').prop('disabled',true)
-        }
+        }*/
     }
 
+    function manage_send(x_selected,y_selected)
+    
+    {
+        var visual = $('#variable_column').val();
+        var agg = $('#aggregate_column').val();
+       
+        var x_axis =  $('#x_select').find(":selected").attr('dtype');
+        if (x_selected != null  &&  y_selected != null && visual && agg)
+        {
+            //$('#send_values').prop('disabled',false)
+            if (x_axis == 'datetime64[ns]' && $('#date_column').val() == null)
+            {
+                $('#send_values').prop('disabled',true)
+            }
+
+            else 
+            {
+                $('#send_values').prop('disabled',false)
+            }
+        }
+
+        else 
+        {
+            $('#send_values').prop('disabled',true)
+        }   
+    }
 
     //anything past here is for select input handling and  button visibility!!
 
@@ -386,7 +438,8 @@ function bi_dashboard()
         var x_selected = $('#x_select').val();
         var y_selected = $('#y_select').val();
         //handle visibility of submit button
-        manage_agg_columns(x_selected,y_selected);
+        manage_agg_columns();
+        manage_send(x_selected,y_selected);
     });
 
 
@@ -396,7 +449,8 @@ function bi_dashboard()
         var y_selected = $('#y_select').val();
         
         //handle visibility of submit button
-        manage_agg_columns(x_selected,y_selected);
+        manage_agg_columns();
+        manage_send(x_selected,y_selected);
     });
 
 
@@ -444,7 +498,8 @@ function bi_dashboard()
 
             else if ($('#aggregate').is(':checked'))
             {  
-                manage_agg_columns(x_selected,y_selected)
+                manage_agg_columns();
+                manage_send(x_selected,y_selected);
             }
             
         

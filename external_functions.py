@@ -70,8 +70,6 @@ class Highcharts:
 	def corr_frame(highchart,data):
 		#from the correlative perspective, date should just be a string
 		data['OrderDate'] = data['OrderDate'].astype(str)
-		#data['OrderID'] = data['OrderID'].astype(int)
-		#data['OrderDetailID'] = data['OrderDetailID'].astype(int)
 		
 		#boolean list to be used later: checks which axes are numerical
 		test = [data.reset_index()[highchart.x].dtype.name,data.reset_index()[highchart.y].dtype.name]
@@ -109,29 +107,40 @@ class Highcharts:
 		grouper = [highchart.x,'OrderID']
 		grouper = list(dict.fromkeys(grouper))
 		
+		
 		#if date string is requested
 		if highchart.date_string:
-			
+			x_is_date = data[highchart.x].dtypes
+			data = data.set_index('OrderDate')
+			data.index = data.index.strftime(highchart.date_string)
 			#if the chosen x axis is the actual date column
-			if data[highchart.x].dtypes == 'datetime64[ns]':
-				data = data.set_index(highchart.x)
-				data.index = data.index.strftime(highchart.date_string)
+			if x_is_date == 'datetime64[ns]':
 				data = data.groupby(data.index).aggregate({highchart.y:highchart.agg_type})
+				title = 'sales {} {} for {}'
+				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x))
+			
+			elif data[highchart.y].dtypes == 'object':
+				data = pd.pivot_table(data,columns=highchart.x,index=data.index,values=highchart.y,aggfunc=highchart.agg_type)
 				title = 'sales {} {} for {}'
 				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x))
 			
 			#axes is string and numerical, aggregate where index is set as date
 			else:
-				data = data.set_index('OrderDate')
-				data.index = data.index.strftime(highchart.date_string)
-				data = pd.pivot_table(data,index=data.index,columns=grouper,values=highchart.y,aggfunc='sum').groupby(level=0,axis=1).agg(highchart.agg_type)
+				#we group everything according to the date, key and orderid, quantity per orderid
+				grouper.insert(0,'OrderDate')
+				data = data.groupby(grouper).aggregate({highchart.y:'sum'}).droplevel('OrderID')
+				data = pd.pivot_table(data,index='OrderDate',columns=highchart.x,values=highchart.y,aggfunc=highchart.agg_type).sort_index().fillna(0)
 				title = '{} {} for {} between {} and {}'
 				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x),data.index[0],data.index[-1])
 		
 		#no date string, normal aggregate
 		else:
-			data = data.groupby(grouper).aggregate({highchart.y:'sum'}).groupby(level=0,axis=0).agg(highchart.agg_type)
-			title = 'sales {} {} for {}'
+			y_is_string = data[highchart.y].dtypes
+			if y_is_string == 'object' and highchart.agg_type == 'nunique':
+				data = data.groupby(highchart.x).aggregate({highchart.y:highchart.agg_type})
+			else:
+				data = data.groupby(grouper).aggregate({highchart.y:'sum'}).groupby(level=0,axis=0).agg(highchart.agg_type)
+			title = '{} {} per Order ID for {}'
 			highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x))
 		data = data.fillna(0).round(2).sort_index()
 		
@@ -226,3 +235,8 @@ class Highcharts:
 			series = [{'name':'{} vs {}'.format(highchart.x,highchart.y),'data':series}]
 			json_data = {'series':series,'title':highchart.title,'type':highchart.visual,'yAxis':yAxis,'xAxis':xAxis}
 		return json_data
+
+
+'''
+#data = pd.pivot_table(data,index=data.index,columns=grouper,values=highchart.y,aggfunc='sum').groupby(level=0,axis=1).agg(highchart.agg_type)
+'''
