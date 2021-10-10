@@ -33,7 +33,7 @@ function bi_dashboard()
             var new_height = data.yAxis.categories.length * 20
         }
 
-        if (data.series.length > 24)
+        if (data.series.length > 12)
         {
             var new_legend = {
                 layout: 'vertical',

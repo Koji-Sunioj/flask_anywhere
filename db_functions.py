@@ -23,21 +23,20 @@ def custom_query(command,joins):
 	#query constructed from table names, joins as attributed by Db_command class
 	con.connect()
 	select_main = con.cursor()
-	statement = 'select {} from orders {};'.format(command,joins)
+	statement = 'select {},orders.OrderID from orders {};'.format(command,joins)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
 	con.commit()
 	con.close()
 	sales = pd.DataFrame(rows,columns=field_names)
+	sales = sales.loc[:,~sales.columns.duplicated()]
+	
 	return sales
 
 
 class Db_command:
 	#a class structure for creating an sql query depending on the requests column names
-	#everything is centered around the orders table. not sure if will use yet, since 
-	#the current stored procedure gives the meta data needed for the html columns, and is already 
-	#sunken in terms of speed
 	def __init__(query,keys=False,command=False,joins=False):
 		#get the table names and column names from database
 		con.connect()
@@ -53,6 +52,7 @@ class Db_command:
 		keys['EmployeeName'] = {"command":"concat( employees.FirstName,' ',employees.LastName) as 'EmployeeName'","link":"employees"}
 		keys['CustomerCity'] = {"command":"customers.City as 'CustomerCity'",'link':'customers'}
 		keys['SupplierCountry'] = keys.pop('Country')
+		keys['SupplierCountry']['command']  = keys['SupplierCountry']['command'] + ' as "SupplierCountry"'
 		keys['CustomerCountry'] = {"command":"customers.Country as 'CustomerCountry'",'link':'customers'}
 		
 		query.keys = keys

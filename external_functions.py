@@ -69,7 +69,8 @@ class Highcharts:
 		
 	def corr_frame(highchart,data):
 		#from the correlative perspective, date should just be a string
-		data['OrderDate'] = data['OrderDate'].astype(str)
+		data['OrderDate'] = data['OrderDate'].astype(str) if 'OrderDate' in data.columns else np.nan
+		data = data.dropna(axis=1)
 		
 		#boolean list to be used later: checks which axes are numerical
 		test = [data.reset_index()[highchart.x].dtype.name,data.reset_index()[highchart.y].dtype.name]
@@ -78,23 +79,25 @@ class Highcharts:
 		#if there is correlativate categoy, and both axes are numerical: make a pivot table with top index as column, followed by numerics
 		if highchart.corr_cat and all(highchart.check_vals['bools']):
 			data = pd.pivot_table(data,index=data.index,values=[highchart.x,highchart.y],columns=[highchart.corr_cat]).swaplevel(0, 1, axis=1).sort_index(axis=1)
+			
 		
 		#dataframe with string columns as axes
 		elif highchart.check_vals['test'] == ['object','object']:
 			value = highchart.corr_cat if highchart.corr_cat else 'OrderID'
 			aggregate = 'sum' if highchart.corr_cat else 'nunique'
-			data = pd.pivot_table(data,columns=highchart.x,index=highchart.y,values=value,aggfunc=aggregate)
+			data = pd.pivot_table(data,columns=highchart.x,index=highchart.y,values=value,aggfunc=aggregate).fillna(0)
+			print(data)
 			
 		#normal correlation
 		elif all(highchart.check_vals['bools']):
 			data = data[[highchart.x,highchart.y]].set_index(highchart.x)
-			print(data)
 		
 		#frame with one axes as string and other as numerical
 		elif any(highchart.check_vals['bools']):
 			string_axes = [highchart.x,highchart.y][highchart.check_vals['bools'].index(False)]
 			numerical_axes = [highchart.x,highchart.y][highchart.check_vals['bools'].index(True)]
 			data = pd.pivot_table(data,columns=[string_axes],values=numerical_axes,index=data.index)
+			
 
 		title = 'Correlation between {} and {}'
 		highchart.title = title.format(highchart.regex_labels(highchart.x),highchart.regex_labels(highchart.y))
@@ -103,6 +106,8 @@ class Highcharts:
 		return data
 
 	def agg_frame(highchart,data):
+		#groupby gives one category, pivoting makes columns which gives multiple
+		
 		#group every aggregate centered around the OrderID to get correct values
 		grouper = [highchart.x,'OrderID']
 		grouper = list(dict.fromkeys(grouper))
@@ -112,6 +117,7 @@ class Highcharts:
 		if highchart.date_string:
 			x_is_date = data[highchart.x].dtypes
 			data = data.set_index('OrderDate')
+			data.index = pd.to_datetime(data.index)
 			data.index = data.index.strftime(highchart.date_string)
 			#if the chosen x axis is the actual date column
 			if x_is_date == 'datetime64[ns]':
@@ -132,6 +138,7 @@ class Highcharts:
 				data = pd.pivot_table(data,index='OrderDate',columns=highchart.x,values=highchart.y,aggfunc=highchart.agg_type).sort_index().fillna(0)
 				title = '{} {} for {} between {} and {}'
 				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x),data.index[0],data.index[-1])
+			print(data)
 		
 		#no date string, normal aggregate
 		else:
