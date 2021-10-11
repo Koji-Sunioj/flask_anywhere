@@ -115,9 +115,9 @@ class Highcharts:
 		
 		#if date string is requested
 		if highchart.date_string:
+			data['OrderDate'] = pd.to_datetime(data['OrderDate'])
 			x_is_date = data[highchart.x].dtypes
 			data = data.set_index('OrderDate')
-			data.index = pd.to_datetime(data.index)
 			data.index = data.index.strftime(highchart.date_string)
 			#if the chosen x axis is the actual date column
 			if x_is_date == 'datetime64[ns]':

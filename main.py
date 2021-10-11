@@ -31,13 +31,11 @@ def bi_data():
 		send_values = {key:val for key,val in request.form.items()}
 		query = db_functions.Db_command()
 		col_array = [val for key,val in send_values.items() if key in ['x_axis','y_axis','category']]
-		#if 'date_string' in send_values:
-		#	col_array.append('OrderDate')
 		'date_string' in send_values and col_array.append('OrderDate')
 		query.db_rel(col_array)
 		data = db_functions.custom_query(query.command,query.joins)
 		
-		print(data)
+		print(data.info())
 		
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['type'])

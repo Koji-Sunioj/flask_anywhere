@@ -23,7 +23,7 @@ function bi_dashboard()
         }
         
 
-        if (data.yAxis.categories && data.yAxis.categories.length * 20 < 400 || !data.yAxis.categories)
+        if (data.yAxis.categories && data.yAxis.categories.length * 20 < 400 || !data.yAxis.categories)
         {
             var new_height = 400  
         }
@@ -90,6 +90,7 @@ function bi_dashboard()
            
         //highchart ends here 
         });
+       
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
@@ -140,6 +141,7 @@ function bi_dashboard()
     //ajax request for new chart visual from server
     $(document).on('click','#send_values', function() {
         $('#send_values').prop('disabled',true);
+        $('#sales').css('opacity',0.5)
 
         if ($('#correlation').is(':checked'))
         {
@@ -181,6 +183,7 @@ function bi_dashboard()
             {
                 update_highchart(data)
                 $('#send_values').prop('disabled',false);
+                $('#sales').css('opacity',1);
             }  
         });
     })
