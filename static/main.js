@@ -94,6 +94,10 @@ function bi_dashboard()
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
+       //console.log( JSON.parse(data.warnings)) 
+
+        $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
+
         $(data.meta_data).each(function(index,value)
         {   
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
@@ -138,11 +142,8 @@ function bi_dashboard()
     //get request ends here  
     })
 
-    //ajax request for new chart visual from server
-    $(document).on('click','#send_values', function() {
-        $('#send_values').prop('disabled',true);
-        $('#sales').css('opacity',0.5)
-
+    function ajax_data()
+    {
         if ($('#correlation').is(':checked'))
         {
             data = {
@@ -172,6 +173,16 @@ function bi_dashboard()
             }
             
         }
+
+        if ($('#warning-ignore').is(':checked'))
+        {
+            data.warnings = true
+        }
+
+        else
+        {
+            data.warnings = false
+        }
         
         $.ajax({
             data :data,
@@ -186,13 +197,43 @@ function bi_dashboard()
                 $('#sales').css('opacity',1);
             }  
         });
+    }
+
+    //ajax request for new chart visual from server
+    $(document).on('click','#send_values', function(event) {
+        $('#send_values').prop('disabled',true);
+        $('#sales').css('opacity',0.5)
+        
+        var x_count = $('#x_select').find(":selected").attr('title').replace('values','');
+        var x_type = $('#x_select').find(":selected").attr('dtype');
+        var y_count = $('#y_select').find(":selected").attr('title').replace('values','');
+        var y_type = $('#y_select').find(":selected").attr('dtype');
+
+        if ($('#warning-ignore').is(':checked') && $('#correlation').is(':checked') && x_type == 'object' && y_type == 'object' && x_count > 30 || $('#warning-ignore').is(':checked') && $('#correlation').is(':checked') && x_type == 'object' && y_type == 'object' && y_count > 30)
+        {
+            //event.preventDefault();
+            $('#warning').modal('show');
+            $('#warning-text').text(`The requested data has ${x_count} on the horizontal axis and ${y_count} on the vertical axis. Some categorical labels may not fit on the graph.`);
+        }
+
+        else 
+
+        {
+            ajax_data();
+        }
     })
 
-    $('#modalshow').on('click',function()
-    
+    $('#resume_ajax').on('click',function()
     {
-        $('#exampleModal').modal('show')
+        ajax_data(); 
     })
+
+    $('#cancel_ajax').on('click',function()
+    {
+        $('#send_values').prop('disabled',false);
+        $('#sales').css('opacity',1)
+    })
+
 
     //interface for correlative chart type
     $(document).on('click','#correlation',function()

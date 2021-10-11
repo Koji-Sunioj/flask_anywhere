@@ -86,7 +86,6 @@ class Highcharts:
 			value = highchart.corr_cat if highchart.corr_cat else 'OrderID'
 			aggregate = 'sum' if highchart.corr_cat else 'nunique'
 			data = pd.pivot_table(data,columns=highchart.x,index=highchart.y,values=value,aggfunc=aggregate).fillna(0)
-			print(data)
 			
 		#normal correlation
 		elif all(highchart.check_vals['bools']):
@@ -138,7 +137,6 @@ class Highcharts:
 				data = pd.pivot_table(data,index='OrderDate',columns=highchart.x,values=highchart.y,aggfunc=highchart.agg_type).sort_index().fillna(0)
 				title = '{} {} for {} between {} and {}'
 				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x),data.index[0],data.index[-1])
-			print(data)
 		
 		#no date string, normal aggregate
 		else:
