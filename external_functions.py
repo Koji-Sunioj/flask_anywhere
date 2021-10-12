@@ -22,7 +22,7 @@ class Highcharts:
 		highchart.check_vals = check_vals
 		
 	def regex_labels(highchart,label):
-		new_label = re.split("([A-Z][a-z]+||[A-Z][A-Z]+)", label)
+		new_label = re.split("([A-Z][a-z]+|[A-Z][A-Z]+)", label)
 		new_label = [word for word in  new_label if word]
 		new_label = " ".join(new_label)
 		return new_label
@@ -166,6 +166,9 @@ class Highcharts:
 		else:
 			new_data = new_data[new_data.sum().sort_values(ascending=False).index]
 		
+		#we transpose the axis if the number of columns is between a range: makes it more readable
+		#new_data = new_data.T if len(new_data.columns) < 20 and len(new_data.columns) > 1 else new_data
+		
 		#loop through the items as normal. scatter chart does not include zeros, otherwise the chart is cluttered
 		for i in np.arange(0,len(new_data.columns)):
 			if highchart.visual == 'scatter':
@@ -192,7 +195,7 @@ class Highcharts:
 		#correlative with strings as axes, correlation category is numeric
 		elif highchart.check_vals['test'] == ['object','object']:
 			#remove columns which are null on both axes
-			new_data = new_data[new_data.sum().sort_values().index].dropna(how='all')  if 'OrderDate' not in [highchart.x,highchart.y] else new_data.dropna(how='all') 
+			new_data = new_data[new_data.sum().sort_values(ascending=False).index].dropna(how='all')  if 'OrderDate' not in [highchart.x,highchart.y] else new_data.dropna(how='all') 
 			#base the name of the highchart category on the numerical bin the aggregate falls in
 			bool_scatter = highchart.bool_scatter(new_data)
 			colors = highchart.color_gradient(bool_scatter['bin'].unique())

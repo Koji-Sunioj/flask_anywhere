@@ -1,5 +1,9 @@
 function bi_dashboard()
-{   function update_highchart(data)
+{   
+    
+    
+    
+    function update_highchart(data)
     {   
         /*data.yAxis.scrollbar =  {
             enabled: true
@@ -90,6 +94,7 @@ function bi_dashboard()
            
         //highchart ends here 
         });
+        
        
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
@@ -213,7 +218,7 @@ function bi_dashboard()
         {
             //event.preventDefault();
             $('#warning').modal('show');
-            $('#warning-text').text(`The requested data has ${x_count} on the horizontal axis and ${y_count} on the vertical axis. Some categorical labels may not fit on the graph.`);
+            $('#warning-text').text(`The requested data has ${x_count} on the horizontal axis and ${y_count} on the vertical axis. Some categorical labels may not fit on the graph making it harder to read.`);
         }
 
         else 
@@ -563,5 +568,32 @@ function bi_dashboard()
 };
 
 
-    
+
+function test()
+{
+    $(document).on('click','#addFilter',function()
+    {
+        var id = $('.tab-content .active').attr('id');
+       
+        var input, filter, table, tr, td, i, txtValue;
+        input = $("#searchParam").val();
+        //filter = input.value.toUpperCase();
+        table = document.getElementById(id);
+        tr = table.getElementsByTagName("tr");
+            for (i = 0; i < tr.length; i++) {
+              td = tr[i].getElementsByTagName("td");
+              if (td) {
+                txtValue = td.textContent || td.innerText;
+                if (txtValue.indexOf(filter) > -1) {
+                  tr[i].style.display = "";
+                } else {
+                  tr[i].style.display = "none";
+                }
+              }       
+            }
+          
+    })
+}
+
+   
    

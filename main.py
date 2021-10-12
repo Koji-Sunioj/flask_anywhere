@@ -93,6 +93,38 @@ def bi_page():
 	#session.pop('state',None)
 	return render_template('index.html')
 
+'''
+@app.route('/test_heat/', methods=['GET'])
+def test_heat():
+	data = db_functions.sales()
+	data = pd.pivot_table(data,index='ShipperName',columns='CustomerCountry',values='Total',aggfunc='sum').fillna(0)
+	xAxis_categories = [i for i in data.columns]
+	yAxis_categories = [i for i in data.index]
+	
+	print(xAxis_categories)
+	
+	series = []
 
+	for col_index in np.arange(0,len(data.columns)):
+		selected = data[data.columns[col_index]]
+		for row_index,value in enumerate(selected.values):
+			series.append([int(col_index),int(row_index),int(value)])
+	
+	print(series)
+	new_json = {'xAxis':xAxis_categories,'yAxis':yAxis_categories,'series':series}
+	
+	return jsonify(new_json)
+'''
+@app.route("/test/")
+def test():
+	data = db_functions.sales()
+	data = data.select_dtypes(include=['object','datetime64']).sort_values('OrderDate')
+	data = data.astype(str)
+	data = data[data.nunique().sort_values().index]
+	cols = {i:data[i].unique().tolist() for i in data.columns}
+	
+	return render_template('test.html',cols=cols)
+	
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
+
