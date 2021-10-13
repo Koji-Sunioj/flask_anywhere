@@ -571,28 +571,75 @@ function bi_dashboard()
 
 function test()
 {
-    $(document).on('click','#addFilter',function()
+    function manage_visible_li()
     {
-        var id = $('.tab-content .active').attr('id');
-       
-        var input, filter, table, tr, td, i, txtValue;
-        input = $("#searchParam").val();
-        //filter = input.value.toUpperCase();
-        table = document.getElementById(id);
-        tr = table.getElementsByTagName("tr");
-            for (i = 0; i < tr.length; i++) {
-              td = tr[i].getElementsByTagName("td");
-              if (td) {
-                txtValue = td.textContent || td.innerText;
-                if (txtValue.indexOf(filter) > -1) {
-                  tr[i].style.display = "";
-                } else {
-                  tr[i].style.display = "none";
+        var param = $('#dropdownMenuButton1').val().toLowerCase();
+        if (param.length == 0)
+        {
+               //console.log('asd')
+            $('#list').show(); 
+        }
+        else 
+        {
+            $('#list li').each(function(index,value)
+            {   
+                if ($(value).text().toLowerCase().trim().includes(param))
+                {
+                    $(value).show()
                 }
-              }       
+    
+                else
+                {
+                    $(value).hide()
+                }
+            }); 
+            var lis = $('#list li').length
+            var test_visible = $('li[style*="display: none"]').length; 
+            if (test_visible == lis)
+            {
+                $('#list').hide();
+            } 
+    
+            else 
+            {
+                $('#list').show();
             }
-          
+        }
+    }
+
+    $(document).on('click','#dropdownMenuButton1',function()
+    { 
+        manage_visible_li()
+     });
+
+
+    $(document).on('keyup','#dropdownMenuButton1',function()
+    {  
+        manage_visible_li()
     })
+
+    $(document).on('click',function(event)
+    {   
+        if ($(event.target).attr('class') != 'form-control' && $(event.target).attr('class') != 'dropdown-item' )
+        {
+            $('#list').hide();
+        }  
+
+        else if ($(event.target).attr('class') == 'dropdown-item')
+        {   
+            $('#filters').parent().css('background-color','white')
+            $('#filters').append(`
+                <div class="btn-group me-2" role="group" style="padding:5px;">
+                    <button class="btn btn-primary" type="filter">${$(event.target).text()}</button>
+                </div>`)
+        }
+  
+    });
+
+
+$(document).on('click','button[type=filter]',function(){
+    $(this).remove();
+})
 }
 
    
