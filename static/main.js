@@ -571,75 +571,67 @@ function bi_dashboard()
 
 function test()
 {
-    function manage_visible_li()
-    {
-        var param = $('#dropdownMenuButton1').val().toLowerCase();
-        if (param.length == 0)
+    
+    $(document).on('keyup','#params',function(){
+        var params = $('#params').val();
+        var buttonTexts = $.map($('#filters button'), function(val) {  
+            return $(val).text()
+        });  
+
+        var values = []
+
+        $('.dataOption').each(function(index,value){
+            values.push($(value).val())
+        })
+  
+        if (values.includes(params) )
         {
-               //console.log('asd')
-            $('#list').show(); 
+            $('#addFilter').prop('disabled',false)
         }
+
         else 
         {
-            $('#list li').each(function(index,value)
-            {   
-                if ($(value).text().toLowerCase().trim().includes(param))
-                {
-                    $(value).show()
-                }
-    
-                else
-                {
-                    $(value).hide()
-                }
-            }); 
-            var lis = $('#list li').length
-            var test_visible = $('li[style*="display: none"]').length; 
-            if (test_visible == lis)
-            {
-                $('#list').hide();
-            } 
-    
-            else 
-            {
-                $('#list').show();
-            }
+            $('#addFilter').prop('disabled',true)
         }
-    }
-
-    $(document).on('click','#dropdownMenuButton1',function()
-    { 
-        manage_visible_li()
-     });
-
-
-    $(document).on('keyup','#dropdownMenuButton1',function()
-    {  
-        manage_visible_li()
     })
 
-    $(document).on('click',function(event)
-    {   
-        if ($(event.target).attr('class') != 'form-control' && $(event.target).attr('class') != 'dropdown-item' )
-        {
-            $('#list').hide();
-        }  
 
-        else if ($(event.target).attr('class') == 'dropdown-item')
+    $(document).on('click','#addFilter',function(){
         {   
+            $('.dataOption').each(function(index,value){
+                if ($(value).val() == $('#params').val())
+                {
+                    $(value).prop('disabled',true)
+                }
+            })
+
             $('#filters').parent().css('background-color','white')
             $('#filters').append(`
                 <div class="btn-group me-2" role="group" style="padding:5px;">
-                    <button class="btn btn-primary" type="filter">${$(event.target).text()}</button>
+                    <button class="btn btn-primary btn-sm" type="filter">${$('#params').val()}</button>
                 </div>`)
+            $('#params').val('');
+            $('#addFilter').prop('disabled',true);
         }
-  
-    });
+    })
 
+    $(document).on('click','button[type=filter]',function()
+    {
+        $(this).parent().remove();
+        var buttonFilter = $(this).text();
+        if ($('#filters button').length == 0)
+        {
+            $('#filters').parent().css('background-color','') 
+            $('#filters').empty(); 
+        }
+        $('.dataOption').each(function(index,value){
+            if ($(value).val() == buttonFilter)
+            {
+                $(value).prop('disabled',false)
+            }
+        })
+    })
 
-$(document).on('click','button[type=filter]',function(){
-    $(this).remove();
-})
 }
 
    

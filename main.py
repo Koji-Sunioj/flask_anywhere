@@ -119,83 +119,18 @@ def test_heat():
 @app.route("/test/")
 def test():
 	data = db_functions.sales()
-	#htmler = data.to_html(classes='table small',header=True,index=False,col_space=1,justify='left')
 	data = data.select_dtypes(include=['object','datetime64']).sort_values('OrderDate')
 	data = data[data.nunique().sort_values().index]
 	data = data.astype(str)
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	
-	#data = data[data.nunique().sort_values().index]
-	#cols = {i:data[i].unique().tolist() for i in data.columns}
-	
-	return render_template('test.html',cols=cols)
+	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
+	#print(meta_data)
+	return render_template('test.html',cols=cols,meta_data=meta_data)
 	
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
 
 
 
-
-'''
-<form>
- 
-    <div class="input-group" style="margin-top: 20px;">
-      <span class="input-group-text">Search</span>
-      <input type="text" class="form-control">
-    </div>
-   
-    <div class="input-group mt-4"  style="margin-bottom: 20px;">
-      {%for index,list in cols.items()%}
-        <select class="form-select">
-          <option disabled selected>{{index}}</option>
-          {% for value in list %}  
-            <option>{{value}}</option>
-          {% endfor %}
-        </select>
-      {%endfor%}
-    </div>
-  </form>
-
-<form>
- 
-    <div class="input-group" style="margin-top: 20px;">
-      <span class="input-group-text">Search</span>
-      <input type="text" class="form-control" id="searchParam">
-      <button class="btn btn-primary" id="addFilter"type="button">Add Filter</button>
-    </div>
-    <br>
-      <ul class="nav nav-tabs" id="nav-tab" role="tablist">
-        {%for index,list in cols.items()%}
-        <li class="nav-item"> 
-          <button class="nav-link small" id="nav-{{index}}" data-bs-toggle="tab" data-bs-target="#{{index}}" type="button" role="tab">{{index}}</button>
-        </li>
-        {%endfor%}
-      </ul>
-      <div class="tab-content" id="nav-tabContent">
-        {%for index,list in cols.items()%}
-          <div class="tab-pane fade" id="{{index}}" role="tabpanel">
-            <table class="table table-striped table-sm" id="table-{{index}}" style="width: 100%;">
-              <tbody>
-                {% for value in list%}
-                  <tr class="small">
-                    <td style="text-align: center;">
-                      {{value}}
-                    </td>
-                  </tr>
-                {%endfor%}
-              </tbody>
-            </table>
-          </div>
-        {%endfor%}
-      </div>
-  </form>
-  
-  
-   <datalist id="ice-cream-flavors" style="color: lightseagreen; width: 100%;">
-        {% for i in cols%}
-        <option value="{{i}}">
-       
-        {% endfor %}
-    </datalist>
-'''
 

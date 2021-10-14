@@ -4,7 +4,9 @@
 ::-webkit-scrollbar { 
   width: 0px!important;
 } 
-
+.filtergroup::-webkit-calendar-picker-indicator {
+  display:none !important;
+}
 </style>
 
 <body onload="test()" style="background-color: lightblue">
@@ -12,19 +14,43 @@
 
 <div class="container mt-5">
   <div class="row rounded" style="background-color: white; padding:20px">
-    <div class="dropdown">
-      
-      <input class="form-control" type="text" id="dropdownMenuButton1"  aria-expanded="false">
-      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" id="list">
+
+    <div class=" input-group">
+      <span class="input-group-text">Filter</span>
+      <input class="form-control filtergroup" list="filtergroup" id="params" placeholder="Category Name, Supplier Country...">
+      <datalist id="filtergroup">
         {% for val in cols%}
-        <li class="dropdown-item">{{val}}</li>
+        <option class="dataOption" value="{{val}}">
         {% endfor %}
-      </ul>
+      </datalist>
+      <button class="btn btn-primary" type="button" id="addFilter" disabled>Add</button>
     </div>
   </div>
   <br>
+  <div class="row rounded" style="background-color: white; padding:20px">
+    <h5 class="text-center">Current selection</h5>
+    <table class="table table-sm align-middle table-borderless">
+      <thead>
+        <tr>
+          {% for meta in meta_data%}
+          <th scope="col">{{meta['name']}}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {% for meta in meta_data%}
+          <td class="text-center">{{meta['count']}}</td>
+          {% endfor %}
+         
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+  <br>
   <div class="row rounded" role="toolbar">
-    <div class="btn-toolbar" role="toolbar" id="filters">
+    <div class="btn-toolbar" role="toolbar" id="filters" >
     </div>
   </div>
 </div> 
