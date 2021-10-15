@@ -3,6 +3,7 @@ import db_functions
 import pymysql
 import external_functions
 import re
+import json
 
 app = Flask(__name__)
 app.secret_key = 'ironpond_2'
@@ -94,39 +95,33 @@ def bi_page():
 	#session.pop('state',None)
 	return render_template('index.html')
 
-'''
-@app.route('/test_heat/', methods=['GET'])
-def test_heat():
-	data = db_functions.sales()
-	data = pd.pivot_table(data,index='ShipperName',columns='CustomerCountry',values='Total',aggfunc='sum').fillna(0)
-	xAxis_categories = [i for i in data.columns]
-	yAxis_categories = [i for i in data.index]
-	
-	print(xAxis_categories)
-	
-	series = []
 
-	for col_index in np.arange(0,len(data.columns)):
-		selected = data[data.columns[col_index]]
-		for row_index,value in enumerate(selected.values):
-			series.append([int(col_index),int(row_index),int(value)])
-	
-	print(series)
-	new_json = {'xAxis':xAxis_categories,'yAxis':yAxis_categories,'series':series}
-	
-	return jsonify(new_json)
-'''
 @app.route("/test/")
 def test():
 	data = db_functions.sales()
-	data = data.select_dtypes(include=['object','datetime64']).sort_values('OrderDate')
+	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
-	data = data.astype(str)
+	#data = data.astype(str)
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	#print(meta_data)
 	return render_template('test.html',cols=cols,meta_data=meta_data)
+	
+@app.route("/filter/",methods=['POST'])
+def filter():
+	json_filters = json.loads(request.form['filterData'])
+	
+	data = db_functions.sales()
+	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
+	data = data[data.nunique().sort_values().index]
+	for filt in json_filters:
+		data = data[(data[filt['column']] == filt['parameter'])]
+	#meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
+	#print(meta_data)
+	#filter_arr = {key:val for key,val in request.form.items()}
+	#print(filter_arr)
+	return jsonify({'fuck':'you'})
+
 	
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)

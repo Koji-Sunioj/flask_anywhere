@@ -574,9 +574,9 @@ function test()
     
     $(document).on('keyup','#params',function(){
         var params = $('#params').val();
-        var buttonTexts = $.map($('#filters button'), function(val) {  
-            return $(val).text()
-        });  
+       // var buttonTexts = $.map($('#filters button'), function(val) {  
+       //     return $(val).text()
+       // });  
 
         var values = []
 
@@ -598,6 +598,7 @@ function test()
 
     $(document).on('click','#addFilter',function(){
         {   
+           
             $('.dataOption').each(function(index,value){
                 if ($(value).val() == $('#params').val())
                 {
@@ -605,6 +606,7 @@ function test()
                 }
             })
 
+            
             $('#filters').parent().css('background-color','white')
             $('#filters').append(`
                 <div class="btn-group me-2" role="group" style="padding:5px;">
@@ -612,6 +614,35 @@ function test()
                 </div>`)
             $('#params').val('');
             $('#addFilter').prop('disabled',true);
+
+
+             var filters = []
+             $('#filters button').each(function(index,value)
+             {  
+                var filterArr = $(value).text().split(':')
+                var target = filterArr[0].trim().replace(/\s/g, '')
+                var param = filterArr[1].trim()
+                filters.push({column: target, parameter: param}) 
+
+             })
+
+            data = {
+                filterData : JSON.stringify(filters) 
+            }
+             
+           
+
+             $.ajax({
+                data :data,
+                type : 'POST',
+                url : '/filter/'
+            })
+            .done(function(data){ 
+                {
+                    console.log(data)
+                }  
+            });
+            
         }
     })
 
