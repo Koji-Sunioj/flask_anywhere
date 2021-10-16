@@ -42,7 +42,7 @@
       <tbody>
         <tr>
           {% for meta in meta_data%}
-          <td class="text-center">{{meta['count']}}</td>
+          <td class="text-center metaColumn" header="{{meta['name']}}">{{meta['count']}}</td>
           {% endfor %}
          
         </tr>

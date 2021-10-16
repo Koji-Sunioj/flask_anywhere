@@ -596,9 +596,50 @@ function test()
     })
 
 
+    function ajax_filters()
+    {
+        var filters = []
+        $('#filters button').each(function(index,value)
+        {  
+           var filterArr = $(value).text().split(':')
+           var target = filterArr[0].trim().replace(/\s/g, '')
+           var param = filterArr[1].trim()
+           filters.push({column: target, parameter: param}) 
+
+        })
+
+       data = {
+           filterData : JSON.stringify(filters) 
+       }
+        
+      
+       //send to server
+        $.ajax({
+           data :data,
+           type : 'POST',
+           url : '/filter/'
+       })
+
+
+       .done(function(data){ 
+           {
+               //update the table
+               $('.metaColumn').each(function(index,value)
+               {
+                   if (data[index]['name'] == $(value).attr('header'))
+                   { 
+                       $(value).text(data[index]['count'])
+                   }
+               })
+           }  
+       });
+    }
+
+
     $(document).on('click','#addFilter',function(){
         {   
            
+            //disable selected value in data list
             $('.dataOption').each(function(index,value){
                 if ($(value).val() == $('#params').val())
                 {
@@ -606,7 +647,7 @@ function test()
                 }
             })
 
-            
+            //send to filters list
             $('#filters').parent().css('background-color','white')
             $('#filters').append(`
                 <div class="btn-group me-2" role="group" style="padding:5px;">
@@ -615,39 +656,16 @@ function test()
             $('#params').val('');
             $('#addFilter').prop('disabled',true);
 
-
-             var filters = []
-             $('#filters button').each(function(index,value)
-             {  
-                var filterArr = $(value).text().split(':')
-                var target = filterArr[0].trim().replace(/\s/g, '')
-                var param = filterArr[1].trim()
-                filters.push({column: target, parameter: param}) 
-
-             })
-
-            data = {
-                filterData : JSON.stringify(filters) 
-            }
-             
-           
-
-             $.ajax({
-                data :data,
-                type : 'POST',
-                url : '/filter/'
-            })
-            .done(function(data){ 
-                {
-                    console.log(data)
-                }  
-            });
+            //send text of filters in div to an array
+            ajax_filters()
             
         }
     })
 
     $(document).on('click','button[type=filter]',function()
     {
+
+        
         $(this).parent().remove();
         var buttonFilter = $(this).text();
         if ($('#filters button').length == 0)
@@ -661,6 +679,7 @@ function test()
                 $(value).prop('disabled',false)
             }
         })
+        ajax_filters()
     })
 
 }

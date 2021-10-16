@@ -101,26 +101,20 @@ def test():
 	data = db_functions.sales()
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
-	#data = data.astype(str)
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
-	
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
 	return render_template('test.html',cols=cols,meta_data=meta_data)
 	
 @app.route("/filter/",methods=['POST'])
 def filter():
 	json_filters = json.loads(request.form['filterData'])
-	
 	data = db_functions.sales()
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
-	for filt in json_filters:
-		data = data[(data[filt['column']] == filt['parameter'])]
-	#meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	#print(meta_data)
-	#filter_arr = {key:val for key,val in request.form.items()}
-	#print(filter_arr)
-	return jsonify({'fuck':'you'})
+	command = "&".join(["(data['{}'] == '{}')".format(value['column'],value['parameter']) for value in json_filters])
+	data = data[eval(command)] if command else data
+	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
+	return jsonify(meta_data)
 
 	
 if (__name__ == "__main__"):
