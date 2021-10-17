@@ -1,11 +1,19 @@
 {% extends "layout.html" %}
 {% block content %}
 <style>
-::-webkit-scrollbar { 
-  width: 0px!important;
-} 
+
+#datatable { font-size: 10px;
+ 
+
+}
 
 
+
+table, th, tbody 
+{
+  
+  text-align: left;     
+}
 .filtergroup::-webkit-calendar-picker-indicator {
   display:none !important;
 }
@@ -55,6 +63,11 @@
     <div class="btn-toolbar" role="toolbar" id="filters" >
     </div>
   </div>
+  <br>
+  <div class="row table-responsive" style="background-color: white; ">
+      {{shit|safe}}
+  </div>
 </div> 
+
 </body>
 {% endblock %}  

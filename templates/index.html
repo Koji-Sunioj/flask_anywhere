@@ -39,7 +39,6 @@
         <p>Correlative simply plots one sales value or category vs. another, and is more of a utility to view where data is clustered, and by category (if one is chosen).</p>
         <p>Aggregate plotting is more refined, offering clear insights of plotted data with typical line, column plots where aggregate types (sum, average) and time series can by filtered.</p>
         <p>Some sales categories have a lot of data points and work is being done to simplify the visualizations to make it more readable.</p>
-        
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -81,58 +80,61 @@
     </div>
   </div>
 </div>
-
-
-
-
   <div class="container " id = "content" >
    
     <br>
-    <div class="row rounded" style="background-color: white; ">
+    <div class="row rounded" style="background-color: white; padding-bottom: 10px; ">
         <h3>Customize graph</h3>
-        <div class="input-group">
-          <div class="form-check form-check-sm form-check-inline" >
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="correlation" value="correlation">
-            <label class="form-check-label" for="correlation">Correlation</label>
-          </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="inlineRadioOptions" id="aggregate" value="aggregate">
-            <label class="form-check-label" for="aggregate">Aggregate</label>
-          </div>
-          <select class="form-select form-select-sm" disabled id="x_select">
-            <option selected disabled>X-Axis</option>
+       
+        <div class="col">
+          <label >Category</label>
+          <select class="form-select form-select"  id="x_select">
           </select>
-          <select class="form-select form-select-sm" disabled id="y_select">
-            <option selected disabled>Y-Axis</option>
+        </div>
+        <div class="col">
+          <label >Value</label>
+          <select class="form-select form-select"  id="y_select">
           </select>
-         
-          <select class="form-select form-select-sm" id="variable_column"style="visibility: hidden;" >
-            <option selected disabled class="keep_col"></option>
-            <option class="keep_col">None</option>
+        </div>
+        <div class="col">
+          <label >Visual</label>
+          <select class="form-select form-select" id="variable_column" >
+            <option value="column">Column</option>
+            <option value="bar">Bar</option>
+            <option value="line">Line</option>
           </select>
-          <select class="form-select form-select-sm" id="aggregate_column" style="visibility: hidden;">
-            <option selected disabled>Value</option>
-            <option disabled class="agg" value="sum">Sum</option>
-            <option disabled class="agg" value="mean">Mean</option>
-            <option disabled class="agg" value="max">Max</option>
-            <option disabled class="agg" value="min">Min</option>
-            <option disabled class="unique" value="nunique">Count</option>
+        </div>
+        <div class="col">
+          <label >Function</label>
+          <select class="form-select form-select" id="aggregate_column" >
+            <option value="sum">Sum</option>
+            <option value="mean">Mean</option>
+            <option value="max">Max</option>
+            <option value="min">Min</option>
+            <option value="nunique">Count</option>
           </select>
-          <select class="form-select form-select-sm" id="date_column" style="visibility: hidden;" >
-            <option selected disabled>Date</option>
+        </div>
+        <div class="col">
+          <label class="form-check-label" for="flexCheckDefault">
+            Date
+          </label>
+          <input class="form-check-input" type="checkbox" value="" id="isDate">
+          <select class="form-select form-select" id="date_column" disabled >
+            
             <option value="%Y">Year</option>
             <option value="%Y-%m">Year-Month</option>
             <option value="%Y-%m-%d">Year-Month-Day</option>
           </select>
-        <button class="btn btn-primary border" type="button" style="visibility: hidden;" id="send_values" disabled>
-            Update
-          </button>
         </div>
-     
+        <div class="col align-self-end ">
+            <button class="btn btn-primary btn-block" type="button" id="send_values" style="height: 38px ;">
+             Update
+            </button>
+        </div>  
     </div> 
     <br>
    
-    <div class="row rounded" style="background-color: white;">
+    <div class="row rounded" >
       <div class="card">
         <div class="card-body">
           <div id="sales"  class="card">

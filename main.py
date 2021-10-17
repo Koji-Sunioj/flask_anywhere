@@ -4,6 +4,8 @@ import pymysql
 import external_functions
 import re
 import json
+import numpy as np
+import math
 
 app = Flask(__name__)
 app.secret_key = 'ironpond_2'
@@ -14,23 +16,22 @@ def bi_data():
 	if request.method == 'POST':
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
+		print(send_values)
 		
 		#initialize query constructor, with list from ajax request
 		query = db_functions.Db_command()
-		col_array = [val for key,val in send_values.items() if key in ['x_axis','y_axis','category']]
+		col_array = [val for key,val in send_values.items() if key in ['x_axis','y_axis']]
 		'date_string' in send_values and col_array.append('OrderDate')
 		query.db_rel(col_array)
 		data = db_functions.custom_query(query.command,query.joins)
 		
 		#set the attributes from the data
-		highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['type'])
-		highchart.corr_cat = send_values['category'] if 'category' in send_values else False
-		highchart.agg_type = send_values['agg_type'] if send_values['type'] == 'aggregate' else False
+		highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['agg_type'])
 		highchart.date_string = send_values['date_string'] if 'date_string' in send_values else False
 		
 		#create the frame and array.grab the meta data for the html divs.
-		new_data = highchart.corr_frame(data) if highchart.chart_type == 'correlation' else highchart.agg_frame(data)
-		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
+		new_data = highchart.agg_frame(data)
+		new_json = highchart.agg_to_json(new_data)
 		#new_json['meta_data'] = meta_data
 		
 		#remove last cookie, reload it with new attributes
@@ -46,14 +47,15 @@ def bi_data():
 		data = db_functions.sales()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('Total','Price','scatter','correlation')
+		highchart = external_functions.Highcharts('SupplierCountry','Total','column','sum')
 		
 		#for the cookies
 		for_next = vars(highchart)
 		
+		
 		#create the frame and json array. meta data and state for html interfacing
-		new_data = highchart.corr_frame(data) if highchart.chart_type == 'correlation' else highchart.agg_frame(data)
-		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
+		new_data = highchart.agg_frame(data)
+		new_json = highchart.agg_to_json(new_data)
 		
 		#we need metadata for the html elements and save in cookies
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
@@ -66,10 +68,10 @@ def bi_data():
 		#save attributes to cookies
 		session['state'] = for_next
 		session['warnings'] = 'true'
+		print(new_json)
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' in session:
-		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
@@ -78,8 +80,8 @@ def bi_data():
 		highchart = external_functions.Highcharts(**for_next)
 		
 		#create the frame and json array. meta data and state for html interfacing
-		new_data = highchart.corr_frame(data) if highchart.chart_type == 'correlation' else highchart.agg_frame(data)
-		new_json = highchart.corr_to_json(new_data) if highchart.chart_type == 'correlation' else highchart.agg_to_json(new_data)
+		new_data = highchart.agg_frame(data)
+		new_json = highchart.agg_to_json(new_data)
 		
 		#we need metadata for the html elements and save in cookies
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
@@ -99,21 +101,27 @@ def bi_page():
 @app.route("/test/")
 def test():
 	data = db_functions.sales()
+	#pages = math.ceil(len(data.index) / 20)
+	#pagination = np.arange(0,pages) + 1
+	shit = data.sort_values('OrderDate').head(10).to_html(classes='table  table-bordered table-hover',index=False,table_id="datatable")
+	#shit = data.sort_values('OrderDate').to_html(classes='display',index=False,table_id="table_id")
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	return render_template('test.html',cols=cols,meta_data=meta_data)
+	return render_template('test.html',cols=cols,meta_data=meta_data,shit=shit) #
 	
 @app.route("/filter/",methods=['POST'])
 def filter():
 	json_filters = json.loads(request.form['filterData'])
 	data = db_functions.sales()
+	#print(data.head(5).select_dtypes(include=['int64','float64','datetime64[ns]']))
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
 	command = "&".join(["(data['{}'] == '{}')".format(value['column'],value['parameter']) for value in json_filters])
 	data = data[eval(command)] if command else data
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
+	
 	return jsonify(meta_data)
 
 	

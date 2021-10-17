@@ -7,7 +7,7 @@ function bi_dashboard()
     {   
         /*data.yAxis.scrollbar =  {
             enabled: true
-        }*/
+        }
         
         if (data.type == 'scatter')
         {
@@ -35,7 +35,7 @@ function bi_dashboard()
         else 
         {
             var new_height = data.yAxis.categories.length * 20
-        }
+        }*/
 
         if (data.series.length > 12)
         {
@@ -58,16 +58,17 @@ function bi_dashboard()
         Highcharts.chart('sales', {
            
             title: {text: data.title},
-            chart: {type: data.type, animation: false,height:new_height},
+            chart: {type: data.type, animation: false},
+            //chart: {type: data.type, animation: false,height:new_height},
             yAxis: data.yAxis,
             xAxis: data.xAxis,
             legend: new_legend,
             plotOptions: { 
                 
-                series: {
+                /*series: {
                     marker: marker,
                     }
-                    /*
+                    
                     point: {
                         events: {
                             click: function () {
@@ -100,7 +101,7 @@ function bi_dashboard()
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
        //console.log( JSON.parse(data.warnings)) 
-
+        console.log(data.state.y)
         $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
 
         $(data.meta_data).each(function(index,value)
@@ -113,70 +114,39 @@ function bi_dashboard()
 
         });
         //reinstate html inputs from previous session
-        $(`#${data.state.chart_type}`).prop("checked", true).click();
-        $('#x_select').val(data.state.x).change();
-        $('#y_select').val(data.state.y).change();
+       
+        $('#x_select').val(data.state.x);
+        $('#y_select').val(data.state.y);
 
-        if (data.state.chart_type == 'correlation')
+       
+        $('#variable_column').val(data.state.visual);
+        $('#aggregate_column').val(data.state.agg_type);
+        if (data.state.date_string)
         {
-            if (data.state.corr_cat == false)
-            {
-                $('#variable_column').val('None').change();
-            }
-            else if (data.state.corr_cat)
-            {
-                $('#variable_column').val(data.state.corr_cat).change();
-            }
-
-        }
-
-        else if (data.state.chart_type == 'aggregate')
-        {   
-            
-            $('#variable_column').val(data.state.visual).change();
-            $('#aggregate_column').val(data.state.agg_type).change();
-            if (data.state.date_string)
-            {
-                $('#date_column').val(data.state.date_string).change()
-            }
-
+            $('#date_column').val(data.state.date_string)
+            $('#isDate').attr('checked',true).change()
+           
         }
         
         //update highcharts here
+
         update_highchart(data);
     //get request ends here  
     })
 
     function ajax_data()
-    {
-        if ($('#correlation').is(':checked'))
-        {
-            data = {
-                x_axis : $('#x_select').val(),
-                y_axis :$('#y_select').val(),
-                visual : 'scatter',
-                type : 'correlation'
-            }
-            if ($('#variable_column').val() &&  $('#variable_column').val() != 'None')
-            {
-                data.category = $('#variable_column').val()
-            }
+    {   
+        data = {
+            x_axis : $('#x_select').val(),
+            y_axis :$('#y_select').val(),
+            visual : $('#variable_column').val(),
+            agg_type : $('#aggregate_column').val()
         }
-        else if ($('#aggregate').is(':checked'))
-        {
-            data = {
-                x_axis : $('#x_select').val(),
-                y_axis :$('#y_select').val(),
-                visual : $('#variable_column').val(),
-                type : 'aggregate',
-                agg_type : $('#aggregate_column').val()
-            }
 
-            if ($('#date_column').val() != null)
-            {
-                data.date_string = $('#date_column').val();
-            }
-            
+        if ($('#isDate').is(':checked') )
+        {
+            data.date_string = $('#date_column').val();
+           
         }
 
         if ($('#warning-ignore').is(':checked'))
@@ -208,24 +178,7 @@ function bi_dashboard()
     $(document).on('click','#send_values', function(event) {
         $('#send_values').prop('disabled',true);
         $('#sales').css('opacity',0.5)
-        
-        var x_count = $('#x_select').find(":selected").attr('title').replace('values','');
-        var x_type = $('#x_select').find(":selected").attr('dtype');
-        var y_count = $('#y_select').find(":selected").attr('title').replace('values','');
-        var y_type = $('#y_select').find(":selected").attr('dtype');
-
-        if ($('#warning-ignore').is(':checked') && $('#correlation').is(':checked') && x_type == 'object' && y_type == 'object' && x_count > 30 || $('#warning-ignore').is(':checked') && $('#correlation').is(':checked') && x_type == 'object' && y_type == 'object' && y_count > 30)
-        {
-            //event.preventDefault();
-            $('#warning').modal('show');
-            $('#warning-text').text(`The requested data has ${x_count} on the horizontal axis and ${y_count} on the vertical axis. Some categorical labels may not fit on the graph making it harder to read.`);
-        }
-
-        else 
-
-        {
-            ajax_data();
-        }
+        ajax_data();
     })
 
     $('#resume_ajax').on('click',function()
@@ -238,65 +191,6 @@ function bi_dashboard()
         $('#send_values').prop('disabled',false);
         $('#sales').css('opacity',1)
     })
-
-
-    //interface for correlative chart type
-    $(document).on('click','#correlation',function()
-    {
-        $("#x_select option:first").prop("selected", true)
-        $("#x_select option").show();
-        $("#y_select option").show();
-        $('#x_select').prop('disabled',false);
-        $("#y_select option:first").prop("selected", true)
-        $('#y_select').prop('disabled',false);
-        $('#send_values').css('visibility','');
-        normalize_variable_column();
-        $('#variable_column option:contains(None)').show();
-        $('#x_select option').css('color','black')
-        $('#y_select option').css('color','black')
-        $('#send_values').prop('disabled',true)
-        $('#aggregate_column').css('visibility','hidden');
-        $('#date_column').css('visibility','hidden');
-        $("#date_column:first").prop("selected", true);
-    });
-
-    //interface for aggregate type
-    $(document).on('click','#aggregate',function()
-    {   
-        $("#x_select option:first").prop("selected", true);
-        $("#x_select option[dtype='int64']").hide();
-        $("#x_select option[dtype='float64']").hide();
-        $('#x_select').prop('disabled',false); 
-        $("#y_select option:first").prop("selected", true);
-        //$("#y_select option[dtype='object']").hide();
-        $("#y_select option:contains(Order)").hide();
-        $("#y_select option[dtype='datetime64[ns]']").hide();
-        $('#y_select').prop('disabled',false);
-        normalize_variable_column();
-        $('#send_values').css('visibility','');
-        $('#x_select option').css('color','black')
-        $('#y_select option').css('color','black')
-        $('#send_values').prop('disabled',true)
-       
-        
-        //handle the variable column to have chart types
-        var visuals = ['column','bar','line','scatter']
-        $('#variable_column option:first').text('Visual')
-        $('#variable_column option:first').prop("selected", true)
-        $('#variable_column option:contains(None)').hide();
-        $(visuals).each(function(index,value){
-            var option = `<option value=${value}>${value.charAt(0).toUpperCase() +value.substring(1)}</option>`
-            $('#variable_column').append(option)
-        })
-        $('#variable_column').attr('name','visual')
-        $('#variable_column').css('visibility','');
-        $('#aggregate_column').css('visibility','');
-        $('#aggregate_column .unique').prop('disabled',true);
-        $('#aggregate_column .agg').prop('disabled',true);
-        $('#aggregate_column option:first').prop("selected", true)
-        $('#date_column').css('visibility','');
-        $("#date_column option:first").prop("selected", true);
-    });
    
     //called whenever the variable column needs to be emptied out
     function normalize_variable_column()
@@ -310,68 +204,7 @@ function bi_dashboard()
         $("#variable_column:selected").prop("selected", false)
     };
 
-    //function to manage the variable column depending on data type of chosen axes
-    function manage_corr_cat(dtype,prev_category,new_category,opp_dtype)
-    {
-        var x_axis =  $('#x_select').find(":selected").attr('dtype');
-        var y_axis =  $('#y_select').find(":selected").attr('dtype');
-        var axis_arr = [x_axis,y_axis]
-        
-        if (axis_arr.includes('datetime64[ns]'))
-        {
-            axis_arr[axis_arr.indexOf('datetime64[ns]')] = 'object';
-        }
-        //if any value is not selected, it will be undefined. hide column but make sure it's empty.
-        //needs to be first because one column is always unselected on the first drop
-        if (x_axis == undefined || y_axis == undefined)
-        {
-            normalize_variable_column();
-            return true
-        }
-        
-        //if both axes are the same data type, load the column with the opposite type
-        // else if ([x_axis,y_axis].map(e => e.includes(String(dtype))).every(Boolean))
-        
-        
-        else if (axis_arr.map(e => e.endsWith(dtype)).every(Boolean))
-        {   
-            if ($('#variable_column').attr('name') ==prev_category)
-            {
-                normalize_variable_column();
-            }
-
-            $('#variable_column').attr('name',new_category)
-            $('#variable_column').css('visibility','')
-           
-            if($('#variable_column option').length == 2)
-            {   $('#variable_column option:first').text(new_category.charAt(0).toUpperCase() +new_category.substring(1)).prop('disabled',true) //.css('text-transform','capitalize')
-                console.log('fill')
-                $('#x_select option').each(function(index,value)
-                { 
-                    
-                   if ( String($(value).attr('dtype')).includes(opp_dtype) && !String($(value).attr('dtype')).includes('date') && !String($(value).val()).includes('Order'))
-                   { 
-                     $('#variable_column').append($(value).clone())
-                   }
-                })
-                $("#variable_column option:first").prop("selected", true)
-            }
-            return false   
-        }
-
-        //this handles nulls and if both axes are different
-        else if ($('#variable_column').attr('name') !=prev_category)
-        {   
-            normalize_variable_column();
-            return true
-        }
-
-        else 
-        {
-            
-            return true
-        }
-    }
+    
 
     //button visibility: fires only for correlative chart type
     function manage_val_column(x_selected,y_selected)
@@ -388,11 +221,11 @@ function bi_dashboard()
     }
 
     //button visibility: fires only for aggregate chart type
-    function manage_agg_columns()
+   /*   function manage_agg_columns()
     {   
         
         
-         var y_axis =  $('#y_select').find(":selected").attr('dtype');
+        var y_axis =  $('#y_select').find(":selected").attr('dtype');
 
         if (y_axis == 'object')
         {
@@ -415,7 +248,7 @@ function bi_dashboard()
             $('#aggregate_column option:first').prop("selected", true)
         }
         
-          /* 
+         
         //console.log($('#date_column').val())
         if (x_selected != null  &&  y_selected != null && visual && agg)
         {
@@ -434,8 +267,8 @@ function bi_dashboard()
         else 
         {
             $('#send_values').prop('disabled',true)
-        }*/
-    }
+        }
+    }*/
 
     function manage_send(x_selected,y_selected)
     
@@ -447,7 +280,7 @@ function bi_dashboard()
         if (x_selected != null  &&  y_selected != null && visual && agg)
         {
             //$('#send_values').prop('disabled',false)
-            if (x_axis == 'datetime64[ns]' && $('#date_column').val() == null)
+            if (x_axis == 'datetime64[ns]' && $('#date_column').val() == null || x_selected ==y_selected )
             {
                 $('#send_values').prop('disabled',true)
             }
@@ -487,10 +320,22 @@ function bi_dashboard()
         var x_selected = $('#x_select').val();
         var y_selected = $('#y_select').val();
         //handle visibility of submit button
-        manage_agg_columns();
+       // manage_agg_columns();
         manage_send(x_selected,y_selected);
     });
 
+    $(document).on('change','#isDate',function()
+    { 
+       if ($('#isDate').is(':checked'))
+       {
+        $('#date_column').prop('disabled',false);
+       }
+
+       else 
+       {
+        $('#date_column').prop('disabled',true);
+       }
+    });
 
     $(document).on('change','#aggregate_column',function()
     { 
@@ -498,7 +343,7 @@ function bi_dashboard()
         var y_selected = $('#y_select').val();
         
         //handle visibility of submit button
-        manage_agg_columns();
+        //manage_agg_columns();
         manage_send(x_selected,y_selected);
     });
 
@@ -530,28 +375,8 @@ function bi_dashboard()
                 $('#y_select').css('color','');
                 $('#y_select option:selected').css('color','green');
             }
-        
-            //handling the variable column if both axes are the same data type
-            if ($('#correlation').is(':checked'))
-            { 
-                //first run checks if both axes are objects
-                var check_failed = manage_corr_cat('object','category','value','64');
-                //second one for pandas integer types
-                if (check_failed)
-                { 
-                    //console.log('asd')
-                    manage_corr_cat('64','value','category','object');
-                }
-                manage_val_column(x_selected,y_selected)
-            }
-
-            else if ($('#aggregate').is(':checked'))
-            {  
-                manage_agg_columns();
-                manage_send(x_selected,y_selected);
-            }
-            
-        
+            // manage_agg_columns();
+            manage_send(x_selected,y_selected);
         } 
     }
 
@@ -571,6 +396,9 @@ function bi_dashboard()
 
 function test()
 {
+    //$(document).ready( function () {
+    //    $('#table_id').DataTable();
+    //} );
     
     $(document).on('keyup','#params',function(){
         var params = $('#params').val();
