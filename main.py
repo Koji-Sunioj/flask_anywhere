@@ -20,19 +20,21 @@ def bi_data():
 		
 		#initialize query constructor, with list from ajax request
 		query = db_functions.Db_command()
-		col_array = [val for key,val in send_values.items() if key in ['x_axis','y_axis']]
+		col_array = [val for key,val in send_values.items() if key in ['category','value']]
 		'date_string' in send_values and col_array.append('OrderDate')
 		query.db_rel(col_array)
 		data = db_functions.custom_query(query.command,query.joins)
 		
+		
 		#set the attributes from the data
-		highchart = external_functions.Highcharts(send_values['x_axis'],send_values['y_axis'],send_values['visual'],send_values['agg_type'])
+		highchart = external_functions.Highcharts(send_values['value'],send_values['visual'],send_values['agg_type'])
+		highchart.category = send_values['category'] if 'category' in send_values else False
 		highchart.date_string = send_values['date_string'] if 'date_string' in send_values else False
+		
 		
 		#create the frame and array.grab the meta data for the html divs.
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
-		#new_json['meta_data'] = meta_data
 		
 		#remove last cookie, reload it with new attributes
 		session.pop('state',None)
@@ -47,11 +49,9 @@ def bi_data():
 		data = db_functions.sales()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('SupplierCountry','Total','column','sum')
-		
+		highchart = external_functions.Highcharts('Total','column','sum',category='SupplierCountry',date_string='%Y')
 		#for the cookies
 		for_next = vars(highchart)
-		
 		
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
@@ -68,10 +68,10 @@ def bi_data():
 		#save attributes to cookies
 		session['state'] = for_next
 		session['warnings'] = 'true'
-		print(new_json)
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' in session:
+		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		

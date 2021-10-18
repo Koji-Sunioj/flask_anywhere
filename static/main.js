@@ -101,7 +101,7 @@ function bi_dashboard()
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
        //console.log( JSON.parse(data.warnings)) 
-        console.log(data.state.y)
+        console.log(data.state)
         $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
 
         $(data.meta_data).each(function(index,value)
@@ -109,14 +109,36 @@ function bi_dashboard()
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
             fixed_name = fixed_name.join(' ');
             var option = `<option value=${value.name} title='${value.count} values' dtype=${value.dtype}>${fixed_name}</option>`
-            $('#x_select').append(option);
-            $('#y_select').append(option);
+            
+
+            if (value.dtype.includes('int64') || value.dtype.includes('float64'))
+            {
+                $('#values').append(option);
+            }
+            else if (value.dtype.includes('object'))
+            {
+                $('#categories').append(option);
+            }
 
         });
         //reinstate html inputs from previous session
+        
        
-        $('#x_select').val(data.state.x);
-        $('#y_select').val(data.state.y);
+        if (data.state.category == 'OrderDate')
+
+        {
+            $('#isCategory').attr('checked',false).change()
+        }
+
+        else 
+        {
+            $('#categories').val(data.state.category);
+            $('#isCategory').attr('checked',true).change()
+        }
+
+        
+        
+        $('#values').val(data.state.value);
 
        
         $('#variable_column').val(data.state.visual);
@@ -137,9 +159,9 @@ function bi_dashboard()
     function ajax_data()
     {   
         data = {
-            x_axis : $('#x_select').val(),
-            y_axis :$('#y_select').val(),
-            visual : $('#variable_column').val(),
+            
+            value :$('#values').val(),
+            visual : $('#visuals').val(),
             agg_type : $('#aggregate_column').val()
         }
 
@@ -147,6 +169,23 @@ function bi_dashboard()
         {
             data.date_string = $('#date_column').val();
            
+        }
+
+        
+        if ($('#isCategory').is(':checked') )
+        {
+            data.category = $('#categories').val();
+           
+        }
+
+        else if ($('#isCategory').is(':not(:checked)') && $('#isDate').is(':checked'))
+        {
+            data.category = 'OrderDate'
+        }
+
+        else if ($('#isCategory').is(':not(:checked)') && $('#isDate').is(':not(:checked)'))
+        {
+            data.category = 'OrderID'
         }
 
         if ($('#warning-ignore').is(':checked'))
@@ -207,9 +246,9 @@ function bi_dashboard()
     
 
     //button visibility: fires only for correlative chart type
-    function manage_val_column(x_selected,y_selected)
+    function manage_val_column(values,categories)
     {   
-        if (x_selected != null  &&  y_selected != null && x_selected != y_selected )
+        if (values != null  && categories != null && values != y_selected )
         {
             $('#send_values').prop('disabled',false)
         }
@@ -270,17 +309,17 @@ function bi_dashboard()
         }
     }*/
 
-    function manage_send(x_selected,y_selected)
+    function manage_send(values,categories)
     
     {
-        var visual = $('#variable_column').val();
+        var visual = $('#visuals').val();
         var agg = $('#aggregate_column').val();
        
         var x_axis =  $('#x_select').find(":selected").attr('dtype');
-        if (x_selected != null  &&  y_selected != null && visual && agg)
+        if (values != null  && categories != null && visual && agg)
         {
             //$('#send_values').prop('disabled',false)
-            if (x_axis == 'datetime64[ns]' && $('#date_column').val() == null || x_selected ==y_selected )
+            if ($('#date_column').val() == null ||values ==categories )
             {
                 $('#send_values').prop('disabled',true)
             }
@@ -292,36 +331,35 @@ function bi_dashboard()
         }
 
         else 
-        {
+        { 
             $('#send_values').prop('disabled',true)
         }   
     }
 
     //anything past here is for select input handling and  button visibility!!
 
-    $(document).on('change','#variable_column[name=value]',function()
+    $(document).on('change','#visuals',function()
     { 
-        var x_selected = $('#x_select').val();
-        var y_selected = $('#y_select').val();
+        var values = $('#values').val();
+        var categories = $('#categories').val();
         //handle visibility of submit button
-        manage_val_column(x_selected,y_selected);
+        manage_val_column(values,categories);
     });
 
     $(document).on('change','#date_column',function()
     { 
-        var x_selected = $('#x_select').val();
-        var y_selected = $('#y_select').val();
+        var values = $('#values').val();
+        var categories = $('#categories').val();
         //handle visibility of submit button
-        manage_val_column(x_selected,y_selected);
+        manage_val_column(values,categories);
     });
 
-    $(document).on('change','#variable_column[name=visual]',function()
+    $(document).on('change','#visuals',function()
     { 
-        var x_selected = $('#x_select').val();
-        var y_selected = $('#y_select').val();
+        var values = $('#values').val();
+        var categories = $('#categories').val();
         //handle visibility of submit button
-       // manage_agg_columns();
-        manage_send(x_selected,y_selected);
+        manage_val_column(values,categories);
     });
 
     $(document).on('change','#isDate',function()
@@ -337,14 +375,29 @@ function bi_dashboard()
        }
     });
 
+    $(document).on('change','#isCategory',function()
+    { 
+       if ($('#isCategory').is(':checked'))
+       {
+        $('#categories').prop('disabled',false);
+       }
+
+       else 
+       {
+        $('#categories').prop('disabled',true);
+       }
+    });
+
     $(document).on('change','#aggregate_column',function()
     { 
-        var x_selected = $('#x_select').val();
-        var y_selected = $('#y_select').val();
+        var values = $('#values').val();
+        var categories = $('#categories').val();
+        //handle visibility of submit button
+        
         
         //handle visibility of submit button
         //manage_agg_columns();
-        manage_send(x_selected,y_selected);
+        manage_send(values,categories);
     });
 
 

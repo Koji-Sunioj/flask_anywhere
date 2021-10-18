@@ -35,10 +35,7 @@
       <div class="modal-body">
         <p>This data represented here is based on the <a href="https://www.w3schools.com/sql/default.asp">W3 schools SQL tutorial</a>, which is a fictional company with customers, suppliers and several other details common in a business.</p>
         <p>The use case for this interface is a sales associate or decision maker in the company wanting to visualize the performance, in which case all values and categories are centered around the client's order details.</p> 
-        <p>There are two different plot types available: correlative and aggregate.</p> 
-        <p>Correlative simply plots one sales value or category vs. another, and is more of a utility to view where data is clustered, and by category (if one is chosen).</p>
-        <p>Aggregate plotting is more refined, offering clear insights of plotted data with typical line, column plots where aggregate types (sum, average) and time series can by filtered.</p>
-        <p>Some sales categories have a lot of data points and work is being done to simplify the visualizations to make it more readable.</p>
+        <p>If you just want pure sales total, or any sales value from the sales order table: mark off the category column.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -85,20 +82,21 @@
     <br>
     <div class="row rounded" style="background-color: white; padding-bottom: 10px; ">
         <h3>Customize graph</h3>
-       
+        <div class="col">
+          <label>Sales Order Value</label>
+          <select class="form-select form-select"  id="values">
+          </select>
+        </div>
         <div class="col">
           <label >Category</label>
-          <select class="form-select form-select"  id="x_select">
+          <input class="form-check-input" type="checkbox" value="" id="isCategory">
+          <select class="form-select form-select"  id="categories">
           </select>
         </div>
-        <div class="col">
-          <label >Value</label>
-          <select class="form-select form-select"  id="y_select">
-          </select>
-        </div>
+        
         <div class="col">
           <label >Visual</label>
-          <select class="form-select form-select" id="variable_column" >
+          <select class="form-select form-select" id="visuals" >
             <option value="column">Column</option>
             <option value="bar">Bar</option>
             <option value="line">Line</option>
