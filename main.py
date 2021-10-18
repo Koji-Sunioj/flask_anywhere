@@ -25,12 +25,10 @@ def bi_data():
 		query.db_rel(col_array)
 		data = db_functions.custom_query(query.command,query.joins)
 		
-		
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['value'],send_values['visual'],send_values['agg_type'])
 		highchart.category = send_values['category'] if 'category' in send_values else False
 		highchart.date_string = send_values['date_string'] if 'date_string' in send_values else False
-		
 		
 		#create the frame and array.grab the meta data for the html divs.
 		new_data = highchart.agg_frame(data)
@@ -101,21 +99,17 @@ def bi_page():
 @app.route("/test/")
 def test():
 	data = db_functions.sales()
-	#pages = math.ceil(len(data.index) / 20)
-	#pagination = np.arange(0,pages) + 1
-	shit = data.sort_values('OrderDate').head(10).to_html(classes='table  table-bordered table-hover',index=False,table_id="datatable")
-	#shit = data.sort_values('OrderDate').to_html(classes='display',index=False,table_id="table_id")
+	table = data.sort_values('OrderDate').head(10).to_html(classes='table  table-bordered table-hover',index=False,table_id="datatable")
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	return render_template('test.html',cols=cols,meta_data=meta_data,shit=shit) #
+	return render_template('test.html',cols=cols,meta_data=meta_data,table=table) #
 	
 @app.route("/filter/",methods=['POST'])
 def filter():
 	json_filters = json.loads(request.form['filterData'])
 	data = db_functions.sales()
-	#print(data.head(5).select_dtypes(include=['int64','float64','datetime64[ns]']))
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
 	command = "&".join(["(data['{}'] == '{}')".format(value['column'],value['parameter']) for value in json_filters])

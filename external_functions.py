@@ -54,7 +54,9 @@ class Highcharts:
 			else:
 				#we group everything according to the date, key and orderid, quantity per orderid
 				grouper.insert(0,'OrderDate')
-				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).droplevel('OrderID')
+				
+				data = data.groupby(grouper).aggregate({highchart.value:'sum'})
+				data = data.droplevel('OrderID') if 'OrderID' not in highchart.category else data
 				data = pd.pivot_table(data,index='OrderDate',columns=highchart.category,values=highchart.value,aggfunc=highchart.agg_type).sort_index().fillna(0)
 				title = '{} {} for {} between {} and {}'
 				highchart.title = title.format(highchart.agg_type,highchart.value,highchart.regex_labels(highchart.category),data.index[0],data.index[-1])
@@ -104,10 +106,15 @@ class Highcharts:
 		return json_data
 
 '''
+conditions:
 
+1. all columns (value, category, visual, function,date)
+2. only three columns (value, visual,function)
+3. only 4 columns (value, category, visual,function)
+4. only 4 columns (value, visual, function ,date)
 
 			elif data[highchart.value].dtypes == 'object':
-				print('shit2')
+				
 				data = pd.pivot_table(data,columns=highchart.x,index=data.index,values=highchart.y,aggfunc=highchart.agg_type)
 				title = 'sales {} {} for {}'
 				highchart.title = title.format(highchart.agg_type,highchart.y,highchart.regex_labels(highchart.x))
