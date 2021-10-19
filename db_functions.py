@@ -31,7 +31,9 @@ def custom_query(command,joins):
 	con.close()
 	sales = pd.DataFrame(rows,columns=field_names)
 	sales = sales.loc[:,~sales.columns.duplicated()]
-	
+	sales['OrderID'] = sales['OrderID'].astype(str)
+	if 'OrderDetailID' in sales.columns:
+		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
 	return sales
 
 

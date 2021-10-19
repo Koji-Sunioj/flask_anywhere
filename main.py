@@ -16,15 +16,14 @@ def bi_data():
 	if request.method == 'POST':
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
-		print(send_values)
-		
+
 		#initialize query constructor, with list from ajax request
 		query = db_functions.Db_command()
 		col_array = [val for key,val in send_values.items() if key in ['category','value']]
+		col_array = list(set(col_array))
 		'date_string' in send_values and col_array.append('OrderDate')
 		query.db_rel(col_array)
 		data = db_functions.custom_query(query.command,query.joins)
-		
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['value'],send_values['visual'],send_values['agg_type'])
 		highchart.category = send_values['category'] if 'category' in send_values else False
@@ -75,6 +74,7 @@ def bi_data():
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
+		print(for_next)
 		highchart = external_functions.Highcharts(**for_next)
 		
 		#create the frame and json array. meta data and state for html interfacing

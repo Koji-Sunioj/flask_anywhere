@@ -31,11 +31,8 @@ class Highcharts:
 	
 	def agg_frame(highchart,data):
 		#groupby gives one category, pivoting makes columns which gives multiple
-		#group every aggregate centered around the OrderID to get correct values
 		grouper = [highchart.category,'OrderID']
 		grouper = list(dict.fromkeys(grouper))
-		
-		
 		
 		#if date string is requested
 		if highchart.date_string:
@@ -43,39 +40,44 @@ class Highcharts:
 			x_is_date = data[highchart.category].dtypes
 			data = data.set_index('OrderDate')
 			data.index = data.index.strftime(highchart.date_string)
+			
 			#if the chosen x axis is the actual date column
 			if x_is_date == 'datetime64[ns]':
-				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).droplevel('OrderID')
+				data = data.groupby(grouper).aggregate({highchart.value:'sum'})
+				data = data.droplevel('OrderID')
+				#account for possibility of nunique request, which is actually just count since 
+				highchart.agg_type = 'count' if highchart.agg_type == 'nunique' else highchart.agg_type
 				data = data.groupby(data.index).aggregate({highchart.value:highchart.agg_type})
 				title = 'sales {} {} for {}'
 				highchart.title = title.format(highchart.agg_type,highchart.category,highchart.regex_labels(highchart.value))
 			
 			#axes is string and numerical, aggregate where index is set as date
-			else:
+			elif x_is_date == 'object':
 				#we group everything according to the date, key and orderid, quantity per orderid
 				grouper.insert(0,'OrderDate')
-				
-				data = data.groupby(grouper).aggregate({highchart.value:'sum'})
-				data = data.droplevel('OrderID') if 'OrderID' not in highchart.category else data
-				data = pd.pivot_table(data,index='OrderDate',columns=highchart.category,values=highchart.value,aggfunc=highchart.agg_type).sort_index().fillna(0)
+				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
+				unique_or = 'OrderID' if highchart.agg_type == 'nunique' else highchart.value 
+				data = pd.pivot_table(data,index='OrderDate',columns=highchart.category,values=unique_or,aggfunc=highchart.agg_type).sort_index().fillna(0)
 				title = '{} {} for {} between {} and {}'
 				highchart.title = title.format(highchart.agg_type,highchart.value,highchart.regex_labels(highchart.category),data.index[0],data.index[-1])
 				
 		#no date string, normal aggregate
-		else:
-			value_is_string = data[highchart.value].dtypes
-			if value_is_string == 'object' and highchart.agg_type == 'nunique':
-				data = data.groupby(highchart.x).aggregate({highchart.y:highchart.agg_type})
-			elif highchart.category == 'OrderID':
-				
-				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).aggregate({highchart.value:highchart.agg_type})
+		elif highchart.date_string == False:
+			#if no category is selected: one sales order value in one column
+			if highchart.category == False:
+				data = data.groupby('OrderID').aggregate({highchart.value:'sum'}).reset_index()
+				unique_or = 'OrderID' if highchart.agg_type == 'nunique' else highchart.value 
+				data = data.aggregate({unique_or:highchart.agg_type})
 				data = pd.DataFrame(data).T
 				data.index = [highchart.agg_type]
-
-			else:
-				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).groupby(level=0,axis=0).agg(highchart.agg_type)
-			title = '{} {} per Order ID for {}'
-			highchart.title = title.format(highchart.agg_type,highchart.value,highchart.regex_labels(highchart.category))
+				print(data)
+			#if there is a category, we sum 
+			elif highchart.category:
+				data =  data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
+				highchart.value = 'OrderID' if highchart.agg_type == 'nunique' else highchart.value 
+				data = data.groupby(highchart.category).aggregate({highchart.value:highchart.agg_type})
+				title = '{} {} per Order ID for {}'
+				highchart.title = title.format(highchart.agg_type,highchart.value,highchart.regex_labels(highchart.category))
 		data = data.fillna(0).round(2).sort_index()
 		
 		return data
@@ -85,7 +87,7 @@ class Highcharts:
 		series = []
 		#if there is one column, sort the values of the numerical column
 		if len(new_data.columns) == 1 and highchart.category !='OrderDate':
-			new_data = new_data.sort_values(highchart.value, ascending=False)
+			new_data = new_data.sort_values(new_data.columns[0])
 		#sort the columns according to whichever columns has the highest aggregate total
 		else:
 			new_data = new_data[new_data.sum().sort_values(ascending=False).index]

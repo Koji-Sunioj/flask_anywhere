@@ -143,6 +143,17 @@ function bi_dashboard()
        
         $('#variable_column').val(data.state.visual);
         $('#aggregate_column').val(data.state.agg_type);
+        if ($('#aggregate_column').val() == 'nunique')
+        {
+            $('#values').prop('disabled',true)
+        } 
+
+        else 
+
+        {
+            $('#values').prop('disabled',false)
+        }
+        
         if (data.state.date_string)
         {
             $('#date_column').val(data.state.date_string)
@@ -168,7 +179,6 @@ function bi_dashboard()
         if ($('#isDate').is(':checked') )
         {
             data.date_string = $('#date_column').val();
-           
         }
 
         
@@ -185,7 +195,7 @@ function bi_dashboard()
 
         else if ($('#isCategory').is(':not(:checked)') && $('#isDate').is(':not(:checked)'))
         {
-            data.category = 'OrderID'
+            
         }
 
         if ($('#warning-ignore').is(':checked'))
@@ -379,12 +389,12 @@ function bi_dashboard()
     { 
        if ($('#isCategory').is(':checked'))
        {
-        $('#categories').prop('disabled',false);
+            $('#categories').prop('disabled',false);
        }
 
        else 
        {
-        $('#categories').prop('disabled',true);
+            $('#categories').prop('disabled',true);
        }
     });
 
@@ -393,55 +403,20 @@ function bi_dashboard()
         var values = $('#values').val();
         var categories = $('#categories').val();
         //handle visibility of submit button
-        
+        if ($('#aggregate_column').val() == 'nunique')
+        {
+            $('#values').prop('disabled',true)
+        } 
+
+        else 
+
+        {
+            $('#values').prop('disabled',false)
+        }
         
         //handle visibility of submit button
         //manage_agg_columns();
         manage_send(values,categories);
-    });
-
-
-   
-    function col_bools()
-    {
-        {   
-            var x_selected = $('#x_select').val();
-            var y_selected = $('#y_select').val();
-            
-            //visuals from the column level, highlight error and disable button
-            $('#x_select option').css('color','black')
-            $('#y_select option').css('color','black')
-            //disable button if both values are the same
-            if (x_selected == y_selected)
-            {
-                $('#x_select').css('color','red');
-                $('#x_select option:selected').css('color','red');
-                $('#y_select').css('color','red');
-                $('#y_select option:selected').css('color','red');
-                $('#send_values').prop('disabled',true)
-            
-            }
-            else
-            {
-                $('#x_select').css('color','');
-                $('#x_select option:selected').css('color','green');
-                $('#y_select').css('color','');
-                $('#y_select option:selected').css('color','green');
-            }
-            // manage_agg_columns();
-            manage_send(x_selected,y_selected);
-        } 
-    }
-
-    
-    $(document).on('change','#x_select',function()
-    {   
-        col_bools()
-    });
-
-    $(document).on('change','#y_select',function()
-    {   
-        col_bools() 
     });
 };
 
