@@ -14,3 +14,5 @@ the way it works is:
 2. client sends a post request: a function is called to piece together a custom made sql query without adding unneeded columns (like in the main stored procedure), the attributes are saved in the cookie session and data is updated on the graph.
 
 3. client relads the page after posting data: one stored procedure is called for the meta and sales data, but with attributes from the sesion.
+
+the functions have been simplified to a really small length. the title will be added soon.
