@@ -24,8 +24,10 @@ def bi_data():
 		'date_string' in send_values and col_array.append('OrderDate')
 		query.db_rel(col_array)
 		data = db_functions.custom_query(query.command,query.joins)
+		
 		#set the attributes from the data
-		highchart = external_functions.Highcharts(send_values['value'],send_values['visual'],send_values['agg_type'])
+		highchart = external_functions.Highcharts(send_values['visual'],send_values['agg_type'])
+		highchart.value = send_values['value'] if 'value' in send_values else False
 		highchart.category = send_values['category'] if 'category' in send_values else False
 		highchart.date_string = send_values['date_string'] if 'date_string' in send_values else False
 		
@@ -46,7 +48,7 @@ def bi_data():
 		data = db_functions.sales()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('Total','column','sum',category='SupplierCountry',date_string='%Y')
+		highchart = external_functions.Highcharts('column','sum',value='Total',category='SupplierCountry',date_string='%Y')
 		#for the cookies
 		for_next = vars(highchart)
 		

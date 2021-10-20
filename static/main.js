@@ -121,12 +121,30 @@ function bi_dashboard()
             }
 
         });
-        //reinstate html inputs from previous session
-        
-       
+
+        //if there is a value
+        if (data.state.value)
+        {
+            $('#values').val(data.state.value);
+        }
+
+        else 
+        {
+            $('#values').prop('disabled',true)
+            $('#values option:first').prop("selected", true).change();
+        }
+
+        //if there is a category
         if (data.state.category == 'OrderDate')
 
         {
+            $('#isCategory').attr('checked',false).change()
+        }
+
+
+        else if (data.state.category == false)
+        {
+            $('#categories option:first').prop("selected", true).change()
             $('#isCategory').attr('checked',false).change()
         }
 
@@ -137,15 +155,15 @@ function bi_dashboard()
         }
 
         
-        
-        $('#values').val(data.state.value);
+        //visuals always exists
+        $('#visuals').val(data.state.visual);
 
-       
-        $('#variable_column').val(data.state.visual);
-        $('#aggregate_column').val(data.state.agg_type);
+        //aggregate column always exist, but disable value if unique
+        $('#aggregate_column').val(data.state.agg_type).change();
         if ($('#aggregate_column').val() == 'nunique')
         {
             $('#values').prop('disabled',true)
+            $('#values option:first').prop("selected", true).change()
         } 
 
         else 
@@ -162,7 +180,6 @@ function bi_dashboard()
         }
         
         //update highcharts here
-
         update_highchart(data);
     //get request ends here  
     })
@@ -171,31 +188,34 @@ function bi_dashboard()
     {   
         data = {
             
-            value :$('#values').val(),
+           
             visual : $('#visuals').val(),
             agg_type : $('#aggregate_column').val()
         }
 
-        if ($('#isDate').is(':checked') )
+        console.log($('#values').prop('disabled'))
+        //if value is viewable, send it
+        if ($('#values').prop('disabled') == false)
         {
-            data.date_string = $('#date_column').val();
+            data.value = $('#values').val()
         }
 
-        
+        //if category not marked off, send it
         if ($('#isCategory').is(':checked') )
         {
             data.category = $('#categories').val();
            
         }
 
-        else if ($('#isCategory').is(':not(:checked)') && $('#isDate').is(':checked'))
+        /*else if ($('#isCategory').is(':not(:checked)') && $('#isDate').is(':checked'))
         {
             data.category = 'OrderDate'
-        }
+        }*/
 
-        else if ($('#isCategory').is(':not(:checked)') && $('#isDate').is(':not(:checked)'))
+       
+        if ($('#isDate').is(':checked') )
         {
-            
+            data.date_string = $('#date_column').val();
         }
 
         if ($('#warning-ignore').is(':checked'))

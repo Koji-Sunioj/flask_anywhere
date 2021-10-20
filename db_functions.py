@@ -23,7 +23,7 @@ def custom_query(command,joins):
 	#query constructed from table names, joins as attributed by Db_command class
 	con.connect()
 	select_main = con.cursor()
-	statement = 'select {},orders.OrderID from orders {};'.format(command,joins)
+	statement = 'select {} from orders {};'.format(command,joins)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
@@ -97,7 +97,7 @@ class Db_command:
 		
 		#join query string into one
 		command = [i['command'] for i in rels]
-		command = ",".join(command)
+		command = ",".join(command) + ",orders.OrderID" if len(command) > 0 else "orders.OrderID"
 		
 		#add them to the class
 		query.command = command
