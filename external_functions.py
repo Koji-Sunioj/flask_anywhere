@@ -29,6 +29,16 @@ class Highcharts:
 			rgba = cmap(i)
 			colors.append(matplotlib.colors.rgb2hex(rgba))
 		return colors
+		
+
+	def handle_title(highchart,date_index=False):
+		#create the highchart title
+		label = 'Count' if highchart.agg_type == 'nunique' else  'Euro ' + highchart.agg_type.title()
+		label = 'Sales Order ' + label
+		label = label + ' per ' + highchart.regex_labels(highchart.category).title() if highchart.category else label
+		label = label + ': between {} and {}'.format(date_index[0],date_index[-1]) if highchart.date_string and len(date_index) > 1 else label
+		return label
+			
 	
 	def agg_frame(highchart,data):
 		#grouping revolves around OrderID for sales view
@@ -44,17 +54,22 @@ class Highcharts:
 			data.index = data.index.strftime(highchart.date_string)
 			grouper.insert(0,'OrderDate')
 			columns = highchart.category if highchart.category else None
-			data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index() if highchart.value else data
+			#data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index() if highchart.value else data
+			if highchart.value and highchart.value != 'Price':
+				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
 			data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc=highchart.agg_type)
 			data = data.sort_index()
+			highchart.title = '{}'.format(highchart.handle_title(data.index))
 			
 		#no date string, normal aggregate
 		elif highchart.date_string == False:
-			data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index() if highchart.value else data
+			if highchart.value and highchart.value != 'Price':
+				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
 			data = data.groupby(highchart.category) if highchart.category else data
 			data = data.aggregate({values:highchart.agg_type})
 			data = pd.DataFrame(data) if len(data) == 1 and type(data).__name__ == 'Series' else data
-			data.index = [highchart.agg_type] if len(data) == 1 and type(data).__name__ == 'Series' else data.index
+			data.columns = [highchart.agg_type]  if highchart.agg_type != 'nunique' else ['count']
+			highchart.title = '{}'.format(highchart.handle_title())
 			
 		data = data.fillna(0).round(2).sort_index()
 		return data
@@ -73,9 +88,17 @@ class Highcharts:
 			stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 			series.append(stuff)
 		
-		json_data = {'series':series,'title':highchart.title,'yAxis':{'title':highchart.category},'type':highchart.visual}
-		xAxis = {'categories':[i for i in new_data.index],'title': {'text':new_data.index.name,'style':{'fontSize':'2px'}}}
+		y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
+		json_data = {'series':series,'title':highchart.title,'yAxis':{'title': {'text':y_label.title()}},'type':highchart.visual}
+		
+		x_label = 'OrderDate' if highchart.date_string else highchart.category
+		x_label = 'Orders' if x_label == False else highchart.regex_labels(x_label)
+		categories = [i for i in new_data.index ] if len(new_data.index) > 1 else ['']
+		
+		xAxis = {'categories':categories,'title': {'text':x_label}}
+		
 		json_data['xAxis'] = xAxis
+		
 		return json_data
 
 '''
