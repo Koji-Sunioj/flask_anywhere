@@ -25,11 +25,11 @@ CREATE TABLE `country_iso` (
 alter table customers
 add column iso_id int;
 
-alter table w3.customers
+alter table customers
 add foreign key (iso_id) references country_iso(country_id);
 
 alter table suppliers
 add column iso_id int;
 
-alter table w3.suppliers
+alter table suppliers
 add foreign key (iso_id) references country_iso(country_id);
