@@ -54,10 +54,11 @@ class Highcharts:
 			data.index = data.index.strftime(highchart.date_string)
 			grouper.insert(0,'OrderDate')
 			columns = highchart.category if highchart.category else None
-			#data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index() if highchart.value else data
 			if highchart.value and highchart.value != 'Price':
 				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
 			data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc=highchart.agg_type)
+			unique_or = 'count' if  highchart.agg_type == 'nunique' else highchart.agg_type
+			data.columns = [unique_or] if len(data.columns) == 1 else data.columns
 			data = data.sort_index()
 			highchart.title = '{}'.format(highchart.handle_title(data.index))
 			
@@ -72,12 +73,13 @@ class Highcharts:
 			highchart.title = '{}'.format(highchart.handle_title())
 			
 		data = data.fillna(0).round(2).sort_index()
+		print(data)
 		return data
 
 	def agg_to_json(highchart,new_data):
 		#series list is the array highcharts will interact with
 		series = []
-
+		
 		#if there is one column, sort the values of the numerical column
 		if len(new_data.columns) == 1 and highchart.date_string == False:
 			new_data = new_data.sort_values(new_data.columns[0])

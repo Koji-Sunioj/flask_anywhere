@@ -50,12 +50,15 @@ class Db_command:
 		con.close()
 		keys = {i[1]:{"command":i[0]+"."+ i[1],"link":i[0]} for i in rows}
 		
+		print(keys)
 		#create custom keys for aliases in our key
 		keys['Total'] = {"command":"products.Price * order_details.Quantity as 'Total'","link":"products"}
 		keys['EmployeeName'] = {"command":"concat( employees.FirstName,' ',employees.LastName) as 'EmployeeName'","link":"employees"}
 		keys['CustomerCity'] = {"command":"customers.City as 'CustomerCity'",'link':'customers'}
 		keys['SupplierCountry'] = keys.pop('Country')
 		keys['SupplierCountry']['command']  = keys['SupplierCountry']['command'] + ' as "SupplierCountry"'
+		keys['SupplierCity'] = keys.pop('City')
+		keys['SupplierCity']['command']  = keys['SupplierCity']['command'] + ' as "SupplierCity"'
 		keys['CustomerCountry'] = {"command":"customers.Country as 'CustomerCountry'",'link':'customers'}
 		
 		query.keys = keys

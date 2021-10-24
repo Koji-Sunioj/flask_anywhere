@@ -1,7 +1,49 @@
 function bi_dashboard()
 {   
     
-    
+    //http://jsfiddle.net/dnbtkmyz/
+    /*
+    $(function () {
+    var mapData = Highcharts.maps['custom/world'];
+
+    $('#container').highcharts('Map', {
+        series: [{
+            name: 'Countries',
+            mapData: mapData,
+        }, {
+            name: 'Points',
+            type: 'mappoint',
+            data: [{
+                name: 'London',
+                lat: 51.507222,
+                lon: -0.1275
+            }, {
+                name: 'Moscow',
+                lat: 55.7500,
+                lon: 37.6167
+            }, {
+                name: 'Beijing',
+                lat: 39.9167,
+                lon: 116.3833
+            }, {
+                name: 'Washington D.C.',
+                lat: 38.889931,
+                lon: -77.00900,
+                color: 'red',
+                marker: {
+                            radius: 2
+                        }
+            }]
+        }],
+        legend: {
+            enabled: true
+        },
+        title: {
+            text: 'World map'
+        }
+    });
+
+});*/ 
     
     function update_highchart(data)
     {   
@@ -77,6 +119,10 @@ function bi_dashboard()
                         }
                     },
                 }*/
+            },
+            colorAxis: {
+                min: 0,
+                max: 20
             },
             series: data.series,
             tooltip: {
@@ -373,6 +419,15 @@ function bi_dashboard()
         var values = $('#values').val();
         var categories = $('#categories').val();
         //handle visibility of submit button
+        /*if ( $('#values').val() == 'Price')
+        {
+            $('#aggregate_column').find("option:contains('Count')").hide()
+        }
+        else
+        {
+
+        }*/
+
         manage_val_column(values,categories);
     });
 
