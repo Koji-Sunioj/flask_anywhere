@@ -129,10 +129,6 @@ def filter():
 	
 	return jsonify(meta_data)
 
-@app.route("/map/")
-def map():
-	
-	return render_template('map.html')
 	
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
