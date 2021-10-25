@@ -1,83 +1,12 @@
 function bi_dashboard()
 {   
     
-    //http://jsfiddle.net/dnbtkmyz/
-    /*
-    $(function () {
-    var mapData = Highcharts.maps['custom/world'];
-
-    $('#container').highcharts('Map', {
-        series: [{
-            name: 'Countries',
-            mapData: mapData,
-        }, {
-            name: 'Points',
-            type: 'mappoint',
-            data: [{
-                name: 'London',
-                lat: 51.507222,
-                lon: -0.1275
-            }, {
-                name: 'Moscow',
-                lat: 55.7500,
-                lon: 37.6167
-            }, {
-                name: 'Beijing',
-                lat: 39.9167,
-                lon: 116.3833
-            }, {
-                name: 'Washington D.C.',
-                lat: 38.889931,
-                lon: -77.00900,
-                color: 'red',
-                marker: {
-                            radius: 2
-                        }
-            }]
-        }],
-        legend: {
-            enabled: true
-        },
-        title: {
-            text: 'World map'
-        }
-    });
-
-});*/ 
+   
     
+   
+
     function update_highchart(data)
     {   
-        /*data.yAxis.scrollbar =  {
-            enabled: true
-        }
-        
-        if (data.type == 'scatter')
-        {
-            var marker = 
-               {
-                    symbol: 'circle',
-                    radius: 3,
-                    
-                 }
-            //var symbol = 'circle';
-        }
-        else 
-        {
-            var marker = {
-                enabled: false
-            };
-        }
-        
-
-        if (data.yAxis.categories && data.yAxis.categories.length * 20 < 400 || !data.yAxis.categories)
-        {
-            var new_height = 400  
-        }
-
-        else 
-        {
-            var new_height = data.yAxis.categories.length * 20
-        }*/
 
         if (data.series.length > 12)
         {
@@ -96,58 +25,46 @@ function bi_dashboard()
                 title: {text: data.legend}
             }
         }
-       //render the chartlet chart = 
         Highcharts.chart('sales', {
            
             title: {text: data.title},
             chart: {type: data.type, animation: false},
-            //chart: {type: data.type, animation: false,height:new_height},
             yAxis: data.yAxis,
             xAxis: data.xAxis,
             legend: new_legend,
-            plotOptions: { 
-                
-                /*series: {
-                    marker: marker,
-                    }
-                    
-                    point: {
-                        events: {
-                            click: function () {
-                                console.log('Category: ' + this.category + ', value: ' + this.y);
-                            }
-                        }
-                    },
-                }*/
-            },
-            colorAxis: {
-                min: 0,
-                max: 20
-            },
             series: data.series,
-            tooltip: {
-                
-                formatter: function (tooltip) {
-                    
-                    if (data.type == 'scatter' && data.xAxis.categories && data.yAxis.categories) {
-                        
-                        return `<strong style='color:${this.point.color}'>&#9679</strong> ${data.legend}: <strong>`+this.series.name + '</strong><br>'+data.xAxis.title.text +': '+ this.series.xAxis.categories[this.point.x] +'<br>'+data.yAxis.title.text +': '+this.series.yAxis.categories[this.point.y];
-                    }
-                    // If not null, use the default formatter
-                   // console.log(tooltip)
-                    return tooltip.defaultFormatter.call(this, tooltip);
-                }
-            }
+           
            
         //highchart ends here 
         });
         
        
     }
+
+    function update_map(data)
+    {
+        
+        Highcharts.mapChart('sales', {
+            chart: {
+                map: 'custom/world'
+            },
+        
+            title: {
+                text: 'Highmaps basic demo'
+            },
+            colorAxis: {
+                min: 0 ,stops: [
+                    [0, '#0000ff'], //red
+                    [0.588, '#ffffff'],
+                    [1, '#ff0000'] //white
+                     //blue
+                ]
+            },
+            series: data.series
+        });
+    }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
-       //console.log( JSON.parse(data.warnings)) 
-        console.log(data.state)
         $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
 
         $(data.meta_data).each(function(index,value)
@@ -196,7 +113,7 @@ function bi_dashboard()
 
         else 
         {
-            $('#categories').val(data.state.category);
+            $('#categories').val(data.state.category).change();
             $('#isCategory').attr('checked',true).change()
         }
 
@@ -226,7 +143,18 @@ function bi_dashboard()
         }
         
         //update highcharts here
-        update_highchart(data);
+        if (data.state.visual != 'map')
+        {
+            alert('no');
+            update_highchart(data);
+        }
+        else if (data.state.visual == 'map')
+        {
+            alert('asd');
+            update_map(data)
+            
+        } 
+       
     //get request ends here  
     })
 
@@ -253,13 +181,7 @@ function bi_dashboard()
            
         }
 
-        /*else if ($('#isCategory').is(':not(:checked)') && $('#isDate').is(':checked'))
-        {
-            data.category = 'OrderDate'
-        }*/
-
-       
-        if ($('#isDate').is(':checked') )
+        if ($('#isDate').is(':checked') && $('#isDate').prop('disabled') == false)
         {
             data.date_string = $('#date_column').val();
         }
@@ -285,6 +207,15 @@ function bi_dashboard()
                 update_highchart(data)
                 $('#send_values').prop('disabled',false);
                 $('#sales').css('opacity',1);
+                if (data.visual != 'map')
+                {
+                    update_highchart(data);
+                }
+                else if (data.visual == 'map')
+                {
+                    alert('asd');
+                    update_map()
+                } 
             }  
         });
     }
@@ -307,24 +238,10 @@ function bi_dashboard()
         $('#sales').css('opacity',1)
     })
    
-    //called whenever the variable column needs to be emptied out
-    function normalize_variable_column()
-    {
-        $('#variable_column').css('visibility','hidden')
-        $('#variable_column').removeAttr('name');
-        
-        //$('#variable_column option:eq(2)').after().remove();
-        $('#variable_column option').not('.keep_col').remove();
-        $('#variable_column option:first').text('');
-        $("#variable_column:selected").prop("selected", false)
-    };
-
-    
-
     //button visibility: fires only for correlative chart type
     function manage_val_column(values,categories)
     {   
-        if (values != null  && categories != null && values != y_selected )
+        if (values != null  && categories != null && values !=categories )
         {
             $('#send_values').prop('disabled',false)
         }
@@ -335,55 +252,7 @@ function bi_dashboard()
         }
     }
 
-    //button visibility: fires only for aggregate chart type
-   /*   function manage_agg_columns()
-    {   
-        
-        
-        var y_axis =  $('#y_select').find(":selected").attr('dtype');
 
-        if (y_axis == 'object')
-        {
-            $('#aggregate_column .agg').prop('disabled',true);
-            $('#aggregate_column .unique').prop('disabled',false);
-        }
-
-        else if (String(y_axis).includes('64'))
-        {
-
-            $('#aggregate_column .unique').prop('disabled',true);
-            $('#aggregate_column .agg').prop('disabled',false);
-        }
-        
-
-      //console.log($('#aggregate_column option').is(':hidden'))
-       if ($('#aggregate_column option:selected').prop('disabled') == true )
-        {
-           //console.log($('#aggregate_column option:selected').prop('disabled') == true)
-            $('#aggregate_column option:first').prop("selected", true)
-        }
-        
-         
-        //console.log($('#date_column').val())
-        if (x_selected != null  &&  y_selected != null && visual && agg)
-        {
-            //$('#send_values').prop('disabled',false)
-            if (x_axis == 'datetime64[ns]' && $('#date_column').val() == null)
-            {
-                $('#send_values').prop('disabled',true)
-            }
-
-            else 
-            {
-                $('#send_values').prop('disabled',false)
-            }
-        }
-
-        else 
-        {
-            $('#send_values').prop('disabled',true)
-        }
-    }*/
 
     function manage_send(values,categories)
     
@@ -391,7 +260,7 @@ function bi_dashboard()
         var visual = $('#visuals').val();
         var agg = $('#aggregate_column').val();
        
-        var x_axis =  $('#x_select').find(":selected").attr('dtype');
+      
         if (values != null  && categories != null && visual && agg)
         {
             //$('#send_values').prop('disabled',false)
@@ -418,28 +287,23 @@ function bi_dashboard()
     { 
         var values = $('#values').val();
         var categories = $('#categories').val();
-        //handle visibility of submit button
-        /*if ( $('#values').val() == 'Price')
+        
+        if ( $('#visuals').val() == 'map')
         {
-            $('#aggregate_column').find("option:contains('Count')").hide()
+            $('#date_column').prop('disabled',true)
+            $('#isDate').prop('disabled',true)
+          
         }
         else
         {
-
-        }*/
-
+            $('#date_column').prop('disabled',false)
+            $('#isDate').prop('disabled',false)
+        }
+        console.log( $('#isDate').prop('disabled'))
         manage_val_column(values,categories);
     });
 
     $(document).on('change','#date_column',function()
-    { 
-        var values = $('#values').val();
-        var categories = $('#categories').val();
-        //handle visibility of submit button
-        manage_val_column(values,categories);
-    });
-
-    $(document).on('change','#visuals',function()
     { 
         var values = $('#values').val();
         var categories = $('#categories').val();
@@ -473,6 +337,19 @@ function bi_dashboard()
        }
     });
 
+    $(document).on('change','#categories',function()
+    { 
+       if ($('#categories').val().toLowerCase().includes('country'))
+       {
+          $('#map_type').show()
+       }
+
+       else 
+       {
+            $('#map_type').hide()
+       }
+    });
+
     $(document).on('change','#aggregate_column',function()
     { 
         var values = $('#values').val();
@@ -490,7 +367,6 @@ function bi_dashboard()
         }
         
         //handle visibility of submit button
-        //manage_agg_columns();
         manage_send(values,categories);
     });
 };
@@ -615,5 +491,256 @@ function test()
 
 }
 
+function map() {
+
+
+    $(document).on('click','#shit',function(){
+        Highcharts.chart('container', {
+
+            title: {
+                text: 'Solar Employment Growth by Sector, 2010-2016'
+            },
+            
+            subtitle: {
+                text: 'Source: thesolarfoundation.com'
+            },
+            
+            yAxis: {
+                title: {
+                    text: 'Number of Employees'
+                }
+            },
+            
+            xAxis: {
+                accessibility: {
+                    rangeDescription: 'Range: 2010 to 2017'
+                }
+            },
+            
+            legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle'
+            },
+            
+            plotOptions: {
+                series: {
+                    label: {
+                        connectorAllowed: false
+                    },
+                    pointStart: 2010
+                }
+            },
+            
+            series: [{
+                name: 'Installation',
+                data: [43934, 52503, 57177, 69658, 97031, 119931, 137133, 154175]
+            }, {
+                name: 'Manufacturing',
+                data: [24916, 24064, 29742, 29851, 32490, 30282, 38121, 40434]
+            }, {
+                name: 'Sales & Distribution',
+                data: [11744, 17722, 16005, 19771, 20185, 24377, 32147, 39387]
+            }, {
+                name: 'Project Development',
+                data: [null, null, 7988, 12169, 15112, 22452, 34400, 34227]
+            }, {
+                name: 'Other',
+                data: [12908, 5948, 8105, 11248, 8989, 11816, 18274, 18111]
+            }],
+            
+            responsive: {
+                rules: [{
+                    condition: {
+                        maxWidth: 500
+                    },
+                    chartOptions: {
+                        legend: {
+                            layout: 'horizontal',
+                            align: 'center',
+                            verticalAlign: 'bottom'
+                        }
+                    }
+                }]
+            }
+            
+            });
+
+    })
+
+    $(document).on('click','#fuck',function(){
+        
+        Highcharts.mapChart('container', {
+            chart: {
+                map: 'custom/world'
+            },
+        
+            title: {
+                text: 'Highmaps basic demo'
+            },
+            colorAxis: {
+                min: 0
+            },
+            series: [{
+                data: [
+            ['ru', 0],
+            ['um', 1],
+            ['us', 2],
+            ['jp', 3],
+            ['us', 7]],
+                name: 'Shite',
+                
+            },]
+        });
+
+    })
+
+    
+}
    
    
+
+ //http://jsfiddle.net/dnbtkmyz/
+    /*
+    $(function () {
+    var mapData = Highcharts.maps['custom/world'];
+
+    $('#container').highcharts('Map', {
+        series: [{
+            name: 'Countries',
+            mapData: mapData,
+        }, {
+            name: 'Points',
+            type: 'mappoint',
+            data: [{
+                name: 'London',
+                lat: 51.507222,
+                lon: -0.1275
+            }, {
+                name: 'Moscow',
+                lat: 55.7500,
+                lon: 37.6167
+            }, {
+                name: 'Beijing',
+                lat: 39.9167,
+                lon: 116.3833
+            }, {
+                name: 'Washington D.C.',
+                lat: 38.889931,
+                lon: -77.00900,
+                color: 'red',
+                marker: {
+                            radius: 2
+                        }
+            }]
+        }],
+        legend: {
+            enabled: true
+        },
+        title: {
+            text: 'World map'
+        }
+    });
+http://jsfiddle.net/BlackLabel/gbduyLo9/
+});
+
+function update_highchart(data)
+{   
+    data.yAxis.scrollbar =  {
+        enabled: true
+    }
+    
+    if (data.type == 'scatter')
+    {
+        var marker = 
+           {
+                symbol: 'circle',
+                radius: 3,
+                
+             }
+        //var symbol = 'circle';
+    }
+    else 
+    {
+        var marker = {
+            enabled: false
+        };
+    }
+    
+
+    if (data.yAxis.categories && data.yAxis.categories.length * 20 < 400 || !data.yAxis.categories)
+    {
+        var new_height = 400  
+    }
+
+    else 
+    {
+        var new_height = data.yAxis.categories.length * 20
+    }
+
+    if (data.series.length > 12)
+    {
+        var new_legend = {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'middle',
+            title: {text: data.legend}
+        }
+
+    }
+
+    else 
+    {
+        var new_legend = {
+            title: {text: data.legend}
+        }
+    }
+   //render the chartlet chart = 
+    Highcharts.chart('sales', {
+       
+        title: {text: data.title},
+        chart: {type: data.type, animation: false},
+        chart: {type: data.type, animation: false,height:new_height},
+        yAxis: data.yAxis,
+        xAxis: data.xAxis,
+        legend: new_legend,
+        plotOptions: { 
+            
+            series: {
+                marker: marker,
+                }
+                
+                point: {
+                    events: {
+                        click: function () {
+                            console.log('Category: ' + this.category + ', value: ' + this.y);
+                        }
+                    }
+                },
+            }
+        },
+        colorAxis: {
+            min: 0,
+            max: 20
+        },
+        series: data.series,
+        tooltip: {
+            
+            formatter: function (tooltip) {
+                
+                if (data.type == 'scatter' && data.xAxis.categories && data.yAxis.categories) {
+                    
+                    return `<strong style='color:${this.point.color}'>&#9679</strong> ${data.legend}: <strong>`+this.series.name + '</strong><br>'+data.xAxis.title.text +': '+ this.series.xAxis.categories[this.point.x] +'<br>'+data.yAxis.title.text +': '+this.series.yAxis.categories[this.point.y];
+                }
+                // If not null, use the default formatter
+               // console.log(tooltip)
+                return tooltip.defaultFormatter.call(this, tooltip);
+            }
+        }
+       
+    //highchart ends here 
+    });
+    
+   
+}
+*/ 

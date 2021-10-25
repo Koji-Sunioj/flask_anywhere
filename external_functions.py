@@ -83,13 +83,20 @@ class Highcharts:
 		#if there is one column, sort the values of the numerical column
 		if len(new_data.columns) == 1 and highchart.date_string == False:
 			new_data = new_data.sort_values(new_data.columns[0])
+		
 		#sort the columns according to whichever columns has the highest aggregate total
 		else:
 			new_data = new_data[new_data.sum().sort_values(ascending=False).index]
-		for i in np.arange(0,len(new_data.columns)):
-			stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
-			series.append(stuff)
 		
+		if highchart.visual == 'map':
+			stuff = {'name':highchart.category,'data':[[country.lower(),value[0].round(2)] for country,value in zip(new_data.index,new_data.values)]}
+			series.append(stuff)
+		elif highchart.visual != 'map':
+			for i in np.arange(0,len(new_data.columns)):
+				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
+				series.append(stuff)
+		
+
 		y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
 		json_data = {'series':series,'title':highchart.title,'yAxis':{'title': {'text':y_label.title()}},'type':highchart.visual}
 		
@@ -100,7 +107,7 @@ class Highcharts:
 		xAxis = {'categories':categories,'title': {'text':x_label}}
 		
 		json_data['xAxis'] = xAxis
-		
+		print(json_data)
 		return json_data
 
 '''

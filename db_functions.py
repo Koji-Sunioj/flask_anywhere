@@ -24,7 +24,6 @@ def custom_query(command,joins):
 	con.connect()
 	select_main = con.cursor()
 	statement = 'select {} from orders {};'.format(command,joins)
-	print(statement)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()

@@ -16,6 +16,7 @@ def bi_data():
 	if request.method == 'POST':
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
+		print(send_values)
 
 		#initialize query constructor, with list from ajax request
 		query = db_functions.Db_command()
@@ -48,7 +49,8 @@ def bi_data():
 		data = db_functions.sales()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('column','sum',value='Total',category='SupplierCountry',date_string='%Y')
+		highchart = external_functions.Highcharts('map','sum',value='Total',category='customer_iso')
+		#highchart = external_functions.Highcharts('column','sum',value='Total',category='CustomerCountry')
 		#for the cookies
 		for_next = vars(highchart)
 		
@@ -56,8 +58,13 @@ def bi_data():
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
+		for_next['category'] = 'CustomerCountry'
+		
+		meta_raw = data[data.columns[~data.columns.str.contains('iso')]].copy()
+
+		
 		#we need metadata for the html elements and save in cookies
-		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
+		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
 		meta_data.reverse()
 		
 		new_json['meta_data'] = meta_data
@@ -73,18 +80,20 @@ def bi_data():
 		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
-		
+
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
-		print(for_next)
+		
 		highchart = external_functions.Highcharts(**for_next)
 		
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
+		meta_raw = data[data.columns[~data.columns.str.contains('iso')]].copy()
+
 		#we need metadata for the html elements and save in cookies
-		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(data.nunique().index,data.nunique().values,data.dtypes)]
+		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
 		meta_data.reverse()
 		
 		new_json['meta_data'] = meta_data
@@ -94,7 +103,7 @@ def bi_data():
 
 @app.route("/")
 def bi_page():
-	#session.pop('state',None)
+	session.pop('state',None)
 	return render_template('index.html')
 
 
@@ -120,6 +129,10 @@ def filter():
 	
 	return jsonify(meta_data)
 
+@app.route("/map/")
+def map():
+	
+	return render_template('map.html')
 	
 if (__name__ == "__main__"):
 	app.run(port = 5000, debug=True)
