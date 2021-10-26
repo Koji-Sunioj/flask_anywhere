@@ -45,20 +45,26 @@ function bi_dashboard()
     {
         
         Highcharts.mapChart('sales', {
-            chart: {
+            chart: { 
                 map: 'custom/world'
+            }, mapNavigation: {
+                enabled: true
             },
         
             title: {
-                text: 'Highmaps basic demo'
+                text: data.title
             },
             colorAxis: {
                 min: 0 ,stops: [
-                    [0, '#0000ff'], //red
-                    [0.588, '#ffffff'],
-                    [1, '#ff0000'] //white
-                     //blue
+                    [0, '#0000ff'],
+                    [0.5, '#ffffff'],
+                    [1, '#ff0000'] 
+                
                 ]
+            },legend: {
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle'
             },
             series: data.series
         });
@@ -145,14 +151,11 @@ function bi_dashboard()
         //update highcharts here
         if (data.state.visual != 'map')
         {
-            alert('no');
             update_highchart(data);
         }
         else if (data.state.visual == 'map')
         {
-            alert('asd');
             update_map(data)
-            
         } 
        
     //get request ends here  
@@ -167,7 +170,7 @@ function bi_dashboard()
             agg_type : $('#aggregate_column').val()
         }
 
-        console.log($('#values').prop('disabled'))
+        console.log(data)
         //if value is viewable, send it
         if ($('#values').prop('disabled') == false)
         {
@@ -203,18 +206,18 @@ function bi_dashboard()
         })
         
         .done(function(data){ 
-            {
-                update_highchart(data)
+            {   
+                console.log(data)
+                //update_highchart(data)
                 $('#send_values').prop('disabled',false);
                 $('#sales').css('opacity',1);
-                if (data.visual != 'map')
+                if (data.type != 'map')
                 {
                     update_highchart(data);
                 }
-                else if (data.visual == 'map')
+                else if (data.type == 'map')
                 {
-                    alert('asd');
-                    update_map()
+                    update_map(data)
                 } 
             }  
         });
@@ -297,9 +300,8 @@ function bi_dashboard()
         else
         {
             $('#date_column').prop('disabled',false)
-            $('#isDate').prop('disabled',false)
+            $('#isDate').prop('disabled',false).change()
         }
-        console.log( $('#isDate').prop('disabled'))
         manage_val_column(values,categories);
     });
 
@@ -326,15 +328,25 @@ function bi_dashboard()
 
     $(document).on('change','#isCategory',function()
     { 
-       if ($('#isCategory').is(':checked'))
-       {
+        if ($('#isCategory').is(':checked'))
+        {
             $('#categories').prop('disabled',false);
-       }
+            $('#send_values').prop('disabled',false)
+        }
 
-       else 
-       {
+        else 
+        {    
+            if ($('#visuals').val() == 'map')
+            {
+                $('#send_values').prop('disabled',true)
+            }
+            else
+            {
+                $('#send_values').prop('disabled',false)
+            }
+
             $('#categories').prop('disabled',true);
-       }
+        }
     });
 
     $(document).on('change','#categories',function()

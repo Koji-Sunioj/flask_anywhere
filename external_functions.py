@@ -5,6 +5,12 @@ import matplotlib
 from matplotlib import cm
 import re
 
+def translate_category_map(category):
+	keys = {'CustomerCountry':'customer_iso'}
+	
+	category = keys[category] if category in keys else category
+	return category
+
 class Highcharts:
 	def __init__(highchart,visual,agg_type,value=False,category=False,date_string=False,title=False):	
 		highchart.value = value
@@ -30,6 +36,10 @@ class Highcharts:
 			colors.append(matplotlib.colors.rgb2hex(rgba))
 		return colors
 		
+		
+	def translate_map_category(highchart):
+		keys = {'customer_iso':'CustomerCountry'}
+		highchart.category = keys[highchart.category] if highchart.category in keys else highchart.category
 
 	def handle_title(highchart,date_index=False):
 		#create the highchart title
@@ -70,16 +80,18 @@ class Highcharts:
 			data = data.aggregate({values:highchart.agg_type})
 			data = pd.DataFrame(data) if len(data) == 1 and type(data).__name__ == 'Series' else data
 			data.columns = [highchart.agg_type]  if highchart.agg_type != 'nunique' else ['count']
+			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
 			
 		data = data.fillna(0).round(2).sort_index()
-		print(data)
+		
 		return data
 
 	def agg_to_json(highchart,new_data):
 		#series list is the array highcharts will interact with
 		series = []
 		
+		print(new_data)
 		#if there is one column, sort the values of the numerical column
 		if len(new_data.columns) == 1 and highchart.date_string == False:
 			new_data = new_data.sort_values(new_data.columns[0])
@@ -89,14 +101,13 @@ class Highcharts:
 			new_data = new_data[new_data.sum().sort_values(ascending=False).index]
 		
 		if highchart.visual == 'map':
-			stuff = {'name':highchart.category,'data':[[country.lower(),value[0].round(2)] for country,value in zip(new_data.index,new_data.values)]}
+			stuff = {'name':highchart.regex_labels(highchart.category),'data':[[country.lower(),float(value[0])] for country,value in zip(new_data.index,new_data.values)]}
 			series.append(stuff)
 		elif highchart.visual != 'map':
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 				series.append(stuff)
 		
-
 		y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
 		json_data = {'series':series,'title':highchart.title,'yAxis':{'title': {'text':y_label.title()}},'type':highchart.visual}
 		
@@ -107,7 +118,7 @@ class Highcharts:
 		xAxis = {'categories':categories,'title': {'text':x_label}}
 		
 		json_data['xAxis'] = xAxis
-		print(json_data)
+		
 		return json_data
 
 '''

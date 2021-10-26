@@ -16,14 +16,17 @@ def bi_data():
 	if request.method == 'POST':
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
-		print(send_values)
-
+		
+		if send_values['visual'] == 'map':
+			send_values['category'] = external_functions.translate_category_map(send_values['category'])
+		
 		#initialize query constructor, with list from ajax request
 		query = db_functions.Db_command()
 		col_array = [val for key,val in send_values.items() if key in ['category','value']]
 		col_array = list(set(col_array))
 		'date_string' in send_values and col_array.append('OrderDate')
 		query.db_rel(col_array)
+
 		data = db_functions.custom_query(query.command,query.joins)
 		
 		#set the attributes from the data
@@ -42,6 +45,8 @@ def bi_data():
 		session['state'] = vars(highchart)
 		session['warnings'] = send_values['warnings']
 		
+		
+		
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
@@ -54,11 +59,14 @@ def bi_data():
 		#for the cookies
 		for_next = vars(highchart)
 		
+		if for_next['visual'] == 'map':
+			for_next['category'] = external_functions.translate_category_map(for_next['category'])
+		
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
-		for_next['category'] = 'CustomerCountry'
+		#for_next['category'] = 'CustomerCountry'
 		
 		meta_raw = data[data.columns[~data.columns.str.contains('iso')]].copy()
 
@@ -83,6 +91,9 @@ def bi_data():
 
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
+	
+		if for_next['visual'] == 'map':
+			for_next['category'] = external_functions.translate_category_map(for_next['category'])
 		
 		highchart = external_functions.Highcharts(**for_next)
 		
@@ -103,7 +114,7 @@ def bi_data():
 
 @app.route("/")
 def bi_page():
-	session.pop('state',None)
+	#session.pop('state',None)
 	return render_template('index.html')
 
 

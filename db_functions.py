@@ -34,6 +34,7 @@ def custom_query(command,joins):
 	sales['OrderID'] = sales['OrderID'].astype(str)
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
+	
 	return sales
 
 
@@ -49,7 +50,7 @@ class Db_command:
 		con.close()
 		keys = {i[1]:{"command":i[0]+"."+ i[1],"link":i[0]} for i in rows}
 		
-		print(keys)
+		
 		#create custom keys for aliases in our key
 		keys['Total'] = {"command":"products.Price * order_details.Quantity as 'Total'","link":"products"}
 		keys['EmployeeName'] = {"command":"concat( employees.FirstName,' ',employees.LastName) as 'EmployeeName'","link":"employees"}
@@ -59,6 +60,10 @@ class Db_command:
 		keys['SupplierCity'] = keys.pop('City')
 		keys['SupplierCity']['command']  = keys['SupplierCity']['command'] + ' as "SupplierCity"'
 		keys['CustomerCountry'] = {"command":"customers.Country as 'CustomerCountry'",'link':'customers'}
+		keys['customer_iso'] = keys.pop('iso_code')
+		keys['customer_iso']['command'] = "customer_iso_ref.iso_code as 'customer_iso'"
+		
+		
 		
 		query.keys = keys
 		query.command = command
@@ -74,7 +79,8 @@ class Db_command:
 		cus_ord = 'join customers on customers.CustomerID = orders.CustomerID'
 		ord_emp = 'join employees on orders.EmployeeID = employees.EmployeeID'
 		ord_shi = 'join shippers on orders.ShipperID = shippers.ShipperID'
-		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi]
+		cus_iso = "join country_iso as customer_iso_ref on customers.iso_id = customer_iso_ref.country_id"
+		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi,cus_iso]
 		
 		#reference for needed join requests depending its relation to the orders table
 		refs = {}
@@ -86,17 +92,21 @@ class Db_command:
 		refs['products'] = [0,1]
 		refs['suppliers'] = [0,1,3]
 		refs['categories'] = [0,1,2]
+		refs['country_iso'] = [4,7]
 		
 		#parse the referred tables and proper column name from db
 		rels = query.keys
 		rels = [rels[column] for column in col_array]
 		
+		
 		#get the index of sequencial join clauses for relevant columns
 		joins = [num for i in rels for num in refs[i['link']]]
+		
 		joins = list(set(joins))
 		joins.sort()
 		joins = [indexer[i] for i in joins]
 		joins = " ".join(joins)
+		
 		
 		#join query string into one
 		command = [i['command'] for i in rels]
