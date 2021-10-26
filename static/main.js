@@ -4,7 +4,7 @@ function bi_dashboard()
    
     
    
-
+    //chart update type
     function update_highchart(data)
     {   
 
@@ -40,7 +40,7 @@ function bi_dashboard()
         
        
     }
-
+    //map update type
     function update_map(data)
     {
         
@@ -125,7 +125,7 @@ function bi_dashboard()
 
         
         //visuals always exists
-        $('#visuals').val(data.state.visual);
+        $('#visuals').val(data.state.visual).change();
 
         //aggregate column always exist, but disable value if unique
         $('#aggregate_column').val(data.state.agg_type).change();
@@ -242,54 +242,17 @@ function bi_dashboard()
     })
    
     //button visibility: fires only for correlative chart type
-    function manage_val_column(values,categories)
-    {   
-        if (values != null  && categories != null && values !=categories )
-        {
-            $('#send_values').prop('disabled',false)
-        }
-
-        else 
-        {
-            $('#send_values').prop('disabled',true)
-        }
-    }
+   
 
 
 
-    function manage_send(values,categories)
     
-    {
-        var visual = $('#visuals').val();
-        var agg = $('#aggregate_column').val();
-       
-      
-        if (values != null  && categories != null && visual && agg)
-        {
-            //$('#send_values').prop('disabled',false)
-            if ($('#date_column').val() == null ||values ==categories )
-            {
-                $('#send_values').prop('disabled',true)
-            }
-
-            else 
-            {
-                $('#send_values').prop('disabled',false)
-            }
-        }
-
-        else 
-        { 
-            $('#send_values').prop('disabled',true)
-        }   
-    }
 
     //anything past here is for select input handling and  button visibility!!
 
     $(document).on('change','#visuals',function()
     { 
-        var values = $('#values').val();
-        var categories = $('#categories').val();
+        
         
         if ( $('#visuals').val() == 'map')
         {
@@ -302,16 +265,10 @@ function bi_dashboard()
             $('#date_column').prop('disabled',false)
             $('#isDate').prop('disabled',false).change()
         }
-        manage_val_column(values,categories);
+       // manage_val_column(values,categories);
     });
 
-    $(document).on('change','#date_column',function()
-    { 
-        var values = $('#values').val();
-        var categories = $('#categories').val();
-        //handle visibility of submit button
-        manage_val_column(values,categories);
-    });
+   
 
     $(document).on('change','#isDate',function()
     { 
@@ -364,8 +321,7 @@ function bi_dashboard()
 
     $(document).on('change','#aggregate_column',function()
     { 
-        var values = $('#values').val();
-        var categories = $('#categories').val();
+       
         //handle visibility of submit button
         if ($('#aggregate_column').val() == 'nunique')
         {
@@ -379,7 +335,7 @@ function bi_dashboard()
         }
         
         //handle visibility of submit button
-        manage_send(values,categories);
+        
     });
 };
 
