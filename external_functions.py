@@ -91,10 +91,11 @@ class Highcharts:
 		#series list is the array highcharts will interact with
 		series = []
 		
-		print(new_data)
+		
 		#if there is one column, sort the values of the numerical column
 		if len(new_data.columns) == 1 and highchart.date_string == False:
-			new_data = new_data.sort_values(new_data.columns[0])
+			bar_bool = highchart.visual != 'bar'
+			new_data = new_data.sort_values(new_data.columns[0],ascending=bar_bool) 
 		
 		#sort the columns according to whichever columns has the highest aggregate total
 		else:

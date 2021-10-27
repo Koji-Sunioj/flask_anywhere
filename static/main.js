@@ -8,6 +8,7 @@ function bi_dashboard()
     function update_highchart(data)
     {   
 
+        //vertical align legend right if series toggle are too many
         if (data.series.length > 12)
         {
             var new_legend = {
@@ -16,7 +17,6 @@ function bi_dashboard()
                 verticalAlign: 'middle',
                 title: {text: data.legend}
             }
-
         }
 
         else 
@@ -33,9 +33,6 @@ function bi_dashboard()
             xAxis: data.xAxis,
             legend: new_legend,
             series: data.series,
-           
-           
-        //highchart ends here 
         });
         
        
@@ -104,20 +101,13 @@ function bi_dashboard()
         }
 
         //if there is a category
-        if (data.state.category == 'OrderDate')
-
-        {
-            $('#isCategory').attr('checked',false).change()
-        }
-
-
-        else if (data.state.category == false)
+        if (!data.state.category)
         {
             $('#categories option:first').prop("selected", true).change()
             $('#isCategory').attr('checked',false).change()
         }
 
-        else 
+        else if (data.state.category)
         {
             $('#categories').val(data.state.category).change();
             $('#isCategory').attr('checked',true).change()
@@ -136,11 +126,11 @@ function bi_dashboard()
         } 
 
         else 
-
         {
             $('#values').prop('disabled',false)
         }
-        
+
+        //if there is a date string, check off the date and render value
         if (data.state.date_string)
         {
             $('#date_column').val(data.state.date_string)
@@ -163,14 +153,11 @@ function bi_dashboard()
 
     function ajax_data()
     {   
+        //visual and aggregate type are always default
         data = {
-            
-           
             visual : $('#visuals').val(),
             agg_type : $('#aggregate_column').val()
         }
-
-        console.log(data)
         //if value is viewable, send it
         if ($('#values').prop('disabled') == false)
         {
@@ -184,31 +171,25 @@ function bi_dashboard()
            
         }
 
+        //if a date string is specified
         if ($('#isDate').is(':checked') && $('#isDate').prop('disabled') == false)
         {
             data.date_string = $('#date_column').val();
         }
 
-        if ($('#warning-ignore').is(':checked'))
-        {
-            data.warnings = true
-        }
-
-        else
-        {
-            data.warnings = false
-        }
+        //warnings 
+        data.warnings  = ($('#warning-ignore').is(':checked')) ? true:false;
         
+        //send data
         $.ajax({
             data :data,
             type : 'POST',
             url : '/bi_data'
         })
         
+        //handle returned data from python
         .done(function(data){ 
             {   
-                console.log(data)
-                //update_highchart(data)
                 $('#send_values').prop('disabled',false);
                 $('#sales').css('opacity',1);
                 if (data.type != 'map')
@@ -240,52 +221,50 @@ function bi_dashboard()
         $('#send_values').prop('disabled',false);
         $('#sales').css('opacity',1)
     })
-   
-    //button visibility: fires only for correlative chart type
-   
-
-
-
-    
-
-    //anything past here is for select input handling and  button visibility!!
+  
+    //!!anything past here is for select input handling and  button visibility!!
 
     $(document).on('change','#visuals',function()
-    { 
-        
-        
-        if ( $('#visuals').val() == 'map')
+    {   
+        //map is only valid for non date specific aggregates
+        if ( $(this).val() == 'map')
         {
             $('#date_column').prop('disabled',true)
             $('#isDate').prop('disabled',true)
+            if (!$('#isCategory').is(':checked')) 
+            {
+                $('#send_values').prop('disabled',true)
+            }
           
         }
         else
         {
             $('#date_column').prop('disabled',false)
             $('#isDate').prop('disabled',false).change()
+            $('#send_values').prop('disabled',false);
         }
-       // manage_val_column(values,categories);
     });
 
    
 
     $(document).on('change','#isDate',function()
     { 
-       if ($('#isDate').is(':checked'))
-       {
-        $('#date_column').prop('disabled',false);
-       }
+        //disable date column on check
+        if ($(this).is(':checked'))
+        {
+            $('#date_column').prop('disabled',false);
+        }
 
-       else 
-       {
-        $('#date_column').prop('disabled',true);
-       }
+        else 
+        {
+            $('#date_column').prop('disabled',true);
+        }
     });
 
     $(document).on('change','#isCategory',function()
     { 
-        if ($('#isCategory').is(':checked'))
+        //handle visibility of categories drop down, or button depending on visual type
+        if ($(this).is(':checked'))
         {
             $('#categories').prop('disabled',false);
             $('#send_values').prop('disabled',false)
@@ -297,45 +276,63 @@ function bi_dashboard()
             {
                 $('#send_values').prop('disabled',true)
             }
+
             else
             {
                 $('#send_values').prop('disabled',false)
             }
-
             $('#categories').prop('disabled',true);
         }
     });
 
     $(document).on('change','#categories',function()
-    { 
-       if ($('#categories').val().toLowerCase().includes('country'))
-       {
-          $('#map_type').show()
-       }
+    {   
+        //handle map option based on category value
+        var category = $(this).val().toLowerCase()
 
-       else 
-       {
+        if (category.includes('country'))
+        {
+            $('#map_type').show()
+        }
+
+        else if (!category.includes('country'))
+        {
+            if ($('#visuals').val() == 'map') 
+            {
+                $("#visuals").val($("#visuals option:first").val()).change();
+            }
+
+            if (category.includes('order'))
+            {
+                $('#aggregate_column').find('option:contains(Count)').hide()
+                if ($('#aggregate_column').val().includes('nunique')) 
+                {
+                    $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
+                }
+            }
+            else if (!category.includes('order'))
+            {
+                
+                $('#aggregate_column').find('option:contains(Count)').show()
+            }
             $('#map_type').hide()
-       }
+        }
+
+        
     });
 
     $(document).on('change','#aggregate_column',function()
     { 
-       
-        //handle visibility of submit button
-        if ($('#aggregate_column').val() == 'nunique')
+        //count of orders does aggregate data
+        if ($(this).val() == 'nunique')
         {
             $('#values').prop('disabled',true)
         } 
 
         else 
-
         {
             $('#values').prop('disabled',false)
-        }
-        
-        //handle visibility of submit button
-        
+        }        
     });
 };
 
