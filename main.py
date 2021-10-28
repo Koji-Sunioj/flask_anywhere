@@ -18,7 +18,8 @@ def bi_data():
 		send_values = {key:val for key,val in request.form.items()}
 		
 		if send_values['visual'] == 'map':
-			send_values['category'] = external_functions.translate_category_map(send_values['category'])
+			keys =  external_functions.translate_category_map()
+			send_values['category'] = keys[send_values['category']]
 		
 		#initialize query constructor, with list from ajax request
 		query = db_functions.Db_command()
@@ -68,7 +69,7 @@ def bi_data():
 		
 		#for_next['category'] = 'CustomerCountry'
 		
-		meta_raw = data[data.columns[~data.columns.str.contains('iso')]].copy()
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID')]].copy()
 
 		
 		#we need metadata for the html elements and save in cookies
@@ -101,7 +102,7 @@ def bi_data():
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
-		meta_raw = data[data.columns[~data.columns.str.contains('iso')]].copy()
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID')]].copy()
 
 		#we need metadata for the html elements and save in cookies
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]

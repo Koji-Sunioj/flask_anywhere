@@ -35,7 +35,7 @@ def custom_query(command,joins):
 	sales['OrderID'] = sales['OrderID'].astype(str)
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
-	
+	print(sales)
 	return sales
 
 
@@ -62,9 +62,8 @@ class Db_command:
 		keys['SupplierCity']['command']  = keys['SupplierCity']['command'] + ' as "SupplierCity"'
 		keys['CustomerCountry'] = {"command":"customers.Country as 'CustomerCountry'",'link':'customers'}
 		keys['customer_iso'] = keys.pop('iso_code')
-		keys['customer_iso']['command'] = "customer_iso_ref.iso_code as 'customer_iso'"
-		
-		
+		keys['customer_iso'] ={"command": "customer_iso_ref.iso_code as 'customer_iso'","link":"customer_iso"}
+		keys['supplier_iso'] = {"command":"supplier_iso_ref.iso_code as 'supplier_iso'","link":"supplier_iso"}
 		
 		query.keys = keys
 		query.command = command
@@ -81,7 +80,8 @@ class Db_command:
 		ord_emp = 'join employees on orders.EmployeeID = employees.EmployeeID'
 		ord_shi = 'join shippers on orders.ShipperID = shippers.ShipperID'
 		cus_iso = "join country_iso as customer_iso_ref on customers.iso_id = customer_iso_ref.country_id"
-		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi,cus_iso]
+		sup_iso = "join country_iso as supplier_iso_ref on suppliers.iso_id = supplier_iso_ref.country_id"
+		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi,cus_iso,sup_iso]
 		
 		#reference for needed join requests depending its relation to the orders table
 		refs = {}
@@ -93,19 +93,27 @@ class Db_command:
 		refs['products'] = [0,1]
 		refs['suppliers'] = [0,1,3]
 		refs['categories'] = [0,1,2]
-		refs['country_iso'] = [4,7]
+		refs['customer_iso'] = [4,7]
+		refs['supplier_iso'] = [0,1,3,8]
 		
-		#parse the referred tables and proper column name from db
+		#take the values from array and parse it with the specified keys
 		rels = query.keys
+		for col in col_array:
+			print(rels[col])
 		rels = [rels[column] for column in col_array]
+		
 		
 		
 		#get the index of sequencial join clauses for relevant columns
 		joins = [num for i in rels for num in refs[i['link']]]
 		
+		
+		print(joins)
 		joins = list(set(joins))
+		print(joins)
 		joins.sort()
 		joins = [indexer[i] for i in joins]
+		print(joins)
 		joins = " ".join(joins)
 		
 		

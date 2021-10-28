@@ -5,11 +5,9 @@ import matplotlib
 from matplotlib import cm
 import re
 
-def translate_category_map(category):
-	keys = {'CustomerCountry':'customer_iso'}
-	
-	category = keys[category] if category in keys else category
-	return category
+def translate_category_map():
+	keys = {'CustomerCountry':'customer_iso','SupplierCountry':'supplier_iso'}
+	return keys
 
 class Highcharts:
 	def __init__(highchart,visual,agg_type,value=False,category=False,date_string=False,title=False):	
@@ -38,7 +36,8 @@ class Highcharts:
 		
 		
 	def translate_map_category(highchart):
-		keys = {'customer_iso':'CustomerCountry'}
+		keys = translate_category_map()
+		keys = dict((value,key) for key,value in keys.items())
 		highchart.category = keys[highchart.category] if highchart.category in keys else highchart.category
 
 	def handle_title(highchart,date_index=False):
@@ -61,7 +60,11 @@ class Highcharts:
 		if highchart.date_string:
 			data['OrderDate'] = pd.to_datetime(data['OrderDate'])
 			data = data.set_index('OrderDate')
-			data.index = data.index.strftime(highchart.date_string)
+			#data.index = data.index.strftime(highchart.date_string)
+			if highchart.date_string == 'quarter':
+				data.index = data.index.to_period('Q').astype(str)
+			else:
+				data.index = data.index.strftime(highchart.date_string)
 			grouper.insert(0,'OrderDate')
 			columns = highchart.category if highchart.category else None
 			if highchart.value and highchart.value != 'Price':
@@ -105,6 +108,7 @@ class Highcharts:
 			stuff = {'name':highchart.regex_labels(highchart.category),'data':[[country.lower(),float(value[0])] for country,value in zip(new_data.index,new_data.values)]}
 			series.append(stuff)
 		elif highchart.visual != 'map':
+			if len(new_data.index) <= 3 and len(new_data.columns) <= 10 and highchart.visual !='line':  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 				series.append(stuff)

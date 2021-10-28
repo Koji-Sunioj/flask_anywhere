@@ -25,6 +25,7 @@ function bi_dashboard()
                 title: {text: data.legend}
             }
         }
+        
         Highcharts.chart('sales', {
            
             title: {text: data.title},
@@ -33,6 +34,13 @@ function bi_dashboard()
             xAxis: data.xAxis,
             legend: new_legend,
             series: data.series,
+            plotOptions: {
+                series: {
+                    marker: {
+                        enabled: false
+                    }
+                }
+            },
         });
         
        
@@ -203,10 +211,68 @@ function bi_dashboard()
             }  
         });
     }
+    function check_map()
+    {
+        if ($('#visuals').val() == 'map') 
+        {
+            $("#visuals").val($("#visuals option:first").val()).change();
+        }
+    }
+
+    function handle_orderID()
+    {
+        var value = $('#values').val();
+        var aggregate = $('#aggregate_column').val();
+
+        if (value == 'Total' || value == 'Quantity')
+        {
+            $('#aggregate_column').find('option:contains(Sum)').show()
+            $('#aggregate_column').find('option:not(:contains(Sum))').hide()
+            if (aggregate != 'sum')
+            {
+                $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
+            } 
+        } 
+
+        else if (value == 'Price')
+        {
+            
+            $('#aggregate_column').find('option').show()
+            $('#aggregate_column').find('option:contains(Sum)').hide() 
+            $('#aggregate_column').find('option:contains(Count)').hide()  
+            if (aggregate == 'sum' || aggregate == 'nunique')
+            {
+               
+                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
+            }       
+        } 
+
+    }
+
+    function handleCategory()
+    {
+        var value = $('#values').val();
+        var aggregate = $('#aggregate_column').val();
+        
+        if (value == 'Price')
+        {
+            $('#aggregate_column').find('option:contains(Sum)').hide()
+            if (aggregate == 'sum')
+            {
+                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
+            }
+        }
+
+        else 
+        {
+            $('#aggregate_column').find('option:contains(Sum)').show()
+        }
+    }
+
 
     //ajax request for new chart visual from server
     $(document).on('click','#send_values', function(event) {
-        $('#send_values').prop('disabled',true);
+       // $('#send_values').prop('disabled',true);
         $('#sales').css('opacity',0.5)
         ajax_data();
     })
@@ -223,6 +289,50 @@ function bi_dashboard()
     })
   
     //!!anything past here is for select input handling and  button visibility!!
+    $(document).on('change','#values',function()
+    {
+        var category = $('#categories').val().toLowerCase()
+        if (category.includes('order'))
+        {
+            handle_orderID()
+        }
+        else 
+        {
+            handleCategory()
+        }
+ 
+    });
+
+    
+
+    $(document).on('change','#categories',function()
+    {   
+        //handle map option based on category value
+        var category = $(this).val().toLowerCase()
+
+        if (category.includes('country'))
+        {
+            $('#map_type').show()
+            $('#aggregate_column').find('option').show()
+            handleCategory()
+        }
+
+        else if (category.includes('order'))
+        {
+            $('#map_type').hide()
+            handle_orderID()
+            check_map()
+            
+        }
+
+        else if (!category.includes('country') || !category.includes('order')) 
+        {
+            $('#map_type').hide()
+            $('#aggregate_column').find('option').show()
+            handleCategory()
+            check_map()  
+        }     
+    });
 
     $(document).on('change','#visuals',function()
     {   
@@ -245,7 +355,19 @@ function bi_dashboard()
         }
     });
 
-   
+    $(document).on('change','#aggregate_column',function()
+    { 
+        //count of orders does aggregate data
+        if ($(this).val() == 'nunique')
+        {
+            $('#values').prop('disabled',true)
+        } 
+
+        else 
+        {
+            $('#values').prop('disabled',false)
+        }        
+    });
 
     $(document).on('change','#isDate',function()
     { 
@@ -284,56 +406,7 @@ function bi_dashboard()
             $('#categories').prop('disabled',true);
         }
     });
-
-    $(document).on('change','#categories',function()
-    {   
-        //handle map option based on category value
-        var category = $(this).val().toLowerCase()
-
-        if (category.includes('country'))
-        {
-            $('#map_type').show()
-        }
-
-        else if (!category.includes('country'))
-        {
-            if ($('#visuals').val() == 'map') 
-            {
-                $("#visuals").val($("#visuals option:first").val()).change();
-            }
-
-            if (category.includes('order'))
-            {
-                $('#aggregate_column').find('option:contains(Count)').hide()
-                if ($('#aggregate_column').val().includes('nunique')) 
-                {
-                    $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
-                }
-            }
-            else if (!category.includes('order'))
-            {
-                
-                $('#aggregate_column').find('option:contains(Count)').show()
-            }
-            $('#map_type').hide()
-        }
-
-        
-    });
-
-    $(document).on('change','#aggregate_column',function()
-    { 
-        //count of orders does aggregate data
-        if ($(this).val() == 'nunique')
-        {
-            $('#values').prop('disabled',true)
-        } 
-
-        else 
-        {
-            $('#values').prop('disabled',false)
-        }        
-    });
+   
 };
 
 

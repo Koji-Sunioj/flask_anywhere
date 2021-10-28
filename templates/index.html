@@ -107,6 +107,7 @@
           <label >Function</label>
           <select class="form-select form-select" id="aggregate_column" >
             <option value="sum">Sum</option>
+           
             <option value="mean">Mean</option>
             <option value="max">Max</option>
             <option value="min">Min</option>
@@ -119,10 +120,11 @@
           </label>
           <input class="form-check-input" type="checkbox" value="" id="isDate">
           <select class="form-select form-select" id="date_column" disabled >
-            
             <option value="%Y">Year</option>
             <option value="%Y-%m">Year-Month</option>
             <option value="%Y-%m-%d">Year-Month-Day</option>
+            <option value="%Y-%W">Year-Week</option>
+            <option value="quarter">Year-Quarter</option>
           </select>
         </div>
         <div class="col align-self-end ">
@@ -132,7 +134,7 @@
         </div>  
     </div> 
     <br>
-   
+    
     <div class="row rounded" >
       <div class="card">
         <div class="card-body">
