@@ -53,7 +53,7 @@ def bi_data():
 		data = db_functions.sales()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('map','sum',value='Total',category='CustomerCity')
+		highchart = external_functions.Highcharts('map','sum',value='Total',category='SupplierCity')
 
 		#for the cookies
 		for_next = vars(highchart)
@@ -88,7 +88,9 @@ def bi_data():
 		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
-
+		
+		
+		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
 		if for_next['visual'] == 'map':
@@ -97,12 +99,13 @@ def bi_data():
 			for_next['category'] = keys[for_next['category']]
 		
 		highchart = external_functions.Highcharts(**for_next)
-	
+		
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
 		check_point = "".join(data.columns)
+		
 		if 'point' in check_point: data = data.rename(columns={for_next['category']:highchart.category}) 
 		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		
@@ -125,10 +128,12 @@ def bi_page():
 @app.route("/test/")
 def test():
 	data = db_functions.sales()
-	table = data.sort_values('OrderDate').head(10).to_html(classes='table  table-bordered table-hover',index=False,table_id="datatable")
+	table = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].sort_values('OrderDate').head(10).to_html(classes='table  table-bordered table-hover',index=False,table_id="datatable")
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
+	
+	print(data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy())
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
 	return render_template('test.html',cols=cols,meta_data=meta_data,table=table) #
 	

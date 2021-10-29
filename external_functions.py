@@ -79,16 +79,21 @@ class Highcharts:
 			
 		#no date string, normal aggregate
 		elif highchart.date_string == False:
-			if 'point' in highchart.category:
+			if highchart.category and 'point' in highchart.category:
 				grouper.remove(highchart.category)
-				highchart.category = data.columns[data.columns.str.contains('point|lat|lon')].tolist()
-				grouper.extend(highchart.category)
-			if highchart.value and highchart.value != 'Price':
+				cat_label = highchart.category.split('_')[0]
+				point_filter = data.columns[data.columns.str.contains('point|lat|lon')]
+				point_filter = point_filter[point_filter.str.contains(cat_label)]
+				highchart.category = point_filter.tolist()
+				grouper.extend(point_filter)
+			if all([highchart.value,highchart.value != 'Price']):
 				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
 			data = data.groupby(highchart.category) if highchart.category else data
 			data = data.aggregate({values:highchart.agg_type})
 			data = pd.DataFrame(data) if len(data) == 1 and type(data).__name__ == 'Series' else data
 			data.columns = [highchart.agg_type]  if highchart.agg_type != 'nunique' else ['count']
+			
+			
 			
 			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
@@ -101,39 +106,37 @@ class Highcharts:
 		series = []
 		
 		#if there is one column, sort the values of the numerical column
-		if len(new_data.columns) == 1 and highchart.date_string == False:
+		if highchart.date_string == False:
 			bar_bool = highchart.visual != 'bar'
 			new_data = new_data.sort_values(new_data.columns[0],ascending=bar_bool) 
 		
-		#sort the columns according to whichever columns has the highest aggregate total
-		else:
-			new_data = new_data[new_data.sum().sort_values(ascending=False).index]
-		
-		if highchart.visual == 'map' and 'City' not in highchart.category :
+		if highchart.visual == 'map' and 'Country' in highchart.category :
 			stuff = {'name':highchart.regex_labels(highchart.category),'data':[[country.lower(),float(value[0])] for country,value in zip(new_data.index,new_data.values)]}
 			series.append(stuff)
+		
 		elif highchart.visual == 'map' and 'City' in highchart.category:
 			new_data = new_data.reset_index()
 			data = [{'name':row[0],'lat':row[1],'lon':row[2],'z':row[3]} for row in new_data.values ] 
 			series.append({'name':'Cities'})
 			y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
 			series.append({'name':y_label,'animation':False,'type':'mapbubble','minSize':3,'maxSize':10,'data':data}) 
+		
 		elif highchart.visual != 'map':
 			flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
 			if all(flip_bool):  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 				series.append(stuff)
+				
 		
 		y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
 		json_data = {'series':series,'title':highchart.title,'yAxis':{'title': {'text':y_label.title()}},'type':highchart.visual}
-		
 		x_label = 'OrderDate' if highchart.date_string else highchart.category
 		x_label = 'Orders' if x_label == False else highchart.regex_labels(x_label)
 		categories = [i for i in new_data.index ] if len(new_data.index) > 1 else ['']
-		
 		xAxis = {'categories':categories,'title': {'text':x_label}}
 		json_data['xAxis'] = xAxis
+		
 		
 		return json_data
 
