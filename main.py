@@ -55,13 +55,14 @@ def bi_data():
 		data = db_functions.sales()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('map','sum',value='Total',category='customer_iso')
+		highchart = external_functions.Highcharts('map','sum',value='Total',category='CustomerCountry')
 		#highchart = external_functions.Highcharts('column','sum',value='Total',category='CustomerCountry')
 		#for the cookies
 		for_next = vars(highchart)
-		
+		print(for_next['category'])
 		if for_next['visual'] == 'map':
-			for_next['category'] = external_functions.translate_category_map(for_next['category'])
+			keys =  external_functions.translate_category_map()
+			for_next['category'] = keys[for_next['category']]
 		
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
@@ -69,7 +70,7 @@ def bi_data():
 		
 		#for_next['category'] = 'CustomerCountry'
 		
-		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID')]].copy()
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|tude')]].copy()
 
 		
 		#we need metadata for the html elements and save in cookies
@@ -92,9 +93,10 @@ def bi_data():
 
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
-	
+		
 		if for_next['visual'] == 'map':
-			for_next['category'] = external_functions.translate_category_map(for_next['category'])
+			keys =  external_functions.translate_category_map()
+			for_next['category'] = keys[for_next['category']]
 		
 		highchart = external_functions.Highcharts(**for_next)
 		
@@ -102,7 +104,7 @@ def bi_data():
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
-		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID')]].copy()
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|tude')]].copy()
 
 		#we need metadata for the html elements and save in cookies
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
@@ -115,7 +117,7 @@ def bi_data():
 
 @app.route("/")
 def bi_page():
-	#session.pop('state',None)
+	session.pop('state',None)
 	return render_template('index.html')
 
 

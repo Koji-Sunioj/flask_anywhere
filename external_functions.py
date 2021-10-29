@@ -6,7 +6,7 @@ from matplotlib import cm
 import re
 
 def translate_category_map():
-	keys = {'CustomerCountry':'customer_iso','SupplierCountry':'supplier_iso'}
+	keys = {'CustomerCountry':'customer_iso','SupplierCountry':'supplier_iso','CustomerCity':'customer_point'}
 	return keys
 
 class Highcharts:
@@ -38,6 +38,9 @@ class Highcharts:
 	def translate_map_category(highchart):
 		keys = translate_category_map()
 		keys = dict((value,key) for key,value in keys.items())
+		if isinstance(highchart.category,list):
+			highchart.category = [col for col in highchart.category if 'point' in col]
+			highchart.category = "".join(highchart.category)
 		highchart.category = keys[highchart.category] if highchart.category in keys else highchart.category
 
 	def handle_title(highchart,date_index=False):
@@ -72,17 +75,22 @@ class Highcharts:
 			data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc=highchart.agg_type)
 			unique_or = 'count' if  highchart.agg_type == 'nunique' else highchart.agg_type
 			data.columns = [unique_or] if len(data.columns) == 1 else data.columns
-			data = data.sort_index()
+			data = data.sort_index().fillna(0)
 			highchart.title = '{}'.format(highchart.handle_title(data.index))
 			
 		#no date string, normal aggregate
 		elif highchart.date_string == False:
+			if 'point' in highchart.category:
+				grouper.remove(highchart.category)
+				highchart.category = data.columns[data.columns.str.contains('point|lat|lon')].tolist()
+				grouper.extend(highchart.category)
 			if highchart.value and highchart.value != 'Price':
 				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
 			data = data.groupby(highchart.category) if highchart.category else data
 			data = data.aggregate({values:highchart.agg_type})
 			data = pd.DataFrame(data) if len(data) == 1 and type(data).__name__ == 'Series' else data
 			data.columns = [highchart.agg_type]  if highchart.agg_type != 'nunique' else ['count']
+			
 			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
 			
@@ -104,11 +112,21 @@ class Highcharts:
 		else:
 			new_data = new_data[new_data.sum().sort_values(ascending=False).index]
 		
-		if highchart.visual == 'map':
+		if highchart.visual == 'map' and 'City' not in highchart.category :
 			stuff = {'name':highchart.regex_labels(highchart.category),'data':[[country.lower(),float(value[0])] for country,value in zip(new_data.index,new_data.values)]}
 			series.append(stuff)
+		elif highchart.visual == 'map' and 'City' in highchart.category:
+			data = []
+			new_data = new_data.reset_index()
+			print(new_data)
+			for row in new_data.values:
+				data.append({'name':row[0],'lat':row[1],'lon':row[2],'z':row[3]})
+			
+			
+			print(data)
 		elif highchart.visual != 'map':
-			if len(new_data.index) <= 3 and len(new_data.columns) <= 10 and highchart.visual !='line':  new_data = new_data.T
+			flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
+			if all(flip_bool):  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 				series.append(stuff)

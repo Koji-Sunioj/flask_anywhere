@@ -271,8 +271,8 @@ function bi_dashboard()
 
 
     //ajax request for new chart visual from server
-    $(document).on('click','#send_values', function(event) {
-       // $('#send_values').prop('disabled',true);
+    $(document).on('click','#send_values', function() {
+        //$('#send_values').prop('disabled',true);
         $('#sales').css('opacity',0.5)
         ajax_data();
     })
@@ -310,7 +310,7 @@ function bi_dashboard()
         //handle map option based on category value
         var category = $(this).val().toLowerCase()
 
-        if (category.includes('country'))
+        if (category.includes('country') || category.includes('city'))
         {
             $('#map_type').show()
             $('#aggregate_column').find('option').show()
@@ -674,4 +674,50 @@ function update_highchart(data)
     
    
 }
+
+$(function () {
+    var mapData = Highcharts.maps['custom/world'];
+
+    $('#container').highcharts('Map', {
+    mapNavigation: {
+        enabled: true
+    },colorAxis: {
+                min: 0 ,stops: [
+                    [0, '#0000ff'],
+                    [0.5, '#ffffff'],
+                    [1, '#ff0000'] 
+                
+                ]
+            },
+        series: [{
+            name: 'Countries',
+            mapData: mapData,
+        }, {
+            name: 'Points',
+            maxSize: '1%',
+            minSize: 2,
+            type: 'mapbubble',
+            data: [{
+                name: 'London',
+                lat: 51.507222,
+                lon: -0.1275,
+                z: 1,
+               
+            },
+            {
+                name: 'London',
+                lat: 60.507222,
+                lon: -0.1275,
+                z: 1
+            },]
+        }],
+        legend: {
+            enabled: false
+        },
+        title: {
+            text: 'World map'
+        }
+    });
+
+});
 */ 

@@ -24,7 +24,6 @@ def custom_query(command,joins):
 	con.connect()
 	select_main = con.cursor()
 	statement = 'select {} from orders {};'.format(command,joins)
-	print(statement)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
@@ -35,7 +34,6 @@ def custom_query(command,joins):
 	sales['OrderID'] = sales['OrderID'].astype(str)
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
-	print(sales)
 	return sales
 
 
@@ -51,20 +49,22 @@ class Db_command:
 		con.close()
 		keys = {i[1]:{"command":i[0]+"."+ i[1],"link":i[0]} for i in rows}
 		
+		del keys['Country']
+		del keys['iso_code']
+		del keys['City']
+		del keys['point_id']
 		
 		#create custom keys for aliases in our key
 		keys['Total'] = {"command":"products.Price * order_details.Quantity as 'Total'","link":"products"}
 		keys['EmployeeName'] = {"command":"concat( employees.FirstName,' ',employees.LastName) as 'EmployeeName'","link":"employees"}
 		keys['CustomerCity'] = {"command":"customers.City as 'CustomerCity'",'link':'customers'}
-		keys['SupplierCountry'] = keys.pop('Country')
-		keys['SupplierCountry']['command']  = keys['SupplierCountry']['command'] + ' as "SupplierCountry"'
-		keys['SupplierCity'] = keys.pop('City')
-		keys['SupplierCity']['command']  = keys['SupplierCity']['command'] + ' as "SupplierCity"'
-		keys['CustomerCountry'] = {"command":"customers.Country as 'CustomerCountry'",'link':'customers'}
-		keys['customer_iso'] = keys.pop('iso_code')
+		keys['SupplierCity'] = {"command":"suppliers.City as 'SupplierCity'",'link':'suppliers'}
+		keys['CustomerCountry'] = {"command":"customers.Country as 'CustomerCountry'",'link':'customers'} 
+		keys['SupplierCountry'] =  {'command':"suppliers.Country as 'SupplierCountry'",'link':'suppliers'}
 		keys['customer_iso'] ={"command": "customer_iso_ref.iso_code as 'customer_iso'","link":"customer_iso"}
 		keys['supplier_iso'] = {"command":"supplier_iso_ref.iso_code as 'supplier_iso'","link":"supplier_iso"}
-		
+		keys['customer_point'] = {"command":"customers.City as 'customer_point',customer_point_ref.latitude as 'customer_lat',customer_point_ref.longitude as 'customer_lon'",'link':'customer_point'}
+ 		
 		query.keys = keys
 		query.command = command
 		query.joins = joins
@@ -81,7 +81,8 @@ class Db_command:
 		ord_shi = 'join shippers on orders.ShipperID = shippers.ShipperID'
 		cus_iso = "join country_iso as customer_iso_ref on customers.iso_id = customer_iso_ref.country_id"
 		sup_iso = "join country_iso as supplier_iso_ref on suppliers.iso_id = supplier_iso_ref.country_id"
-		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi,cus_iso,sup_iso]
+		cus_poi = "join city_points as customer_point_ref on customers.point_id = customer_point_ref.city_id"
+		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi,cus_iso,sup_iso,cus_poi]
 		
 		#reference for needed join requests depending its relation to the orders table
 		refs = {}
@@ -95,27 +96,18 @@ class Db_command:
 		refs['categories'] = [0,1,2]
 		refs['customer_iso'] = [4,7]
 		refs['supplier_iso'] = [0,1,3,8]
+		refs['customer_point'] = [4,9]
 		
 		#take the values from array and parse it with the specified keys
 		rels = query.keys
-		for col in col_array:
-			print(rels[col])
 		rels = [rels[column] for column in col_array]
-		
-		
 		
 		#get the index of sequencial join clauses for relevant columns
 		joins = [num for i in rels for num in refs[i['link']]]
-		
-		
-		print(joins)
 		joins = list(set(joins))
-		print(joins)
 		joins.sort()
 		joins = [indexer[i] for i in joins]
-		print(joins)
 		joins = " ".join(joins)
-		
 		
 		#join query string into one
 		command = [i['command'] for i in rels]
