@@ -64,6 +64,7 @@ class Db_command:
 		keys['customer_iso'] ={"command": "customer_iso_ref.iso_code as 'customer_iso'","link":"customer_iso"}
 		keys['supplier_iso'] = {"command":"supplier_iso_ref.iso_code as 'supplier_iso'","link":"supplier_iso"}
 		keys['customer_point'] = {"command":"customers.City as 'customer_point',customer_point_ref.latitude as 'customer_lat',customer_point_ref.longitude as 'customer_lon'",'link':'customer_point'}
+		keys['supplier_point'] = {"command":"suppliers.City as 'supplier_point',supplier_point_ref.latitude as 'supplier_lat',supplier_point_ref.longitude as 'supplier_lon'",'link':'supplier_point'}
  		
 		query.keys = keys
 		query.command = command
@@ -82,7 +83,8 @@ class Db_command:
 		cus_iso = "join country_iso as customer_iso_ref on customers.iso_id = customer_iso_ref.country_id"
 		sup_iso = "join country_iso as supplier_iso_ref on suppliers.iso_id = supplier_iso_ref.country_id"
 		cus_poi = "join city_points as customer_point_ref on customers.point_id = customer_point_ref.city_id"
-		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi,cus_iso,sup_iso,cus_poi]
+		sup_poi = "join city_points as supplier_point_ref on suppliers.point_id = supplier_point_ref.city_id"
+		indexer = [ord_ord,pro_ord,pro_cat,pro_sup,cus_ord,ord_emp,ord_shi,cus_iso,sup_iso,cus_poi,sup_poi]
 		
 		#reference for needed join requests depending its relation to the orders table
 		refs = {}
@@ -97,6 +99,7 @@ class Db_command:
 		refs['customer_iso'] = [4,7]
 		refs['supplier_iso'] = [0,1,3,8]
 		refs['customer_point'] = [4,9]
+		refs['supplier_point'] = [0,1,3,10]
 		
 		#take the values from array and parse it with the specified keys
 		rels = query.keys

@@ -48,7 +48,7 @@ function bi_dashboard()
     //map update type
     function update_map(data)
     {
-        
+        console.log(data.series)
         Highcharts.mapChart('sales', {
             chart: { 
                 map: 'custom/world'
@@ -77,7 +77,7 @@ function bi_dashboard()
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
         $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
-
+        console.log(data.state)
         $(data.meta_data).each(function(index,value)
         {   
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)

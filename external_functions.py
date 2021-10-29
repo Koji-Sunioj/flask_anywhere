@@ -6,7 +6,7 @@ from matplotlib import cm
 import re
 
 def translate_category_map():
-	keys = {'CustomerCountry':'customer_iso','SupplierCountry':'supplier_iso','CustomerCity':'customer_point'}
+	keys = {'CustomerCountry':'customer_iso','SupplierCountry':'supplier_iso','CustomerCity':'customer_point','SupplierCity':'supplier_point'}
 	return keys
 
 class Highcharts:
@@ -63,7 +63,6 @@ class Highcharts:
 		if highchart.date_string:
 			data['OrderDate'] = pd.to_datetime(data['OrderDate'])
 			data = data.set_index('OrderDate')
-			#data.index = data.index.strftime(highchart.date_string)
 			if highchart.date_string == 'quarter':
 				data.index = data.index.to_period('Q').astype(str)
 			else:
@@ -95,13 +94,11 @@ class Highcharts:
 			highchart.title = '{}'.format(highchart.handle_title())
 			
 		data = data.fillna(0).round(2).sort_index()
-		
 		return data
 
 	def agg_to_json(highchart,new_data):
 		#series list is the array highcharts will interact with
 		series = []
-		
 		
 		#if there is one column, sort the values of the numerical column
 		if len(new_data.columns) == 1 and highchart.date_string == False:
@@ -116,14 +113,11 @@ class Highcharts:
 			stuff = {'name':highchart.regex_labels(highchart.category),'data':[[country.lower(),float(value[0])] for country,value in zip(new_data.index,new_data.values)]}
 			series.append(stuff)
 		elif highchart.visual == 'map' and 'City' in highchart.category:
-			data = []
 			new_data = new_data.reset_index()
-			print(new_data)
-			for row in new_data.values:
-				data.append({'name':row[0],'lat':row[1],'lon':row[2],'z':row[3]})
-			
-			
-			print(data)
+			data = [{'name':row[0],'lat':row[1],'lon':row[2],'z':row[3]} for row in new_data.values ] 
+			series.append({'name':'Cities'})
+			y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
+			series.append({'name':y_label,'animation':False,'type':'mapbubble','minSize':3,'maxSize':10,'data':data}) 
 		elif highchart.visual != 'map':
 			flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
 			if all(flip_bool):  new_data = new_data.T
@@ -139,7 +133,6 @@ class Highcharts:
 		categories = [i for i in new_data.index ] if len(new_data.index) > 1 else ['']
 		
 		xAxis = {'categories':categories,'title': {'text':x_label}}
-		
 		json_data['xAxis'] = xAxis
 		
 		return json_data

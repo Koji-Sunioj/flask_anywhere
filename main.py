@@ -46,8 +46,6 @@ def bi_data():
 		session['state'] = vars(highchart)
 		session['warnings'] = send_values['warnings']
 		
-		
-		
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
@@ -55,24 +53,24 @@ def bi_data():
 		data = db_functions.sales()
 		
 		#plug in the variables
-		highchart = external_functions.Highcharts('map','sum',value='Total',category='CustomerCountry')
-		#highchart = external_functions.Highcharts('column','sum',value='Total',category='CustomerCountry')
+		highchart = external_functions.Highcharts('map','sum',value='Total',category='CustomerCity')
+
 		#for the cookies
 		for_next = vars(highchart)
-		print(for_next['category'])
+		
 		if for_next['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
+			if 'City' in highchart.category: data = data.rename(columns={highchart.category: keys[highchart.category]}) 
 			for_next['category'] = keys[for_next['category']]
-		
+			
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
-		#for_next['category'] = 'CustomerCountry'
-		
-		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|tude')]].copy()
-
-		
+		check_point = "".join(data.columns)
+		if 'point' in check_point: data = data.rename(columns={"".join(data.columns[data.columns.str.contains('point')]):highchart.category})
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+	
 		#we need metadata for the html elements and save in cookies
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
 		meta_data.reverse()
@@ -93,19 +91,21 @@ def bi_data():
 
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
-		
 		if for_next['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
+			if 'City' in for_next['category']: data = data.rename(columns={for_next['category']: keys[for_next['category']]}) 
 			for_next['category'] = keys[for_next['category']]
 		
 		highchart = external_functions.Highcharts(**for_next)
-		
+	
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
-		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|tude')]].copy()
-
+		check_point = "".join(data.columns)
+		if 'point' in check_point: data = data.rename(columns={for_next['category']:highchart.category}) 
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+		
 		#we need metadata for the html elements and save in cookies
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
 		meta_data.reverse()
@@ -113,11 +113,12 @@ def bi_data():
 		new_json['meta_data'] = meta_data
 		new_json['state'] = vars(highchart)
 		new_json['warnings'] = session['warnings']
+		
 		return jsonify(new_json)
 
 @app.route("/")
 def bi_page():
-	session.pop('state',None)
+	#session.pop('state',None)
 	return render_template('index.html')
 
 
