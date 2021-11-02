@@ -89,8 +89,6 @@ def bi_data():
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
-		
-		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
 		if for_next['visual'] == 'map':
@@ -129,46 +127,25 @@ def bi_page():
 def test():
 	data = db_functions.sales()
 	
-	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID|Supplier')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
-	print(table)
+	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
+	
 	new_data = {}
+	customers = table.CustomerName.tolist()
 	for dat in table:
-		selected = table[dat].astype(str)
+		selected = table[dat]
 		new_data[dat] = []
 		for num,value in enumerate(selected.values):
-			if len(new_data[dat])> 0 and value == new_data[dat][-1]['name']:
+			if len(new_data[dat])> 0 and value == new_data[dat][-1]['name'] and customers[num-1] == customers[num]:
 				new_data[dat][-1]['span']  += 1
 			else:
-				new_data[dat].append({'name':value,'span':1,'index':num})
+				new_data[dat].append({'name':value,'span':1,'index':num}) 
 	
-	#print(new_data)
-	new_data = json.dumps(new_data)
-	'''
-	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
-	#table.iloc[1,0] = ''
-	#table.iloc[2,0] = ''
-	#table.iloc[4,0] = ''
-	#table.iloc[1,1] = ''
-	#table.iloc[4,1] = ''
-	#table.iloc[2,1] = ''
-	
-	for col in table.columns:
-		selected = table[col].copy().tolist()
-		new_col = []
-		for num,i in enumerate(selected):
-			if num - 1 >= 0 and i == selected[num - 1]:
-				new_col.append('')
-			else:
-				new_col.append(i)
-		table[col] = new_col
-	table = table.to_html(classes='table  ',index=False,table_id="datatable")
-	'''
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	return render_template('test.html',cols=cols,meta_data=meta_data,new_data=new_data) #
+	return render_template('test.html',cols=cols,meta_data=meta_data,new_data= json.dumps(new_data)) #
 	
 @app.route("/filter/",methods=['POST'])
 def filter():
