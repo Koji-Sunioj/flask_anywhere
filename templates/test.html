@@ -39,7 +39,7 @@ table, th, tbody
   <br>
   <div class="row rounded" style="background-color: white; padding:20px">
     <h5 class="text-center">Current selection</h5>
-    <table class="table table-sm align-middle table-borderless">
+    <table class="table table-sm align-middle ">
       <thead>
         <tr>
           {% for meta in meta_data%}
@@ -64,10 +64,51 @@ table, th, tbody
     </div>
   </div>
   <br>
-  <div class="row table-responsive" style="background-color: white; ">
-      {{table|safe}}
+  <div class="row " style="background-color: white; "  >
+   
+    
+    <table class="table">
+      <thead>
+        <tr id="table_header">
+         
+        </tr>
+      </thead>
+      <tbody id="table_target">
+        <tr>
+      
+        </tr>
+        
+        <tr>
+        
+        </tr>
+        <tr>
+         
+        </tr>
+        <tr>
+         
+        </tr>
+        <tr>
+         
+        </tr>
+        <tr>
+         
+        </tr>
+        <tr>
+         
+        </tr>
+        <tr>
+         
+        </tr>
+        <tr>
+         
+        </tr>
+        <tr>
+         
+        </tr>
+      </tbody>
+    </table>
   </div>
 </div> 
-
+<input type="hidden" value="{{new_data}}" id="table_data">
 </body>
 {% endblock %}  

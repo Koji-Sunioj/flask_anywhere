@@ -128,14 +128,47 @@ def bi_page():
 @app.route("/test/")
 def test():
 	data = db_functions.sales()
-	table = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].sort_values('OrderDate').head(10).to_html(classes='table  table-bordered table-hover',index=False,table_id="datatable")
+	
+	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID|Supplier')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
+	print(table)
+	new_data = {}
+	for dat in table:
+		selected = table[dat].astype(str)
+		new_data[dat] = []
+		for num,value in enumerate(selected.values):
+			if len(new_data[dat])> 0 and value == new_data[dat][-1]['name']:
+				new_data[dat][-1]['span']  += 1
+			else:
+				new_data[dat].append({'name':value,'span':1,'index':num})
+	
+	#print(new_data)
+	new_data = json.dumps(new_data)
+	'''
+	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
+	#table.iloc[1,0] = ''
+	#table.iloc[2,0] = ''
+	#table.iloc[4,0] = ''
+	#table.iloc[1,1] = ''
+	#table.iloc[4,1] = ''
+	#table.iloc[2,1] = ''
+	
+	for col in table.columns:
+		selected = table[col].copy().tolist()
+		new_col = []
+		for num,i in enumerate(selected):
+			if num - 1 >= 0 and i == selected[num - 1]:
+				new_col.append('')
+			else:
+				new_col.append(i)
+		table[col] = new_col
+	table = table.to_html(classes='table  ',index=False,table_id="datatable")
+	'''
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	data = data[data.nunique().sort_values().index]
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	
-	print(data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy())
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	return render_template('test.html',cols=cols,meta_data=meta_data,table=table) #
+	return render_template('test.html',cols=cols,meta_data=meta_data,new_data=new_data) #
 	
 @app.route("/filter/",methods=['POST'])
 def filter():

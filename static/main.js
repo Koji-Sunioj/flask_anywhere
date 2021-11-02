@@ -413,6 +413,22 @@ function bi_dashboard()
 
 function test()
 {
+     var table_data = JSON.parse($('#table_data').val())
+     
+     $.each(table_data, function(key,value){
+        var fixed_name = key.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
+        fixed_name = fixed_name.join(' ');
+        var table_header = `<th scope="col">${fixed_name}</th>`
+
+        $('#table_header').append(table_header)
+        //console.log(key)
+        $(value).each(function(index,data)
+        {
+            var cell = `<td rowspan=${data.span}>${data.name}</td>`
+            $(`#table_target tr:eq(${data.index})`).append(cell)
+            //console.log(cell)
+        });
+    });
     //$(document).ready( function () {
     //    $('#table_id').DataTable();
     //} );
@@ -526,6 +542,7 @@ function test()
         })
         ajax_filters()
     })
+
 
 }
 

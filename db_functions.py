@@ -56,7 +56,7 @@ class Db_command:
 		
 		#create custom keys for aliases in our key
 		keys['Total'] = {"command":"products.Price * order_details.Quantity as 'Total'","link":"products"}
-		keys['EmployeeName'] = {"command":"concat( employees.FirstName,' ',employees.LastName) as 'EmployeeName'","link":"employees"}
+		keys['SalesPerson'] = {"command":"concat( employees.FirstName,' ',employees.LastName) as 'SalesPerson'","link":"employees"}
 		keys['CustomerCity'] = {"command":"customers.City as 'CustomerCity'",'link':'customers'}
 		keys['SupplierCity'] = {"command":"suppliers.City as 'SupplierCity'",'link':'suppliers'}
 		keys['CustomerCountry'] = {"command":"customers.Country as 'CustomerCountry'",'link':'customers'} 
