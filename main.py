@@ -16,7 +16,10 @@ def bi_data():
 	if request.method == 'POST':
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
+		filters = json.loads(send_values['filters']) if 'filters' in send_values else False
 		
+		print(filters)
+ 		
 		if send_values['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
 			send_values['category'] = keys[send_values['category']]
@@ -26,7 +29,8 @@ def bi_data():
 		col_array = [val for key,val in send_values.items() if key in ['category','value']]
 		col_array = list(set(col_array))
 		'date_string' in send_values and col_array.append('OrderDate')
-		query.db_rel(col_array)
+		
+		query.db_rel(col_array,filters)
 
 		data = db_functions.custom_query(query.command,query.joins)
 		
@@ -51,6 +55,9 @@ def bi_data():
 	elif request.method == 'GET' and 'state' not in session:
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
+		filters = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy().sort_values('OrderDate').select_dtypes(include=['object'])
+		filters = filters[filters.nunique().sort_values().index]
+		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
 		
 		#plug in the variables
 		highchart = external_functions.Highcharts('map','sum',value='Total',category='SupplierCity')
@@ -78,6 +85,7 @@ def bi_data():
 		new_json['meta_data'] = meta_data
 		new_json['state'] = vars(highchart)
 		new_json['warnings'] = 'true'
+		new_json['filters'] = cols
 		
 		#save attributes to cookies
 		session['state'] = for_next
@@ -88,6 +96,10 @@ def bi_data():
 		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
+		filters = data.sort_values('OrderDate').select_dtypes(include=['object'])
+		filters = filters[filters.nunique().sort_values().index]
+		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
+		print(cols)
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
@@ -119,7 +131,7 @@ def bi_data():
 
 @app.route("/")
 def bi_page():
-	#session.pop('state',None)
+	session.pop('state',None)
 	return render_template('index.html')
 
 
@@ -127,6 +139,8 @@ def bi_page():
 def test():
 	data = db_functions.sales()
 	
+	pages = math.ceil(len(data) / 10)
+	page = 1
 	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
 	
 	new_data = {}
@@ -145,7 +159,7 @@ def test():
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	return render_template('test.html',cols=cols,meta_data=meta_data,new_data= json.dumps(new_data)) #
+	return render_template('test.html',cols=cols,meta_data=meta_data,new_data=json.dumps(new_data),page=page,pages=pages) #
 	
 @app.route("/filter/",methods=['POST'])
 def filter():

@@ -39,7 +39,7 @@ def custom_query(command,joins):
 
 class Db_command:
 	#a class structure for creating an sql query depending on the requests column names
-	def __init__(query,keys=False,command=False,joins=False):
+	def __init__(query,keys=False,command=False,joins=False,wheres=False):
 		#get the table names and column names from database
 		con.connect()
 		select_main = con.cursor()
@@ -69,10 +69,24 @@ class Db_command:
 		query.keys = keys
 		query.command = command
 		query.joins = joins
+		query.wheres = wheres
 		
-	def db_rel(query,col_array):
+	def db_rel(query,col_array,filters=False):
 		#joins for the stored procedure in current use, in sequence
+		#print(type(filters))
 		
+		if filters:
+			for i in filters:
+				if i['column'] in query.keys:
+					i['command'] = query.keys[i['column']]['command']
+					i['link'] = query.keys[i['column']]['link']
+			for i in filters:
+				if ' as ' in i['command']:
+					i['command'] = i['command'].split(' as ')[0]
+		print(filters)
+		
+		#test = [ query.keys[i['column']]  for i in filters]
+		#print([i['command'].split(' as ')[0] for i in test])
 		ord_ord = 'join order_details on order_details.OrderID = orders.OrderID'
 		pro_ord = 'join products on order_details.ProductID = products.ProductID'
 		pro_cat = 'join categories on products.CategoryID = categories.CategoryID'

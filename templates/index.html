@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
 {% block content %}
-
+<style>
+  .filtergroup::-webkit-calendar-picker-indicator {
+  display:none !important;
+}
+</style>
 
 <body onload="bi_dashboard()" style="background-color: lightblue">
 <!-- Button trigger modal -->
@@ -145,6 +149,25 @@
         </div>
       </div>
       
+    </div>
+    <br>
+    <div class="row rounded" style="background-color: white; padding:20px">
+
+      <div class=" input-group">
+        <span class="input-group-text">Filter</span>
+        <input class="form-control filtergroup" list="filtergroup" id="params" placeholder="Category Name, Supplier Country...">
+        <datalist id="filtergroup">
+    
+        
+         
+        </datalist>
+        <button class="btn btn-primary" type="button" id="addFilter" disabled>Add</button>
+      </div>
+    </div>
+    <br>
+    <div class="row rounded" role="toolbar">
+      <div class="btn-toolbar" role="toolbar" id="filters" >
+      </div>
     </div>
    
   </div>

@@ -109,8 +109,19 @@ table, th, tbody
         </tr>
       </tbody>
     </table>
+   <div class="col-2 offset-10"> 
+    <div class="input-group input-group-sm mb-3 flex-nowrap" >
+      <label class="input-group-text" style="background-color: white;">page</label>
+      <input type="number" min="1" max="52" class="form-control" id="paginAtor" style="width: 63px; text-align: center;">
+      <button class="btn btn-primary">of {{pages}}</button>
+    </div>
   </div>
+  </div>
+  
 </div> 
+
 <input type="hidden" value="{{new_data}}" id="table_data">
+
+
 </body>
 {% endblock %}  

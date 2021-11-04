@@ -76,8 +76,10 @@ function bi_dashboard()
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
+        //1. set the warnings
         $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
-        console.log(data.state)
+        
+        //2. set the columns
         $(data.meta_data).each(function(index,value)
         {   
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
@@ -96,7 +98,7 @@ function bi_dashboard()
 
         });
 
-        //if there is a value
+        //3. if there is a value
         if (data.state.value)
         {
             $('#values').val(data.state.value);
@@ -155,6 +157,11 @@ function bi_dashboard()
         {
             update_map(data)
         } 
+
+        $(data.filters).each(function(index,value){
+            $('#filtergroup').append(`<option class="dataOption" value="${value}">`)
+            
+        });
        
     //get request ends here  
     })
@@ -187,6 +194,23 @@ function bi_dashboard()
 
         //warnings 
         data.warnings  = ($('#warning-ignore').is(':checked')) ? true:false;
+
+
+        if ( $('#filters button').length > 0)
+        {
+            var filters = []
+            $('#filters button').each(function(index,value)
+            {  
+                var filterArr = $(value).text().split(':')
+                var target = filterArr[0].trim().replace(/\s/g, '')
+                var param = filterArr[1].trim()
+                filters.push({column: target, parameter: param}) 
+
+            })
+
+            data.filters = JSON.stringify(filters) 
+            
+        }
         
         //send data
         $.ajax({
@@ -406,6 +430,79 @@ function bi_dashboard()
             $('#categories').prop('disabled',true);
         }
     });
+
+
+
+    $(document).on('keyup','#params',function(){
+        var params = $('#params').val();
+       // var buttonTexts = $.map($('#filters button'), function(val) {  
+       //     return $(val).text()
+       // });  
+
+        var values = []
+
+        $('.dataOption').each(function(index,value){
+            values.push($(value).val())
+        })
+  
+        if (values.includes(params) )
+        {
+            $('#addFilter').prop('disabled',false)
+        }
+
+        else 
+        {
+            $('#addFilter').prop('disabled',true)
+        }
+    })
+
+    $(document).on('click','#addFilter',function(){
+        {   
+           
+            //disable selected value in data list
+            $('.dataOption').each(function(index,value){
+                if ($(value).val() == $('#params').val())
+                {
+                    $(value).prop('disabled',true)
+                }
+            })
+
+            //send to filters list
+            $('#filters').parent().css('background-color','white')
+            $('#filters').append(`
+                <div class="btn-group me-2" role="group" style="padding:5px;">
+                    <button class="btn btn-primary btn-sm" type="filter">${$('#params').val()}</button>
+                </div>`)
+            $('#params').val('');
+            $('#addFilter').prop('disabled',true);
+
+            //send text of filters in div to an array
+            
+        
+        }
+    })
+
+
+    $(document).on('click','button[type=filter]',function()
+    {
+
+        
+        $(this).parent().remove();
+        var buttonFilter = $(this).text();
+        if ($('#filters button').length == 0)
+        {
+            $('#filters').parent().css('background-color','') 
+            $('#filters').empty(); 
+        }
+        $('.dataOption').each(function(index,value){
+            if ($(value).val() == buttonFilter)
+            {
+                $(value).prop('disabled',false)
+            }
+        })
+        
+    })
+
    
 };
 
@@ -543,6 +640,27 @@ function test()
         ajax_filters()
     })
 
+    $(document).on('keyup','#paginAtor',function(event)
+    {  
+        if ($('#paginAtor').val() >  52)
+        {   
+            $('#paginAtor').val(52);
+            
+        }
+        else if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 47 && event.keyCode < 58) || event.keyCode == 8)) 
+        {
+          return false;
+        }
+    })
+
+    $(document).on('keydown','#paginAtor',function(event)
+    {  
+       if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 47 && event.keyCode < 58) || event.keyCode == 8)) 
+        {
+          return false;
+        }
+    })
+ 
 
 }
 
