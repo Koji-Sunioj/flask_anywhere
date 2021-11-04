@@ -18,7 +18,7 @@ def bi_data():
 		send_values = {key:val for key,val in request.form.items()}
 		filters = json.loads(send_values['filters']) if 'filters' in send_values else False
 		
-		print(filters)
+		
  		
 		if send_values['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
@@ -32,7 +32,7 @@ def bi_data():
 		
 		query.db_rel(col_array,filters)
 
-		data = db_functions.custom_query(query.command,query.joins)
+		data = db_functions.custom_query(query.command,query.joins,query.wheres)
 		
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['visual'],send_values['agg_type'])

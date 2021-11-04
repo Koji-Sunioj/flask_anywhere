@@ -19,11 +19,14 @@ def sales():
 	sales['OrderDate'] = pd.to_datetime(sales['OrderDate'])
 	return sales
 
-def custom_query(command,joins):
+def custom_query(command,joins,wheres=False):
 	#query constructed from table names, joins as attributed by Db_command class
 	con.connect()
 	select_main = con.cursor()
-	statement = 'select {} from orders {};'.format(command,joins)
+	statement = 'select {} from orders {}'.format(command,joins)
+	if wheres:
+		statement = statement +' '+ wheres
+	
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
@@ -34,6 +37,7 @@ def custom_query(command,joins):
 	sales['OrderID'] = sales['OrderID'].astype(str)
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
+	print(sales)
 	return sales
 
 
@@ -72,21 +76,15 @@ class Db_command:
 		query.wheres = wheres
 		
 	def db_rel(query,col_array,filters=False):
-		#joins for the stored procedure in current use, in sequence
-		#print(type(filters))
 		
 		if filters:
 			for i in filters:
-				if i['column'] in query.keys:
-					i['command'] = query.keys[i['column']]['command']
-					i['link'] = query.keys[i['column']]['link']
-			for i in filters:
-				if ' as ' in i['command']:
-					i['command'] = i['command'].split(' as ')[0]
-		print(filters)
+				key_command = query.keys[i['column']]['command']
+				i['command'] = key_command.split(' as ')[0] if  ' as ' in key_command else key_command
+				i['link'] = query.keys[i['column']]['link']
+		query.wheres = "where " + " and ".join([ i['command'] +' = "{}" '.format(i['parameter'])  for i in filters])
 		
-		#test = [ query.keys[i['column']]  for i in filters]
-		#print([i['command'].split(' as ')[0] for i in test])
+		
 		ord_ord = 'join order_details on order_details.OrderID = orders.OrderID'
 		pro_ord = 'join products on order_details.ProductID = products.ProductID'
 		pro_cat = 'join categories on products.CategoryID = categories.CategoryID'
@@ -118,7 +116,12 @@ class Db_command:
 		#take the values from array and parse it with the specified keys
 		rels = query.keys
 		rels = [rels[column] for column in col_array]
-		
+		rels_copy = rels.copy()
+
+		if filters:
+			for i in filters:
+				rels.append(query.keys[i['column']])
+	
 		#get the index of sequencial join clauses for relevant columns
 		joins = [num for i in rels for num in refs[i['link']]]
 		joins = list(set(joins))
@@ -127,7 +130,7 @@ class Db_command:
 		joins = " ".join(joins)
 		
 		#join query string into one
-		command = [i['command'] for i in rels]
+		command = [i['command'] for i in rels_copy]
 		command = ",".join(command) + ",orders.OrderID" if len(command) > 0 else "orders.OrderID"
 		
 		#add them to the class
