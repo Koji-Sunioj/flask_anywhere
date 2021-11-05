@@ -18,8 +18,6 @@ def bi_data():
 		send_values = {key:val for key,val in request.form.items()}
 		filters = json.loads(send_values['filters']) if 'filters' in send_values else False
 		
-		
- 		
 		if send_values['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
 			send_values['category'] = keys[send_values['category']]
@@ -31,7 +29,6 @@ def bi_data():
 		'date_string' in send_values and col_array.append('OrderDate')
 		
 		query.db_rel(col_array,filters)
-
 		data = db_functions.custom_query(query.command,query.joins,query.wheres)
 		
 		#set the attributes from the data
@@ -47,14 +44,19 @@ def bi_data():
 		#remove last cookie, reload it with new attributes
 		session.pop('state',None)
 		session.pop('warnings',None)
+		session.pop('wheres',None)
 		session['state'] = vars(highchart)
 		session['warnings'] = send_values['warnings']
+		session['wheres'] = filters
 		
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
+		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
+		
+		#for the datalist html elements
 		filters = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy().sort_values('OrderDate').select_dtypes(include=['object'])
 		filters = filters[filters.nunique().sort_values().index]
 		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
@@ -84,22 +86,26 @@ def bi_data():
 		
 		new_json['meta_data'] = meta_data
 		new_json['state'] = vars(highchart)
-		new_json['warnings'] = 'true'
+		new_json['warnings'] = True
 		new_json['filters'] = cols
+		new_json['wheres'] = False
 		
 		#save attributes to cookies
 		session['state'] = for_next
-		session['warnings'] = 'true'
+		session['warnings'] = True
+		session['wheres'] = False
+		
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' in session:
-		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
+		
+		#for the datalist html elements
 		filters = data.sort_values('OrderDate').select_dtypes(include=['object'])
 		filters = filters[filters.nunique().sort_values().index]
 		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
-		print(cols)
+		
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
@@ -111,6 +117,9 @@ def bi_data():
 		highchart = external_functions.Highcharts(**for_next)
 		
 		#create the frame and json array. meta data and state for html interfacing
+		command = "&".join(["(data['{}'] == '{}')".format(value['column'],value['parameter']) for value in session['wheres']]) if session['wheres'] else False
+		data = data[eval(command)] if command else data
+		
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
@@ -120,18 +129,20 @@ def bi_data():
 		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		
 		#we need metadata for the html elements and save in cookies
-		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
+		meta_data = [{'name':i[0],'dtype':i[1].name}   for i in zip(meta_raw.nunique().index,meta_raw.dtypes)]
 		meta_data.reverse()
 		
+		new_json['wheres'] = session['wheres']
 		new_json['meta_data'] = meta_data
 		new_json['state'] = vars(highchart)
 		new_json['warnings'] = session['warnings']
-		
+		new_json['filters'] = cols
 		return jsonify(new_json)
 
 @app.route("/")
 def bi_page():
-	session.pop('state',None)
+	#session.pop('state',None)
+	#session.pop('wheres',None)
 	return render_template('index.html')
 
 

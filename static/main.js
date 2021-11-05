@@ -48,7 +48,6 @@ function bi_dashboard()
     //map update type
     function update_map(data)
     {
-        console.log(data.series)
         Highcharts.mapChart('sales', {
             chart: { 
                 map: 'custom/world'
@@ -76,6 +75,8 @@ function bi_dashboard()
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
+
+       
         //1. set the warnings
         $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
         
@@ -84,7 +85,7 @@ function bi_dashboard()
         {   
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
             fixed_name = fixed_name.join(' ');
-            var option = `<option value=${value.name} title='${value.count} values' dtype=${value.dtype}>${fixed_name}</option>`
+            var option = `<option value=${value.name} dtype=${value.dtype}>${fixed_name}</option>`
             
 
             if (value.dtype.includes('int64') || value.dtype.includes('float64'))
@@ -157,11 +158,23 @@ function bi_dashboard()
         {
             update_map(data)
         } 
-
+        //4. datalist filter
         $(data.filters).each(function(index,value){
             $('#filtergroup').append(`<option class="dataOption" value="${value}">`)
             
         });
+
+        //5. send filter buttons if stored in session
+        if (data.wheres)
+        {   $('#filters').parent().css('background-color','white')
+            $(data.wheres).each(function(index,value){
+                $('#filters').append(`
+                <div class="btn-group me-2" role="group" style="padding:5px;">
+                    <button class="btn btn-primary btn-sm" type="filter">${value.origin}</button>
+                </div>`)
+
+            })
+        }
        
     //get request ends here  
     })
@@ -204,7 +217,7 @@ function bi_dashboard()
                 var filterArr = $(value).text().split(':')
                 var target = filterArr[0].trim().replace(/\s/g, '')
                 var param = filterArr[1].trim()
-                filters.push({column: target, parameter: param}) 
+                filters.push({column: target, parameter: param,origin:$(value).text()}) 
 
             })
 

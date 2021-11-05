@@ -122,6 +122,7 @@ class Highcharts:
 			series.append({'name':y_label,'animation':False,'type':'mapbubble','minSize':3,'maxSize':10,'data':data}) 
 		
 		elif highchart.visual != 'map':
+			print(new_data)
 			flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
 			if all(flip_bool):  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):

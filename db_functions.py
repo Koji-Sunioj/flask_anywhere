@@ -25,7 +25,7 @@ def custom_query(command,joins,wheres=False):
 	select_main = con.cursor()
 	statement = 'select {} from orders {}'.format(command,joins)
 	if wheres:
-		statement = statement +' '+ wheres
+		statement = statement +' '+ wheres 
 	
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
@@ -37,6 +37,7 @@ def custom_query(command,joins,wheres=False):
 	sales['OrderID'] = sales['OrderID'].astype(str)
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
+	print('\n')
 	print(sales)
 	return sales
 
@@ -82,7 +83,7 @@ class Db_command:
 				key_command = query.keys[i['column']]['command']
 				i['command'] = key_command.split(' as ')[0] if  ' as ' in key_command else key_command
 				i['link'] = query.keys[i['column']]['link']
-		query.wheres = "where " + " and ".join([ i['command'] +' = "{}" '.format(i['parameter'])  for i in filters])
+			query.wheres = "where " + " and ".join([ i['command'] +' = "{}" '.format(i['parameter'])  for i in filters])
 		
 		
 		ord_ord = 'join order_details on order_details.OrderID = orders.OrderID'
