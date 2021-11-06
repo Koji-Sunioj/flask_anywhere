@@ -26,17 +26,49 @@ table, th, tbody
 
 <div class="container mt-5">
   <div class="row rounded" style="background-color: white; padding:20px">
+    <div class="col">
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" name="SecondaryFilters"  type="radio" id="CategoricFilter" checked>
+        <label class="form-check-label" for="CategoricFilter">Category</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" name="SecondaryFilters"  type="radio" id="NumericFilter">
+        <label class="form-check-label" for="NumericFilter">Numeric</label>
+      </div>
+      <div class=" input-group" id="CatFilterRow">
+        <span class="input-group-text">Filter</span>
+        <input class="form-control filtergroup" list="filtergroup" id="params" placeholder="Category Name, Supplier Country...">
+        <datalist id="filtergroup">
+          {% for val in cols%}
+          <option class="dataOption" value="{{val}}">
+          {% endfor %}
+        </datalist>
+        <button class="btn btn-primary" type="button" id="addFilter" disabled>Add</button>
+      </div>
 
-    <div class=" input-group">
-      <span class="input-group-text">Filter</span>
-      <input class="form-control filtergroup" list="filtergroup" id="params" placeholder="Category Name, Supplier Country...">
-      <datalist id="filtergroup">
-        {% for val in cols%}
-        <option class="dataOption" value="{{val}}">
-        {% endfor %}
-      </datalist>
-      <button class="btn btn-primary" type="button" id="addFilter" disabled>Add</button>
-    </div>
+      <div class="input-group" style="display:none;" id="NumFilterRow">
+        <span class="input-group-text">Filter</span>
+        <select class="form-select" id="NumericSelect">
+          <option value="Total">Total</option>
+          <option value="Quantity">Quantity</option>
+          <option value="Price">Price</option>
+          <option value="Date">Date</option>
+        </select>
+        <select class="form-select" >
+          <option>greater than</option>
+          <option>less than</option>
+        </select>
+        <input class="form-control filtergroup" list="filterdate" id="DateFilter" placeholder="2019-07-12...." style="display:none;">
+        <datalist id="filterdate">
+          {% for date in date_cols%}
+          <option >{{date}}</option>
+         
+          {% endfor %}
+        </datalist>
+        <input type="number" class="form-control" style="text-align: center;" id="NumberFilterField">
+        <button class="btn btn-primary" disabled>Add</button>
+      </div>
+    </div> 
   </div>
   <br>
   <div class="row rounded" style="background-color: white; padding:20px">
@@ -113,7 +145,8 @@ table, th, tbody
     <div class="input-group input-group-sm mb-3 flex-nowrap" >
       <label class="input-group-text" style="background-color: white;">page</label>
       <input type="number" min="1" max="52" class="form-control" id="paginAtor" style="width: 63px; text-align: center;">
-      <button class="btn btn-primary">of {{pages}}</button>
+      <label class="input-group-text" style="background-color: white;">of {{pages}}</label>
+      <button class="btn btn-primary">-></button>
     </div>
   </div>
   </div>

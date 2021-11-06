@@ -523,6 +523,42 @@ function bi_dashboard()
 
 function test()
 {
+
+     $('#NumericFilter').on('change',function(){
+        if ($(this).is(':checked')) 
+        {
+            $('#NumFilterRow').show();
+            $('#CatFilterRow').hide();
+        }
+
+     })
+
+     $('#CategoricFilter').on('change',function(){
+        if ($(this).is(':checked')) 
+        {
+            $('#NumFilterRow').hide();
+            $('#CatFilterRow').show();
+        }
+
+     })
+
+     $(document).on('change','#NumericSelect',function(){
+        //alert($(this).val() )
+        if ($(this).val() == 'Date')
+        {
+            $('#NumberFilterField').hide();
+            $('#DateFilter').show()
+        }
+
+        else 
+        {
+            $('#NumberFilterField').show();
+            $('#DateFilter').hide()
+        }
+
+     })
+
+
      var table_data = JSON.parse($('#table_data').val())
      
      $.each(table_data, function(key,value){

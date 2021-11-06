@@ -42,13 +42,11 @@ def bi_data():
 		new_json = highchart.agg_to_json(new_data)
 		
 		#remove last cookie, reload it with new attributes
-		session.pop('state',None)
-		session.pop('warnings',None)
-		session.pop('wheres',None)
 		session['state'] = vars(highchart)
-		session['warnings'] = send_values['warnings']
+		session['warnings'] = json.loads(send_values['warnings'])
 		session['wheres'] = filters
 		
+		print(session)
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
@@ -101,8 +99,10 @@ def bi_data():
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
+		
+		
 		#for the datalist html elements
-		filters = data.sort_values('OrderDate').select_dtypes(include=['object'])
+		filters = data[data.columns[~data.columns.str.contains('iso')]].sort_values('OrderDate').select_dtypes(include=['object'])
 		filters = filters[filters.nunique().sort_values().index]
 		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
 		
@@ -165,12 +165,15 @@ def test():
 			else:
 				new_data[dat].append({'name':value,'span':1,'index':num}) 
 	
+	date_cols = data.OrderDate.sort_values().astype(str).unique()
+	print(date_cols)
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
+	
 	data = data[data.nunique().sort_values().index]
 	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
 	
 	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	return render_template('test.html',cols=cols,meta_data=meta_data,new_data=json.dumps(new_data),page=page,pages=pages) #
+	return render_template('test.html',cols=cols,meta_data=meta_data,new_data=json.dumps(new_data),page=page,pages=pages,date_cols=date_cols) #
 	
 @app.route("/filter/",methods=['POST'])
 def filter():
