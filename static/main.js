@@ -86,18 +86,12 @@ function bi_dashboard()
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
             fixed_name = fixed_name.join(' ');
             var option = `<option value=${value.name} dtype=${value.dtype}>${fixed_name}</option>`
-            
 
             if (value.dtype.includes('int64') || value.dtype.includes('float64'))
             {
                 //$('#NumericSelect').append(option)
                 $('#values').append(option);
             }
-           // else if (value.dtype.includes('date'))
-           // {
-                //$('#NumericSelect').append(option);
-           // }
-
 
             else if (value.dtype.includes('object'))
             {
@@ -200,12 +194,11 @@ function bi_dashboard()
                     var option = `<option value=${text}>${index}</option>`
                     $('#NumericSelect').append(option)
                     $(value).each(function(index,date){
-                        $('#filterdate').prepend(`<option value=${date}>${date}</option>`)
+                        $('#filterdate').prepend(`<option value=${date}></option>`)
                     })
                 }
              })
              $("#NumericSelect").val($("#NumericSelect option:first").val());
-            //var option = `<option value=${value.name} dtype=${value.dtype}>${fixed_name}</option>`
         }
     })
 
@@ -339,7 +332,7 @@ function bi_dashboard()
 
     //ajax request for new chart visual from server
     $(document).on('click','#send_values', function() {
-        //$('#send_values').prop('disabled',true);
+        $('#send_values').prop('disabled',true);
         $('#sales').css('opacity',0.5)
         ajax_data();
     })
@@ -475,13 +468,10 @@ function bi_dashboard()
     });
 
 
+    //FILTER FUNCTIONS
 
     $(document).on('keyup','#params',function(){
         var params = $('#params').val();
-       // var buttonTexts = $.map($('#filters button'), function(val) {  
-       //     return $(val).text()
-       // });  
-
         var values = []
 
         $('.dataOption').each(function(index,value){
@@ -499,36 +489,154 @@ function bi_dashboard()
         }
     })
 
+    $(document).on('keyup','#DateFilter',function(){
+        var params = $('#DateFilter').val();
+        var values = []
+       
+        $('#filterdate option').each(function(index,value){
+            values.push($(value).val())
+        })
+        
+        if (values.includes(params) )
+        {
+            $('#addFilter').prop('disabled',false)
+        }
+
+        else if (!values.includes(params) ) 
+        {
+            $('#addFilter').prop('disabled',true)
+        }
+        check_num_filters()
+    })
+
     $(document).on('click','#addFilter',function(){
         {   
-           
-            //disable selected value in data list
-            $('.dataOption').each(function(index,value){
-                if ($(value).val() == $('#params').val())
+            if ($('#CategoricCheck').is(':checked'))
+            {
+                $('.dataOption').each(function(index,value){
+                    if ($(value).val() == $('#params').val())
+                    {
+                        $(value).prop('disabled',true)
+                    }
+                })
+    
+                //send to filters list
+                $('#filters').parent().css('background-color','white')
+                $('#filters').append(`
+                    <div class="btn-group me-2" role="group" style="padding:5px;">
+                        <button class="btn btn-primary btn-sm" type="filter">${$('#params').val()}</button>
+                    </div>`)
+                $('#params').val('');
+                $('#addFilter').prop('disabled',true);
+            }
+
+
+            else if ($('#NumericCheck').is(':checked'))
+            {
+                var column = $('#NumericSelect').val()
+                var operand =  $('#NumericMath').val() 
+               
+
+                if ($('#NumericFilterField').is(':visible'))
                 {
-                    $(value).prop('disabled',true)
+                    var parameter = $('#NumericFilterField').val() 
                 }
-            })
 
-            //send to filters list
-            $('#filters').parent().css('background-color','white')
-            $('#filters').append(`
-                <div class="btn-group me-2" role="group" style="padding:5px;">
-                    <button class="btn btn-primary btn-sm" type="filter">${$('#params').val()}</button>
-                </div>`)
-            $('#params').val('');
-            $('#addFilter').prop('disabled',true);
+                else if  ($('#DateFilter').is(':visible'))
+                {
+                    var fixed_name = column.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
+                    column = fixed_name.join(' ');
+                      
+                    var parameter = $('#DateFilter').val()
+                    $('#filterdate option').each(function(index,value){
+                        if ($(value).val() == parameter)
+                        {
+                            $(value).prop('disabled',true)
+                        }
+                    }) 
+                }
 
-            //send text of filters in div to an array
-            
-        
+                $('#filters').parent().css('background-color','white')
+                $('#filters').append(`
+                    <div class="btn-group me-2" role="group" style="padding:5px;">
+                        <button class="btn btn-primary btn-sm" type="filter">${column +' '+ operand +' '+ parameter}</button>
+                    </div>`)
+                
+                $('#DateFilter').val('').keyup()
+                $('#NumericMath').change();
+            }
         }
     })
 
-    $(document).on('click','button[type=filter]',function()
+    function check_num_filters()
     {
+        if (!$('#NumericSelect').val().includes('Date')) 
+        {
+            $('#addFilter').prop('disabled',false)
+        }
+        if ($('#filters button').length > 0)
+        {
+            $('#filters button').each(function(index,value){
+                if ($(value).text().includes('<') || $(value).text().includes('>') ) 
+                { 
+                    var numvars = $(value).text().split(/>|</g)[0].replace(/ /g,'')
+                    var operand = $(value).text().charAt($(value).text().search(/<|>/))
+                    if ($('#NumericMath').val() == operand && $('#NumericSelect').val() == numvars.trim())
+                    {
+                        $('#addFilter').prop('disabled',true)
+                    } 
+                }
+            });
+        }
 
+   }
+
+   function check_operand_num() 
+
+   {
+        var target =  $('#NumericSelect').val()
+        var max = $(`#NumericSelect option[value="${target}"`).attr('max')
+        var min =  $(`#NumericSelect option[value="${target}"`).attr('min')
         
+        if  ($('#NumericMath').val() == '>' && !target.includes('Date'))
+        {
+            $('#NumericFilterField').val(min).keyup()
+        }
+
+        else if ($('#NumericMath').val() == '<'  && !target.includes('Date'))
+        {
+            $('#NumericFilterField').val(max).keyup()
+        }
+   }
+
+
+    $(document).on('change','#NumericMath',function()
+    {   
+        check_operand_num() 
+        check_num_filters()  
+    });
+
+    $(document).on('change','#NumericSelect', function(){
+        var target =  $('#NumericSelect').val()
+        if (!target.includes('Date'))
+        {
+            $('#DateFilter').hide()
+            $('#NumericFilterField').show()
+            check_operand_num () 
+        }
+        else if (target.includes('Date'))
+        {
+            $('#NumericFilterField').removeAttr('max').removeAttr('min')
+            $('#DateFilter').show()
+            $('#NumericFilterField').hide()
+            $('#addFilter').prop('disabled',true)
+            
+        }
+        check_num_filters()  
+    })
+
+    $(document).on('click','button[type=filter]',function()
+    {   
         $(this).parent().remove();
         var buttonFilter = $(this).text();
         if ($('#filters button').length == 0)
@@ -536,65 +644,85 @@ function bi_dashboard()
             $('#filters').parent().css('background-color','') 
             $('#filters').empty(); 
         }
-        $('.dataOption').each(function(index,value){
-            if ($(value).val() == buttonFilter)
-            {
-                $(value).prop('disabled',false)
-            }
-        })
-        
+
+        if(buttonFilter.includes(':')) 
+        {
+            $('.dataOption').each(function(index,value){
+                if ($(value).val() == buttonFilter)
+                {
+                    $(value).prop('disabled',false)
+                }
+            })
+        }
+
+        else if (buttonFilter.includes('Date')) 
+        {
+            var date = buttonFilter.split(/>|</g)[1].trim()
+            $('#filterdate option').each(function(index,value){
+                if ($(value).val() == date)
+                {
+                    $(value).prop('disabled',false)
+                }
+            })  
+        }
+
+        if ($('#NumericFilterField').is(':visible'))
+        {
+            check_num_filters()        
+        }
     });
 
 
-    $(document).on('change','#NumericSelect', function(){
-        var target =  $('#NumericSelect').val()
-        if (!target.includes('Date'))
-        {
-            $('#DateFilter').hide()
-            
-            $('#NumericFilterField').show()
-            var max = $(`#NumericSelect option[value="${target}"`).attr('max')
-            var min =  $(`#NumericSelect option[value="${target}"`).attr('min')
-            $('#NumericFilterField').attr('max',max).attr('min',min)
-            $('#NumericFilterField').val(min)
-        }
-        else if (target.includes('Date'))
-        {
-            $('#NumericFilterField').removeAttr('max').removeAttr('min')
-            $('#DateFilter').show()
-            $('#NumericFilterField').hide()
-            
-        }
-        
-    })
+    
 
     $('#NumericCheck').on('change',function(){
         if ($(this).is(':checked')) 
         {
-            $('.NumericFilter').show();
             $('#params').hide();
-            $('#NumericSelect').change();
-            
+            $('.NumericFilter').show();
+            $("#NumericSelect").val($("#NumericSelect option:first").val()).change();
+            $("#NumericMath").val($("#NumericMath option:first").val()).change();
+            $('#NumericFilterField').keyup()
+            $('#NumericMath').change();
         }
-
      })
 
      $('#CategoricCheck').on('change',function(){
         if ($(this).is(':checked')) 
         {
             $('.NumericFilter').hide();
+            $('#DateFilter').hide()
             $('#params').show();
+            $('#addFilter').prop('disabled',true)
         }
-
      })
 
-     $(document).on('keydown','#NumberFilterField',function(event)
+     $(document).on('keydown','#NumericFilterField',function(event)
     {  
-       
-        if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 47 && event.keyCode < 58) || event.keyCode == 8)) 
+        if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 45 && event.keyCode < 58) || event.keyCode == 8)) 
         {
-          return false;
+            return false;
         }
+    })
+
+    $(document).on('keyup','#NumericFilterField',function()
+    {   
+        
+        if (parseInt($('#NumericFilterField').val()) >  parseInt($('#NumericFilterField').attr('max')) )
+        {   
+            $('#NumericFilterField').val($('#NumericFilterField').attr('max'));
+        }
+        
+        else if ($('#NumericFilterField').val().length > 0) 
+        {
+            check_num_filters() 
+        }
+
+        else if ($('#NumericFilterField').val().length == 0) 
+        {
+            $('#addFilter').prop('disabled',true)
+        }
+        
     })
 };
 

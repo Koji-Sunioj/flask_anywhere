@@ -46,7 +46,6 @@ def bi_data():
 		session['warnings'] = json.loads(send_values['warnings'])
 		session['wheres'] = filters
 		
-		print(session)
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
