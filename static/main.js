@@ -76,7 +76,7 @@ function bi_dashboard()
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
 
-       
+        
         //1. set the warnings
         $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
         
@@ -90,8 +90,15 @@ function bi_dashboard()
 
             if (value.dtype.includes('int64') || value.dtype.includes('float64'))
             {
+                //$('#NumericSelect').append(option)
                 $('#values').append(option);
             }
+           // else if (value.dtype.includes('date'))
+           // {
+                //$('#NumericSelect').append(option);
+           // }
+
+
             else if (value.dtype.includes('object'))
             {
                 $('#categories').append(option);
@@ -175,8 +182,31 @@ function bi_dashboard()
 
             })
         }
-       
-    //get request ends here  
+
+        //.6 numeric filters
+
+        if (data.num_filters)
+        {   
+            $.each(data.num_filters,function(index,value)
+            {
+                if (value.max)
+                {   
+                    var option = `<option value=${index} max=${value.max} min=${value.min}>${index}</option>`
+                    $('#NumericSelect').prepend(option)
+                }
+
+                else if (index.includes('Date'))
+                {   var text = index.replace(/\s+/g, '')
+                    var option = `<option value=${text}>${index}</option>`
+                    $('#NumericSelect').append(option)
+                    $(value).each(function(index,date){
+                        $('#filterdate').prepend(`<option value=${date}>${date}</option>`)
+                    })
+                }
+             })
+             $("#NumericSelect").val($("#NumericSelect option:first").val());
+            //var option = `<option value=${value.name} dtype=${value.dtype}>${fixed_name}</option>`
+        }
     })
 
     function ajax_data()
@@ -495,7 +525,6 @@ function bi_dashboard()
         }
     })
 
-
     $(document).on('click','button[type=filter]',function()
     {
 
@@ -514,9 +543,59 @@ function bi_dashboard()
             }
         })
         
+    });
+
+
+    $(document).on('change','#NumericSelect', function(){
+        var target =  $('#NumericSelect').val()
+        if (!target.includes('Date'))
+        {
+            $('#DateFilter').hide()
+            
+            $('#NumericFilterField').show()
+            var max = $(`#NumericSelect option[value="${target}"`).attr('max')
+            var min =  $(`#NumericSelect option[value="${target}"`).attr('min')
+            $('#NumericFilterField').attr('max',max).attr('min',min)
+            $('#NumericFilterField').val(min)
+        }
+        else if (target.includes('Date'))
+        {
+            $('#NumericFilterField').removeAttr('max').removeAttr('min')
+            $('#DateFilter').show()
+            $('#NumericFilterField').hide()
+            
+        }
+        
     })
 
-   
+    $('#NumericCheck').on('change',function(){
+        if ($(this).is(':checked')) 
+        {
+            $('.NumericFilter').show();
+            $('#params').hide();
+            $('#NumericSelect').change();
+            
+        }
+
+     })
+
+     $('#CategoricCheck').on('change',function(){
+        if ($(this).is(':checked')) 
+        {
+            $('.NumericFilter').hide();
+            $('#params').show();
+        }
+
+     })
+
+     $(document).on('keydown','#NumberFilterField',function(event)
+    {  
+       
+        if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 47 && event.keyCode < 58) || event.keyCode == 8)) 
+        {
+          return false;
+        }
+    })
 };
 
 

@@ -100,11 +100,16 @@ def bi_data():
 		data = db_functions.sales()
 		
 		
-		
 		#for the datalist html elements
 		filters = data[data.columns[~data.columns.str.contains('iso')]].sort_values('OrderDate').select_dtypes(include=['object'])
 		filters = filters[filters.nunique().sort_values().index]
 		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
+		
+		num_filters = data[data.columns[~data.columns.str.contains('lat|lon')]].select_dtypes(include=['int64','float64']).aggregate(['max','min'])
+		num_filters = num_filters.to_dict()
+		num_filters['Order Date'] = data.OrderDate.sort_values().astype(str).unique().tolist()
+		print(num_filters)
+		
 		
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
@@ -132,11 +137,14 @@ def bi_data():
 		meta_data = [{'name':i[0],'dtype':i[1].name}   for i in zip(meta_raw.nunique().index,meta_raw.dtypes)]
 		meta_data.reverse()
 		
+		#print(data.Total)
+		
 		new_json['wheres'] = session['wheres']
 		new_json['meta_data'] = meta_data
 		new_json['state'] = vars(highchart)
 		new_json['warnings'] = session['warnings']
 		new_json['filters'] = cols
+		new_json['num_filters'] = num_filters
 		return jsonify(new_json)
 
 @app.route("/")

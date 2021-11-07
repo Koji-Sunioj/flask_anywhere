@@ -38,7 +38,7 @@ def custom_query(command,joins,wheres=False):
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
 	print('\n')
-	print(sales)
+	print(statement)
 	return sales
 
 

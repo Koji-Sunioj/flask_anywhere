@@ -84,7 +84,7 @@
   <div class="container " id = "content" >
    
     <br>
-    <div class="row rounded" style="background-color: white; padding-bottom: 10px; ">
+    <div class="row rounded" style="background-color: white; padding:20px">
         <h3>Customize graph</h3>
         <div class="col">
           <label>Sales Order Value</label>
@@ -152,16 +152,35 @@
     </div>
     <br>
     <div class="row rounded" style="background-color: white; padding:20px">
-
-      <div class=" input-group">
-        <span class="input-group-text">Filter</span>
-        <input class="form-control filtergroup" list="filtergroup" id="params" placeholder="Category Name, Supplier Country...">
-        <datalist id="filtergroup">
-    
+      <h3>Filter Selection</h3>
+      <div class="col">
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" name="SecondaryFilters" type="radio" id="CategoricCheck" checked>
+          <label class="form-check-label" for="CategoricCheck">Category</label>
+        </div>
+        <div class="form-check form-check-inline" >
+          <input class="form-check-input" name="SecondaryFilters" type="radio" id="NumericCheck">
+          <label class="form-check-label" for="NumericCheck">Numeric</label>
+        </div>
         
-         
-        </datalist>
-        <button class="btn btn-primary" type="button" id="addFilter" disabled>Add</button>
+        <div class="input-group" style="padding-top: 20px;">
+          <span class="input-group-text">Filter</span>
+          <select class="form-select NumericFilter" style=" display: none;" id="NumericSelect">
+          </select>
+          <select class="form-select NumericFilter"style=" display: none;" id="NumericMath" >
+            <option>greater than</option>
+            <option>less than</option>
+          </select>
+          <input type="number" id="NumericFilterField" class="form-control NumericFilter" style="text-align: center;  display: none;" id="NumberFilterField">
+          <input class="form-control filtergroup" list="filterdate" id="DateFilter" placeholder="2019-07-12...." style="display:none;">
+          <datalist id="filterdate">
+            
+          </datalist>
+          <input class="form-control filtergroup" list="filtergroup" id="params" placeholder="Category Name, Supplier Country...">
+          <datalist id="filtergroup">
+          </datalist>
+          <button class="btn btn-primary" type="button" id="addFilter" disabled>Add</button>
+        </div>
       </div>
     </div>
     <br>
