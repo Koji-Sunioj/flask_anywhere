@@ -26,7 +26,7 @@ def custom_query(command,joins,wheres=False):
 	statement = 'select {} from orders {}'.format(command,joins)
 	if wheres:
 		statement = statement +' '+ wheres 
-	
+	print(statement)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
@@ -37,8 +37,8 @@ def custom_query(command,joins,wheres=False):
 	sales['OrderID'] = sales['OrderID'].astype(str)
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
-	print('\n')
-	print(statement)
+	#print('\n')
+	#print(statement)
 	return sales
 
 
@@ -79,13 +79,31 @@ class Db_command:
 	def db_rel(query,col_array,filters=False):
 		
 		if filters:
+			having =""" AND orders.OrderID IN 
+			(SELECT orders.OrderID FROM orders 
+			JOIN order_details ON order_details.OrderID = orders.OrderID 
+			JOIN products ON order_details.ProductID = products.ProductID 
+			GROUP BY orders.OrderID 
+			HAVING {} ORDER BY orders.OrderID)"""
+			havings = []
+			wheres = []
 			for i in filters:
 				key_command = query.keys[i['column']]['command']
 				i['command'] = key_command.split(' as ')[0] if  ' as ' in key_command else key_command
 				i['link'] = query.keys[i['column']]['link']
-			query.wheres = "where " + " and ".join([ i['command'] +' = "{}" '.format(i['parameter'])  for i in filters])
-		
-		
+				if i['column'] == 'Total' or i['column'] == 'Quantity':
+					havings.append("SUM({}) {} {}".format(i['command'],i['operand'],i['parameter']))
+				else:
+					wheres.append("{} {} '{}'".format(i['command'],i['operand'],i['parameter']))
+			#query.wheres = "where " + " and ".join([ i['command'] +' {} "{}" '.format(i['operand'],i['parameter'])  for i in filters])
+			
+			wheres = "where "+" and ".join(wheres) if wheres else ''
+			if len(havings)> 0:
+				havings = " and ".join(havings)
+				having = having.format(havings)
+				
+			query.wheres = wheres + having if havings else wheres
+			
 		ord_ord = 'join order_details on order_details.OrderID = orders.OrderID'
 		pro_ord = 'join products on order_details.ProductID = products.ProductID'
 		pro_cat = 'join categories on products.CategoryID = categories.CategoryID'

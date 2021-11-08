@@ -9,6 +9,13 @@ def translate_category_map():
 	keys = {'CustomerCountry':'customer_iso','SupplierCountry':'supplier_iso','CustomerCity':'customer_point','SupplierCity':'supplier_point'}
 	return keys
 
+def check_eval(value):
+	if isinstance(value,int):
+		result = value
+	elif str.isdigit(value) == False:
+		result = '"{}"'.format(value)
+	return result
+
 class Highcharts:
 	def __init__(highchart,visual,agg_type,value=False,category=False,date_string=False,title=False):	
 		highchart.value = value

@@ -171,7 +171,7 @@ function bi_dashboard()
             $(data.wheres).each(function(index,value){
                 $('#filters').append(`
                 <div class="btn-group me-2" role="group" style="padding:5px;">
-                    <button class="btn btn-primary btn-sm" type="filter">${value.origin}</button>
+                    <button class="btn btn-primary btn-sm" operand="${value.operand}" type="filter">${value.origin}</button>
                 </div>`)
 
             })
@@ -237,10 +237,14 @@ function bi_dashboard()
             var filters = []
             $('#filters button').each(function(index,value)
             {  
-                var filterArr = $(value).text().split(':')
+                var filterArr = $(value).text().split(/:|<|>/)
                 var target = filterArr[0].trim().replace(/\s/g, '')
                 var param = filterArr[1].trim()
-                filters.push({column: target, parameter: param,origin:$(value).text()}) 
+                if (!isNaN(param))
+                {
+                    param = parseInt(param)
+                }
+                filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
 
             })
 
@@ -332,7 +336,7 @@ function bi_dashboard()
 
     //ajax request for new chart visual from server
     $(document).on('click','#send_values', function() {
-        $('#send_values').prop('disabled',true);
+       // $('#send_values').prop('disabled',true);
         $('#sales').css('opacity',0.5)
         ajax_data();
     })
@@ -524,7 +528,7 @@ function bi_dashboard()
                 $('#filters').parent().css('background-color','white')
                 $('#filters').append(`
                     <div class="btn-group me-2" role="group" style="padding:5px;">
-                        <button class="btn btn-primary btn-sm" type="filter">${$('#params').val()}</button>
+                        <button class="btn btn-primary btn-sm" operand="=" type="filter">${$('#params').val()}</button>
                     </div>`)
                 $('#params').val('');
                 $('#addFilter').prop('disabled',true);
@@ -559,7 +563,7 @@ function bi_dashboard()
                 $('#filters').parent().css('background-color','white')
                 $('#filters').append(`
                     <div class="btn-group me-2" role="group" style="padding:5px;">
-                        <button class="btn btn-primary btn-sm" type="filter">${column +' '+ operand +' '+ parameter}</button>
+                        <button class="btn btn-primary btn-sm" operand="${operand}" type="filter">${column +' '+ operand +' '+ parameter}</button>
                     </div>`)
                 
                 $('#DateFilter').val('').keyup()

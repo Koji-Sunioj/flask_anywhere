@@ -18,6 +18,7 @@ def bi_data():
 		send_values = {key:val for key,val in request.form.items()}
 		filters = json.loads(send_values['filters']) if 'filters' in send_values else False
 		
+		
 		if send_values['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
 			send_values['category'] = keys[send_values['category']]
@@ -58,6 +59,10 @@ def bi_data():
 		filters = filters[filters.nunique().sort_values().index]
 		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
 		
+		num_filters = data[data.columns[~data.columns.str.contains('lat|lon')]].select_dtypes(include=['int64','float64']).aggregate(['max','min'])
+		num_filters = num_filters.to_dict()
+		num_filters['Order Date'] = data.OrderDate.sort_values().astype(str).unique().tolist()
+		
 		#plug in the variables
 		highchart = external_functions.Highcharts('map','sum',value='Total',category='SupplierCity')
 
@@ -86,6 +91,7 @@ def bi_data():
 		new_json['warnings'] = True
 		new_json['filters'] = cols
 		new_json['wheres'] = False
+		new_json['num_filters'] = num_filters
 		
 		#save attributes to cookies
 		session['state'] = for_next
@@ -107,7 +113,7 @@ def bi_data():
 		num_filters = data[data.columns[~data.columns.str.contains('lat|lon')]].select_dtypes(include=['int64','float64']).aggregate(['max','min'])
 		num_filters = num_filters.to_dict()
 		num_filters['Order Date'] = data.OrderDate.sort_values().astype(str).unique().tolist()
-		print(num_filters)
+		
 		
 		
 		
@@ -121,7 +127,9 @@ def bi_data():
 		highchart = external_functions.Highcharts(**for_next)
 		
 		#create the frame and json array. meta data and state for html interfacing
-		command = "&".join(["(data['{}'] == '{}')".format(value['column'],value['parameter']) for value in session['wheres']]) if session['wheres'] else False
+		translator = {'=':'==','>':'>','<':'<'}
+		command = "&".join(["(data['{}'] {} {})".format(value['column'],translator[value['operand']],external_functions.check_eval(value['parameter']) ) for value in session['wheres']]) if session['wheres'] else False
+	
 		data = data[eval(command)] if command else data
 		
 		new_data = highchart.agg_frame(data)
