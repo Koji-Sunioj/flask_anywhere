@@ -59,7 +59,12 @@ def bi_data():
 		filters = filters[filters.nunique().sort_values().index]
 		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
 		
-		num_filters = data[data.columns[~data.columns.str.contains('lat|lon')]].select_dtypes(include=['int64','float64']).aggregate(['max','min'])
+		test = data[data.columns[~data.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64'])
+		test = test.groupby(test.index).sum()
+		test= test.aggregate(['max','min'])
+		test['Price'] = data.Price.aggregate(['max','min'])
+		num_filters =test
+		
 		num_filters = num_filters.to_dict()
 		num_filters['Order Date'] = data.OrderDate.sort_values().astype(str).unique().tolist()
 		
@@ -110,12 +115,14 @@ def bi_data():
 		filters = filters[filters.nunique().sort_values().index]
 		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
 		
-		num_filters = data[data.columns[~data.columns.str.contains('lat|lon')]].select_dtypes(include=['int64','float64']).aggregate(['max','min'])
+		test = data[data.columns[~data.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64'])
+		test = test.groupby(test.index).sum()
+		test= test.aggregate(['max','min'])
+		test['Price'] = data.Price.aggregate(['max','min'])
+		num_filters =test
+		
 		num_filters = num_filters.to_dict()
 		num_filters['Order Date'] = data.OrderDate.sort_values().astype(str).unique().tolist()
-		
-		
-		
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
