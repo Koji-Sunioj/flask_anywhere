@@ -109,7 +109,6 @@ def bi_data():
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
-		
 		#for the datalist html elements
 		filters = data[data.columns[~data.columns.str.contains('iso')]].sort_values('OrderDate').select_dtypes(include=['object'])
 		filters = filters[filters.nunique().sort_values().index]
@@ -133,11 +132,8 @@ def bi_data():
 		
 		highchart = external_functions.Highcharts(**for_next)
 		
-		#create the frame and json array. meta data and state for html interfacing
-		translator = {'=':'==','>':'>','<':'<'}
-		command = "&".join(["(data['{}'] {} {})".format(value['column'],translator[value['operand']],external_functions.check_eval(value['parameter']) ) for value in session['wheres']]) if session['wheres'] else False
-	
-		data = data[eval(command)] if command else data
+		print(session['wheres'])
+		if session['wheres']: data = external_functions.frame_filters(data,session['wheres'])
 		
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
@@ -215,4 +211,6 @@ if (__name__ == "__main__"):
 
 
 
-
+#translator = {'=':'==','>':'>','<':'<'}
+#command = "&".join(["(data['{}'] {} {})".format(value['column'],translator[value['operand']],external_functions.check_eval(value['parameter']) ) for value in 
+#data = data[eval(command)] if command else data

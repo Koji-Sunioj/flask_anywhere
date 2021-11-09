@@ -16,6 +16,29 @@ def check_eval(value):
 		result = '"{}"'.format(value)
 	return result
 
+def frame_filters(frame,filters):
+	#filter by values by OrderID per sales order, or OrderDetailID for rows in sales order
+	indices = []
+	subindices = []
+	translator = {'=':'==','>':'>','<':'<'}
+
+	for i in filters:
+		query = "{} {} {}".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
+		boolsub = len(subindices) > 0
+		boolindic = len(indices) > 0
+		if i['column'] in ['Total','Quantity']:
+			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index
+			indices = selected if not boolindic else  np.intersect1d(selected, indices)
+		else:
+			selected = frame.query(query).OrderDetailID.unique()
+			subindices = selected if not boolsub else  np.intersect1d(selected, subindices)
+
+	if boolindic: frame = frame[(frame.OrderID.isin(indices))]
+	if boolsub: frame = frame[(frame.OrderDetailID.isin(subindices))]
+	
+	return frame
+
+
 class Highcharts:
 	def __init__(highchart,visual,agg_type,value=False,category=False,date_string=False,title=False):	
 		highchart.value = value
