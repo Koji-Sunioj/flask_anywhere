@@ -16,6 +16,21 @@ def check_eval(value):
 		result = '"{}"'.format(value)
 	return result
 
+def category_datalist(frame):
+	filters = frame[frame.columns[~frame.columns.str.contains('iso')]].sort_values('OrderDate').select_dtypes(include=['object'])
+	filters = filters[filters.nunique().sort_values().index]
+	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
+	return cols
+
+def numeric_filters(frame):
+	new_frame = frame[frame.columns[~frame.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64'])
+	new_frame = new_frame.groupby(new_frame.index).sum()
+	new_frame = new_frame.aggregate(['max','min'])
+	new_frame['Price'] = frame.Price.aggregate(['max','min'])
+	num_filters = new_frame.to_dict()
+	num_filters['Order Date'] = frame.OrderDate.sort_values().astype(str).unique().tolist()
+	return num_filters
+
 def frame_filters(frame,filters):
 	#filter by values by OrderID per sales order, or OrderDetailID for rows in sales order
 	indices = []
@@ -24,18 +39,18 @@ def frame_filters(frame,filters):
 
 	for i in filters:
 		query = "{} {} {}".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
-		boolsub = len(subindices) > 0
 		boolindic = len(indices) > 0
+		boolsub = len(subindices) > 0
+		
 		if i['column'] in ['Total','Quantity']:
 			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index
 			indices = selected if not boolindic else  np.intersect1d(selected, indices)
 		else:
-			selected = frame.query(query).OrderDetailID.unique()
+			selected = frame.query(query).OrderDetailID
 			subindices = selected if not boolsub else  np.intersect1d(selected, subindices)
-
-	if boolindic: frame = frame[(frame.OrderID.isin(indices))]
-	if boolsub: frame = frame[(frame.OrderDetailID.isin(subindices))]
-	
+	if any(indices): frame = frame[(frame.OrderID.isin(indices))]
+	if any(subindices): frame = frame[(frame.OrderDetailID.isin(subindices))]
+	#frame = frame[(frame.OrderDetailID.isin(subindices))]
 	return frame
 
 

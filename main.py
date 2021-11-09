@@ -50,23 +50,12 @@ def bi_data():
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' not in session:
-		
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
-		#for the datalist html elements
-		filters = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy().sort_values('OrderDate').select_dtypes(include=['object'])
-		filters = filters[filters.nunique().sort_values().index]
-		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
-		
-		test = data[data.columns[~data.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64'])
-		test = test.groupby(test.index).sum()
-		test= test.aggregate(['max','min'])
-		test['Price'] = data.Price.aggregate(['max','min'])
-		num_filters =test
-		
-		num_filters = num_filters.to_dict()
-		num_filters['Order Date'] = data.OrderDate.sort_values().astype(str).unique().tolist()
+		#get the values for the html data list elements
+		category_datalist = external_functions.category_datalist(data)
+		num_filters = external_functions.numeric_filters(data)
 		
 		#plug in the variables
 		highchart = external_functions.Highcharts('map','sum',value='Total',category='SupplierCity')
@@ -91,12 +80,13 @@ def bi_data():
 		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
 		meta_data.reverse()
 		
-		new_json['meta_data'] = meta_data
+		#assign variables to json serializable dictionary
 		new_json['state'] = vars(highchart)
-		new_json['warnings'] = True
-		new_json['filters'] = cols
-		new_json['wheres'] = False
+		new_json['meta_data'] = meta_data
+		new_json['filters'] = category_datalist
 		new_json['num_filters'] = num_filters
+		new_json['warnings'] = True
+		new_json['wheres'] = False
 		
 		#save attributes to cookies
 		session['state'] = for_next
@@ -109,19 +99,9 @@ def bi_data():
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
-		#for the datalist html elements
-		filters = data[data.columns[~data.columns.str.contains('iso')]].sort_values('OrderDate').select_dtypes(include=['object'])
-		filters = filters[filters.nunique().sort_values().index]
-		cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in filters.columns for value in filters[col].unique()]
-		
-		test = data[data.columns[~data.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64'])
-		test = test.groupby(test.index).sum()
-		test= test.aggregate(['max','min'])
-		test['Price'] = data.Price.aggregate(['max','min'])
-		num_filters =test
-		
-		num_filters = num_filters.to_dict()
-		num_filters['Order Date'] = data.OrderDate.sort_values().astype(str).unique().tolist()
+		#get the values for the html data list elements
+		category_datalist = external_functions.category_datalist(data)
+		num_filters = external_functions.numeric_filters(data)
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
@@ -132,7 +112,6 @@ def bi_data():
 		
 		highchart = external_functions.Highcharts(**for_next)
 		
-		print(session['wheres'])
 		if session['wheres']: data = external_functions.frame_filters(data,session['wheres'])
 		
 		new_data = highchart.agg_frame(data)
@@ -147,14 +126,14 @@ def bi_data():
 		meta_data = [{'name':i[0],'dtype':i[1].name}   for i in zip(meta_raw.nunique().index,meta_raw.dtypes)]
 		meta_data.reverse()
 		
-		#print(data.Total)
-		
-		new_json['wheres'] = session['wheres']
-		new_json['meta_data'] = meta_data
+		#assign variables to json serializable dictionary
 		new_json['state'] = vars(highchart)
-		new_json['warnings'] = session['warnings']
-		new_json['filters'] = cols
+		new_json['meta_data'] = meta_data
+		new_json['filters'] = category_datalist
 		new_json['num_filters'] = num_filters
+		new_json['warnings'] = session['warnings']
+		new_json['wheres'] = session['wheres']
+		
 		return jsonify(new_json)
 
 @app.route("/")
