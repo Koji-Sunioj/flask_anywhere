@@ -27,7 +27,8 @@ def numeric_filters(frame):
 	new_frame = new_frame.groupby(new_frame.index).sum()
 	new_frame = new_frame.aggregate(['max','min'])
 	new_frame['Price'] = frame.Price.aggregate(['max','min'])
-	num_filters = new_frame.to_dict()
+
+	num_filters = new_frame.fillna(0).to_dict()
 	num_filters['Order Date'] = frame.OrderDate.sort_values().astype(str).unique().tolist()
 	return num_filters
 
@@ -43,14 +44,18 @@ def frame_filters(frame,filters):
 		boolsub = len(subindices) > 0
 		
 		if i['column'] in ['Total','Quantity']:
-			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index
+			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index.values
+			#print(type(selected))
 			indices = selected if not boolindic else  np.intersect1d(selected, indices)
 		else:
-			selected = frame.query(query).OrderDetailID
+			selected = frame.query(query).OrderDetailID.values
 			subindices = selected if not boolsub else  np.intersect1d(selected, subindices)
+	boolboth = [len(indices)> 0,len(subindices)> 0]
+	
 	if any(indices): frame = frame[(frame.OrderID.isin(indices))]
 	if any(subindices): frame = frame[(frame.OrderDetailID.isin(subindices))]
-	#frame = frame[(frame.OrderDetailID.isin(subindices))]
+	if not any(boolboth): frame = frame.drop(np.arange(0,len(frame.index)))
+	
 	return frame
 
 
@@ -106,6 +111,8 @@ class Highcharts:
 		
 		#if date string is requested
 		if highchart.date_string:
+			data = data.reset_index()
+			print(data)
 			data['OrderDate'] = pd.to_datetime(data['OrderDate'])
 			data = data.set_index('OrderDate')
 			if highchart.date_string == 'quarter':

@@ -313,6 +313,45 @@ function bi_dashboard()
 
     }
 
+    function ajax_filters() 
+    {
+        if ( $('#filters button').length > 0)
+        {
+            var filters = []
+            $('#filters button').each(function(index,value)
+            {  
+                var filterArr = $(value).text().split(/:|<|>/)
+                var target = filterArr[0].trim().replace(/\s/g, '')
+                var param = filterArr[1].trim()
+                if (!isNaN(param))
+                {
+                    param = parseInt(param)
+                }
+                filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
+
+            })
+        }
+
+        data = {
+            filterData : JSON.stringify(filters) 
+        }
+        $.ajax({
+            data :  data,
+            type : 'POST',
+            url : '/frame_filter/'
+        })
+ 
+ 
+        .done(function(data){ 
+            {
+                //update the table
+                console.log(data)
+            }  
+        });
+
+
+    }
+
     function handleCategory()
     {
         var value = $('#values').val();
@@ -569,6 +608,7 @@ function bi_dashboard()
                 $('#DateFilter').val('').keyup()
                 $('#NumericMath').change();
             }
+        ajax_filters() 
         }
     })
 

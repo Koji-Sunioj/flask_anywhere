@@ -1,11 +1,10 @@
 from flask import Flask, redirect, url_for, request,json,session,render_template,jsonify
 import db_functions
-import pymysql
 import external_functions
 import re
-import json
-import numpy as np
 import math
+import pandas as pd
+
 
 app = Flask(__name__)
 app.secret_key = 'ironpond_2'
@@ -103,6 +102,8 @@ def bi_data():
 		category_datalist = external_functions.category_datalist(data)
 		num_filters = external_functions.numeric_filters(data)
 		
+		print(num_filters)
+		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
 		if for_next['visual'] == 'map':
@@ -113,6 +114,9 @@ def bi_data():
 		highchart = external_functions.Highcharts(**for_next)
 		
 		if session['wheres']: data = external_functions.frame_filters(data,session['wheres'])
+		
+		string_counts = pd.DataFrame(data.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
+		print(string_counts)
 		
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
@@ -143,6 +147,21 @@ def bi_page():
 	return render_template('index.html')
 
 
+@app.route("/frame_filter/",methods=['POST'])
+def frame_filter():
+	json_filters = json.loads(request.form['filterData'])
+	data = db_functions.sales()
+	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]]
+	new_frame = external_functions.frame_filters(data,json_filters)
+	new_frame = new_frame.drop(['OrderDetailID'], axis=1)
+	ranges =  external_functions.numeric_filters(new_frame)
+	string_counts = pd.DataFrame(new_frame.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
+	json_feedback = {**ranges, **string_counts}
+	if len(json_feedback['Order Date']) > 0: json_feedback['Order Date'] = {'max':max(json_feedback['Order Date']),'min':min(json_feedback['Order Date'])}
+		
+	return jsonify(json_feedback)
+	
+
 @app.route("/test/")
 def test():
 	data = db_functions.sales()
@@ -150,6 +169,7 @@ def test():
 	pages = math.ceil(len(data) / 10)
 	page = 1
 	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
+	print(table)
 	
 	new_data = {}
 	customers = table.CustomerName.tolist()
