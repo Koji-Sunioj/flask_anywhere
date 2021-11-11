@@ -182,8 +182,10 @@ def test():
 			else:
 				new_data[dat].append({'name':value,'span':1,'index':num}) 
 	
+	print(new_data)
+	
 	date_cols = data.OrderDate.sort_values().astype(str).unique()
-	print(date_cols)
+	#print(date_cols)
 	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
 	
 	data = data[data.nunique().sort_values().index]

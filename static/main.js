@@ -811,7 +811,7 @@ function test()
 
 
      var table_data = JSON.parse($('#table_data').val())
-     
+     console.log(table_data)
      $.each(table_data, function(key,value){
         var fixed_name = key.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
         fixed_name = fixed_name.join(' ');

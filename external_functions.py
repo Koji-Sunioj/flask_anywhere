@@ -40,22 +40,17 @@ def frame_filters(frame,filters):
 
 	for i in filters:
 		query = "{} {} {}".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
-		boolindic = len(indices) > 0
-		boolsub = len(subindices) > 0
-		
 		if i['column'] in ['Total','Quantity']:
 			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index.values
-			#print(type(selected))
-			indices = selected if not boolindic else  np.intersect1d(selected, indices)
+			indices.append(set(selected))
 		else:
 			selected = frame.query(query).OrderDetailID.values
-			subindices = selected if not boolsub else  np.intersect1d(selected, subindices)
-	boolboth = [len(indices)> 0,len(subindices)> 0]
+			subindices.append(set(selected))
 	
-	if any(indices): frame = frame[(frame.OrderID.isin(indices))]
-	if any(subindices): frame = frame[(frame.OrderDetailID.isin(subindices))]
-	if not any(boolboth): frame = frame.drop(np.arange(0,len(frame.index)))
-	
+	subindices = list(set.intersection(*subindices)) if len(subindices) > 0 else frame.OrderDetailID.tolist()
+	indices = list(set.intersection(*indices)) if len(indices) > 0 else frame.OrderID.tolist()
+	frame = frame[(frame.OrderDetailID.isin(subindices))]
+	frame = frame[(frame.OrderID.isin(indices))]
 	return frame
 
 
@@ -194,5 +189,24 @@ class Highcharts:
 		return json_data
 
 '''
-
+for i in filters:
+		query = "{} {} {}".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
+		boolindic = len(indices) > 0
+		boolsub = len(subindices) > 0
+		
+		
+		
+		if i['column'] in ['Total','Quantity']:
+			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index.values
+			#print(type(selected))
+			indices = selected if not boolindic else  np.intersect1d(selected, indices)
+		else:
+			selected = frame.query(query).OrderDetailID.tolist()
+			print(not boolsub)
+			#print(selected)
+			subindices = selected if not boolsub else  np.intersect1d(selected, subindices)
+	print(subindices)
+	boolboth = [len(indices)> 0,len(subindices)> 0]
+	#https://www.kite.com/python/answers/how-to-find-the-intersection-of-multiple-sets-in-python
+	#print(boolboth)
 '''
