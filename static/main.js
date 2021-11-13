@@ -171,32 +171,20 @@ function bi_dashboard()
             $(data.wheres).each(function(index,value){
                 $('#filters').append(`
                 <div class="btn-group me-2" role="group" style="padding:5px;">
-                    <button class="btn btn-primary btn-sm" operand="${value.operand}" type="filter">${value.origin}</button>
+                    <button class="btn btn-primary btn-sm button_filter" operand="${value.operand}" type="filter">${value.origin}</button>
                 </div>`)
-
             })
         }
 
         //.6 numeric filters
-
         if (data.num_filters)
         {   
             $.each(data.num_filters,function(index,value)
             {
-                if (value.max)
-                {   
-                    var option = `<option value=${index} max=${value.max} min=${value.min}>${index}</option>`
-                    $('#NumericSelect').prepend(option)
-                }
-
-                else if (index.includes('Date'))
-                {   var text = index.replace(/\s+/g, '')
-                    var option = `<option value=${text}>${index}</option>`
-                    $('#NumericSelect').append(option)
-                    $(value).each(function(index,date){
-                        $('#filterdate').prepend(`<option value=${date}></option>`)
-                    })
-                }
+                var fixed_name = index.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
+                fixed_name = fixed_name.join(' ');
+                var option = `<option value='${index}' max=${value.max} min=${value.min}>${fixed_name}</option>`
+                $('#NumericSelect').prepend(option)
              })
              $("#NumericSelect").val($("#NumericSelect option:first").val());
         }
@@ -219,7 +207,6 @@ function bi_dashboard()
         if ($('#isCategory').is(':checked') )
         {
             data.category = $('#categories').val();
-           
         }
 
         //if a date string is specified
@@ -230,7 +217,6 @@ function bi_dashboard()
 
         //warnings 
         data.warnings  = ($('#warning-ignore').is(':checked')) ? true:false;
-
 
         if ( $('#filters button').length > 0)
         {
@@ -245,7 +231,6 @@ function bi_dashboard()
                     param = parseInt(param)
                 }
                 filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
-
             })
 
             data.filters = JSON.stringify(filters) 
@@ -275,83 +260,8 @@ function bi_dashboard()
             }  
         });
     }
-    function check_map()
-    {
-        if ($('#visuals').val() == 'map') 
-        {
-            $("#visuals").val($("#visuals option:first").val()).change();
-        }
-    }
 
-    function handle_orderID()
-    {
-        var value = $('#values').val();
-        var aggregate = $('#aggregate_column').val();
-
-        if (value == 'Total' || value == 'Quantity')
-        {
-            $('#aggregate_column').find('option:contains(Sum)').show()
-            $('#aggregate_column').find('option:not(:contains(Sum))').hide()
-            if (aggregate != 'sum')
-            {
-                $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
-            } 
-        } 
-
-        else if (value == 'Price')
-        {
-            
-            $('#aggregate_column').find('option').show()
-            $('#aggregate_column').find('option:contains(Sum)').hide() 
-            $('#aggregate_column').find('option:contains(Count)').hide()  
-            if (aggregate == 'sum' || aggregate == 'nunique')
-            {
-               
-                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
-            }       
-        } 
-
-    }
-
-    function ajax_filters() 
-    {
-        if ( $('#filters button').length > 0)
-        {
-            var filters = []
-            $('#filters button').each(function(index,value)
-            {  
-                var filterArr = $(value).text().split(/:|<|>/)
-                var target = filterArr[0].trim().replace(/\s/g, '')
-                var param = filterArr[1].trim()
-                if (!isNaN(param))
-                {
-                    param = parseInt(param)
-                }
-                filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
-
-            })
-        }
-
-        data = {
-            filterData : JSON.stringify(filters) 
-        }
-        $.ajax({
-            data :  data,
-            type : 'POST',
-            url : '/frame_filter/'
-        })
- 
- 
-        .done(function(data){ 
-            {
-                //update the table
-                console.log(data)
-            }  
-        });
-
-
-    }
-
+    //handle normal string category type
     function handleCategory()
     {
         var value = $('#values').val();
@@ -372,6 +282,79 @@ function bi_dashboard()
         }
     }
 
+    //for the html graph customizer, map type
+    function check_map()
+    {
+        if ($('#visuals').val() == 'map') 
+        {
+            $("#visuals").val($("#visuals option:first").val()).change();
+        }
+    }
+
+    //handle values for orderid in category version
+    function handle_orderID()
+    {
+        var value = $('#values').val();
+        var aggregate = $('#aggregate_column').val();
+
+        if (value == 'Total' || value == 'Quantity')
+        {
+            $('#aggregate_column').find('option:contains(Sum)').show()
+            $('#aggregate_column').find('option:not(:contains(Sum))').hide()
+            if (aggregate != 'sum')
+            {
+                $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
+            } 
+        } 
+
+        else if (value == 'Price')
+        {
+            $('#aggregate_column').find('option').show()
+            $('#aggregate_column').find('option:contains(Sum)').hide() 
+            $('#aggregate_column').find('option:contains(Count)').hide()  
+            if (aggregate == 'sum' || aggregate == 'nunique')
+            {
+                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
+            }       
+        } 
+
+    }
+
+    //collects data from the buttons and send them to the server
+    function ajax_filters() 
+    {
+        if ( $('#filters button').length > 0)
+        {
+            var filters = []
+            $('#filters button').each(function(index,value)
+            {  
+                var filterArr = $(value).text().split(/:|<|>/)
+                var target = filterArr[0].trim().replace(/\s/g, '')
+                var param = filterArr[1].trim()
+                if (!isNaN(param))
+                {
+                    param = parseInt(param)
+                }
+                filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
+            })
+        }
+
+        data = {
+            filterData : JSON.stringify(filters) 
+        }
+        $.ajax({
+            data :  data,
+            type : 'POST',
+            url : '/frame_filter/'
+        })
+ 
+        .done(function(data){ 
+            {
+                //update the table
+                console.log(data)
+            }  
+        });
+    }
 
     //ajax request for new chart visual from server
     $(document).on('click','#send_values', function() {
@@ -425,7 +408,6 @@ function bi_dashboard()
             $('#map_type').hide()
             handle_orderID()
             check_map()
-            
         }
 
         else if (!category.includes('country') || !category.includes('order')) 
@@ -448,7 +430,6 @@ function bi_dashboard()
             {
                 $('#send_values').prop('disabled',true)
             }
-          
         }
         else
         {
@@ -512,7 +493,7 @@ function bi_dashboard()
 
 
     //FILTER FUNCTIONS
-
+    //for the datalist which is categorical
     $(document).on('keyup','#params',function(){
         var params = $('#params').val();
         var values = []
@@ -532,26 +513,35 @@ function bi_dashboard()
         }
     })
 
+    //this handles visibility of button depending on valid date input
     $(document).on('keyup','#DateFilter',function(){
-        var params = $('#DateFilter').val();
-        var values = []
-       
-        $('#filterdate option').each(function(index,value){
-            values.push($(value).val())
-        })
         
-        if (values.includes(params) )
-        {
-            $('#addFilter').prop('disabled',false)
-        }
+        var dateinput = String($('#DateFilter').val())  ;
+        var pattern = /^([0-9]{4})[-]([0]?[1-9]|[1][0-2])[-]([0][1-9]|[1|2][0-9]|[3][0|1])$/;
+        var datebool = pattern.test(dateinput)
 
-        else if (!values.includes(params) ) 
-        {
-            $('#addFilter').prop('disabled',true)
+        if  (datebool == true)
+        {   
+            var date = new Date(dateinput)
+            if (Number(date.getMonth()+1) != Number(dateinput.split('-')[1])) 
+            {   
+                 $('#addFilter').prop('disabled',true);
+            }
+            else
+            {
+                $('#addFilter').prop('disabled',false);
+                check_num_filters()
+            }      
         }
-        check_num_filters()
+            
+        else 
+        {
+            $('#addFilter').prop('disabled',true);
+        }
+       
     })
 
+    //function for adding a button which is a filter and then disabling button if selection is already chosen compared to input
     $(document).on('click','#addFilter',function(){
         {   
             if ($('#CategoricCheck').is(':checked'))
@@ -588,21 +578,14 @@ function bi_dashboard()
                 else if  ($('#DateFilter').is(':visible'))
                 {
                     var fixed_name = column.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
-                    column = fixed_name.join(' ');
-                      
+                    column = fixed_name.join(' '); 
                     var parameter = $('#DateFilter').val()
-                    $('#filterdate option').each(function(index,value){
-                        if ($(value).val() == parameter)
-                        {
-                            $(value).prop('disabled',true)
-                        }
-                    }) 
                 }
 
                 $('#filters').parent().css('background-color','white')
                 $('#filters').append(`
                     <div class="btn-group me-2" role="group" style="padding:5px;">
-                        <button class="btn btn-primary btn-sm" operand="${operand}" type="filter">${column +' '+ operand +' '+ parameter}</button>
+                        <button class="btn btn-primary btn-sm button_filter" operand="${operand}" type="filter">${column +' '+ operand +' '+ parameter}</button>
                     </div>`)
                 
                 $('#DateFilter').val('').keyup()
@@ -612,21 +595,23 @@ function bi_dashboard()
         }
     })
 
+    //this will mark out the filters button if it matches the current input
     function check_num_filters()
     {
-        if (!$('#NumericSelect').val().includes('Date')) 
-        {
-            $('#addFilter').prop('disabled',false)
-        }
+        $('#addFilter').prop('disabled',false);
         if ($('#filters button').length > 0)
-        {
-            $('#filters button').each(function(index,value){
+        {   
+
+            $('.button_filter').each(function(index,value){
+                
                 if ($(value).text().includes('<') || $(value).text().includes('>') ) 
                 { 
                     var numvars = $(value).text().split(/>|</g)[0].replace(/ /g,'')
                     var operand = $(value).text().charAt($(value).text().search(/<|>/))
+                    console.log(numvars)
+                    console.log(operand)
                     if ($('#NumericMath').val() == operand && $('#NumericSelect').val() == numvars.trim())
-                    {
+                    {   
                         $('#addFilter').prop('disabled',true)
                     } 
                 }
@@ -635,9 +620,9 @@ function bi_dashboard()
 
    }
 
+   //this handles the values appended to the input after changing a column
    function check_operand_num() 
-
-   {
+   {    
         var target =  $('#NumericSelect').val()
         var max = $(`#NumericSelect option[value="${target}"`).attr('max')
         var min =  $(`#NumericSelect option[value="${target}"`).attr('min')
@@ -645,11 +630,23 @@ function bi_dashboard()
         if  ($('#NumericMath').val() == '>' && !target.includes('Date'))
         {
             $('#NumericFilterField').val(min).keyup()
+            $('#NumericFilterField').attr('min',min).attr('max',max).attr('maxlength',max.length)
         }
 
         else if ($('#NumericMath').val() == '<'  && !target.includes('Date'))
         {
             $('#NumericFilterField').val(max).keyup()
+            $('#NumericFilterField').attr('min',min).attr('max',max).attr('maxlength',max.length)
+        }
+
+        else if ($('#NumericMath').val() == '>'  && target.includes('Date'))
+        {
+            $('#DateFilter').val(min).keyup()
+        }
+
+        else if ($('#NumericMath').val() == '<'  && target.includes('Date'))
+        {
+            $('#DateFilter').val(max).keyup()
         }
    }
 
@@ -666,15 +663,14 @@ function bi_dashboard()
         {
             $('#DateFilter').hide()
             $('#NumericFilterField').show()
-            check_operand_num () 
+            check_operand_num() 
         }
         else if (target.includes('Date'))
         {
             $('#NumericFilterField').removeAttr('max').removeAttr('min')
             $('#DateFilter').show()
             $('#NumericFilterField').hide()
-            $('#addFilter').prop('disabled',true)
-            
+            check_operand_num() 
         }
         check_num_filters()  
     })
@@ -699,25 +695,12 @@ function bi_dashboard()
             })
         }
 
-        else if (buttonFilter.includes('Date')) 
-        {
-            var date = buttonFilter.split(/>|</g)[1].trim()
-            $('#filterdate option').each(function(index,value){
-                if ($(value).val() == date)
-                {
-                    $(value).prop('disabled',false)
-                }
-            })  
-        }
-
-        if ($('#NumericFilterField').is(':visible'))
+        if ($('#NumericFilterField').is(':visible') || $('#DateFilter').is(':visible'))
         {
             check_num_filters()        
         }
     });
 
-
-    
 
     $('#NumericCheck').on('change',function(){
         if ($(this).is(':checked')) 
@@ -728,6 +711,7 @@ function bi_dashboard()
             $("#NumericMath").val($("#NumericMath option:first").val()).change();
             $('#NumericFilterField').keyup()
             $('#NumericMath').change();
+            check_num_filters()
         }
      })
 
@@ -737,13 +721,17 @@ function bi_dashboard()
             $('.NumericFilter').hide();
             $('#DateFilter').hide()
             $('#params').show();
-            $('#addFilter').prop('disabled',true)
+           
         }
      })
 
      $(document).on('keydown','#NumericFilterField',function(event)
-    {  
-        if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 45 && event.keyCode < 58) || event.keyCode == 8)) 
+    {   
+        var max_length = $('#NumericFilterField').attr('maxlength')
+        console.log(max_length)
+        console.log($('#NumericFilterField').val().length)
+       
+        if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 45 && event.keyCode < 58) || event.keyCode == 8  || $('#NumericFilterField').val().length > max_length)) 
         {
             return false;
         }
@@ -751,19 +739,24 @@ function bi_dashboard()
 
     $(document).on('keyup','#NumericFilterField',function()
     {   
-        
-        if (parseInt($('#NumericFilterField').val()) >  parseInt($('#NumericFilterField').attr('max')) )
+        var mins = Number($('#NumericFilterField').attr('min'));
+        var maxs = Number($('#NumericFilterField').attr('max'));
+        var actual = Number($('#NumericFilterField').val());
+       
+        if (actual >= mins &&  actual <= maxs) 
         {   
-            $('#NumericFilterField').val($('#NumericFilterField').attr('max'));
-        }
-        
-        else if ($('#NumericFilterField').val().length > 0) 
-        {
+            $('#NumericFilterField').css('color','black');
             check_num_filters() 
+        }
+
+        else if (actual < mins ||  actual > maxs) 
+        {   
+            $('#NumericFilterField').css('color','red');
         }
 
         else if ($('#NumericFilterField').val().length == 0) 
         {
+            $('#NumericFilterField').css('color','black')
             $('#addFilter').prop('disabled',true)
         }
         
@@ -811,19 +804,19 @@ function test()
 
 
      var table_data = JSON.parse($('#table_data').val())
-     console.log(table_data)
+    
      $.each(table_data, function(key,value){
         var fixed_name = key.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
         fixed_name = fixed_name.join(' ');
         var table_header = `<th scope="col">${fixed_name}</th>`
 
         $('#table_header').append(table_header)
-        //console.log(key)
+    
         $(value).each(function(index,data)
         {
             var cell = `<td rowspan=${data.span}>${data.name}</td>`
             $(`#table_target tr:eq(${data.index})`).append(cell)
-            //console.log(cell)
+            
         });
     });
     //$(document).ready( function () {

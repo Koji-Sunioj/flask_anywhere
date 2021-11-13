@@ -23,13 +23,15 @@ def category_datalist(frame):
 	return cols
 
 def numeric_filters(frame):
-	new_frame = frame[frame.columns[~frame.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64'])
+	new_frame = frame[frame.columns[~frame.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64','datetime64[ns]'])
 	new_frame = new_frame.groupby(new_frame.index).sum()
 	new_frame = new_frame.aggregate(['max','min'])
 	new_frame['Price'] = frame.Price.aggregate(['max','min'])
-
+	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min']).astype(str)
+	#print(frame.OrderDate.aggregate(['max','min']))
 	num_filters = new_frame.fillna(0).to_dict()
-	num_filters['Order Date'] = frame.OrderDate.sort_values().astype(str).unique().tolist()
+	#num_filters['Order Date'] = frame.OrderDate.sort_values().astype(str).unique().tolist()
+	print(num_filters)
 	return num_filters
 
 def frame_filters(frame,filters):

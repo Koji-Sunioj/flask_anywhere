@@ -139,7 +139,7 @@
     </div> 
     <br>
     
-    <div class="row rounded" >
+    <div class="row rounded" style="height: 436.99px;">
       <div class="card">
         <div class="card-body">
           <div id="sales"  class="card">
@@ -172,10 +172,8 @@
             <option value="<">less than</option>
           </select>
           <input type="number" id="NumericFilterField" class="form-control NumericFilter" style="text-align: center;  display: none;" >
-          <input class="form-control filtergroup" list="filterdate" id="DateFilter" placeholder="2019-07-12...." style="display:none;">
-          <datalist id="filterdate">
-            
-          </datalist>
+          <input class="form-control filtergroup" type="text" id="DateFilter" autocomplete="off" maxlength="10" placeholder="2021-11-30" style="text-align: center; display:none;">
+         
           <input class="form-control filtergroup" list="filtergroup" id="params" placeholder="Category Name, Supplier Country...">
           <datalist id="filtergroup">
           </datalist>

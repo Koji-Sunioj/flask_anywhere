@@ -157,7 +157,7 @@ def frame_filter():
 	ranges =  external_functions.numeric_filters(new_frame)
 	string_counts = pd.DataFrame(new_frame.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 	json_feedback = {**ranges, **string_counts}
-	if len(json_feedback['Order Date']) > 0: json_feedback['Order Date'] = {'max':max(json_feedback['Order Date']),'min':min(json_feedback['Order Date'])}
+	if len(json_feedback['OrderDate']) > 0: json_feedback['OrderDate'] = {'max':max(json_feedback['OrderDate']),'min':min(json_feedback['OrderDate'])}
 		
 	return jsonify(json_feedback)
 	
