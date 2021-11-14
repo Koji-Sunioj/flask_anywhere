@@ -188,6 +188,35 @@ function bi_dashboard()
              })
              $("#NumericSelect").val($("#NumericSelect option:first").val());
         }
+
+        if (data.feedback)
+        {
+            $(data.feedback).each(function(index,value){
+                
+                var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
+                fixed_name = fixed_name.join(' ').trim();
+               
+               
+                if ('count' in value.values)
+                {
+                    $('#feedback').append(`<div class="card col-3 rounded" style="background-color: white;">
+                        <div class="card-body">
+                            <h5 class="card-title">${fixed_name}</h5>
+                            <p class="card-text">${value.values.count}</p>
+                        </div>
+                    </div>`)
+                }
+                else if ('max' in value.values)
+                {
+                    $('#feedback').append(`<div class="card col-3 rounded" style="background-color: white; ">
+                        <div class="card-body">
+                            <h5 class="card-title">${fixed_name}</h5>
+                            <p class="card-text">${value.values.min} -> ${value.values.max}</p>
+                        </div>
+                    </div>`) 
+                }
+            })
+        }
     })
 
     function ajax_data()
@@ -317,43 +346,84 @@ function bi_dashboard()
                 $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
             }       
         } 
-
     }
 
     //collects data from the buttons and send them to the server
     function ajax_filters() 
-    {
-        if ( $('#filters button').length > 0)
-        {
-            var filters = []
-            $('#filters button').each(function(index,value)
-            {  
-                var filterArr = $(value).text().split(/:|<|>/)
-                var target = filterArr[0].trim().replace(/\s/g, '')
-                var param = filterArr[1].trim()
-                if (!isNaN(param))
-                {
-                    param = parseInt(param)
-                }
-                filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
-            })
-        }
-
+    {   
+        var filters = []
+        $('button[type=filter]').each(function(index,value)
+        {  
+            var filterArr = $(value).text().split(/:|<|>/)
+            var target = filterArr[0].trim().replace(/\s/g, '')
+            var param = filterArr[1].trim()
+            if (!isNaN(param))
+            {
+                param = parseInt(param)
+            }
+            filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
+        })
         data = {
             filterData : JSON.stringify(filters) 
         }
         $.ajax({
             data :  data,
             type : 'POST',
+            async : false,
             url : '/frame_filter/'
         })
- 
+    
         .done(function(data){ 
             {
                 //update the table
-                console.log(data)
+                $(data).each(function(index,value){
+                
+                    var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
+                    fixed_name = fixed_name.join(' ').trim();
+                    var card = $('#feedback .card').find(`.card-title:contains(${fixed_name})`)
+                    if ('max' in value.values)
+                    {
+                        // <p class="card-text">${value.values.min} -> ${value.values.max}</p>
+                        card.next().text(`${value.values.min} -> ${value.values.max}`)
+                    }
+                    else if ('count' in value.values)
+                    {
+                        card.next().text(value.values.count)
+                    }
+                })
             }  
-        });
+            });
+        var reduce_arr = []
+        $('#feedback .card-text').each(function(index,value)
+        {
+            var range_or = $(value).text().split('->')
+           
+            if (range_or.length > 1 && !isNaN(range_or[0]))
+            {
+                range_or = Number(range_or[0]) + Number(range_or[1])
+                reduce_arr.push(range_or)
+            }
+            else 
+            {
+                range_or = Number(range_or[0])
+                reduce_arr.push(range_or)
+            }
+        })
+        
+        var result =  reduce_arr.reduce((a, b) => a + b, 0)
+        if (result == 0)
+        {   
+            $('#filters_dashboard').find('input, select').prop('disabled',true)
+            $('#customizer').find('input, select').prop('disabled',true)
+            $('#send_values').prop('disabled',true)
+        }
+
+        else 
+        {
+            $('#filters_dashboard').find('input, select').prop('disabled',false)
+            $('#customizer').find('input, select').prop('disabled',false).change()
+            $('#send_values').prop('disabled',false)
+        }
     }
 
     //ajax request for new chart visual from server
@@ -682,7 +752,7 @@ function bi_dashboard()
         if ($('#filters button').length == 0)
         {
             $('#filters').parent().css('background-color','') 
-            $('#filters').empty(); 
+            //$('#filters').attr('empty',true); 
         }
 
         if(buttonFilter.includes(':')) 
@@ -699,6 +769,8 @@ function bi_dashboard()
         {
             check_num_filters()        
         }
+
+       ajax_filters()
     });
 
 
@@ -764,7 +836,7 @@ function bi_dashboard()
 };
 
 
-
+/*
 function test()
 {
 
@@ -882,8 +954,12 @@ function test()
                        $(value).text(data[index]['count'])
                    }
                })
+               
            }  
+          
        });
+
+       
     }
 
 
@@ -922,7 +998,7 @@ function test()
         if ($('#filters button').length == 0)
         {
             $('#filters').parent().css('background-color','') 
-            $('#filters').empty(); 
+            //$('#filters').empty(); 
         }
         $('.dataOption').each(function(index,value){
             if ($(value).val() == buttonFilter)

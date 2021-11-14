@@ -102,8 +102,6 @@ def bi_data():
 		category_datalist = external_functions.category_datalist(data)
 		num_filters = external_functions.numeric_filters(data)
 		
-		print(num_filters)
-		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
 		if for_next['visual'] == 'map':
@@ -115,8 +113,14 @@ def bi_data():
 		
 		if session['wheres']: data = external_functions.frame_filters(data,session['wheres'])
 		
-		string_counts = pd.DataFrame(data.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
-		print(string_counts)
+		#handle filtered data to be shown as feedback to what data is available for filtering
+		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+		numeric_feedback = external_functions.numeric_filters(for_feedback)
+		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
+		json_feedback = {**string_feedback, **numeric_feedback} 
+		
+		preferred = for_feedback.columns.tolist()
+		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
 		
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
@@ -137,6 +141,7 @@ def bi_data():
 		new_json['num_filters'] = num_filters
 		new_json['warnings'] = session['warnings']
 		new_json['wheres'] = session['wheres']
+		new_json['feedback'] = json_feedback
 		
 		return jsonify(new_json)
 
@@ -147,18 +152,18 @@ def bi_page():
 	return render_template('index.html')
 
 
-@app.route("/frame_filter/",methods=['POST'])
+@app.route("/frame_filter/",methods=['POST','GET'])
 def frame_filter():
 	json_filters = json.loads(request.form['filterData'])
 	data = db_functions.sales()
-	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]]
-	new_frame = external_functions.frame_filters(data,json_filters)
-	new_frame = new_frame.drop(['OrderDetailID'], axis=1)
-	ranges =  external_functions.numeric_filters(new_frame)
-	string_counts = pd.DataFrame(new_frame.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
-	json_feedback = {**ranges, **string_counts}
-	if len(json_feedback['OrderDate']) > 0: json_feedback['OrderDate'] = {'max':max(json_feedback['OrderDate']),'min':min(json_feedback['OrderDate'])}
-		
+	data = external_functions.frame_filters(data,json_filters)
+	for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+	numeric_feedback = external_functions.numeric_filters(for_feedback)
+	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
+	json_feedback = {**string_feedback, **numeric_feedback} 
+	preferred = for_feedback.columns.tolist()
+	json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
+	
 	return jsonify(json_feedback)
 	
 

@@ -27,11 +27,13 @@ def numeric_filters(frame):
 	new_frame = new_frame.groupby(new_frame.index).sum()
 	new_frame = new_frame.aggregate(['max','min'])
 	new_frame['Price'] = frame.Price.aggregate(['max','min'])
-	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min']).astype(str)
+
+	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min'])
+
 	#print(frame.OrderDate.aggregate(['max','min']))
-	num_filters = new_frame.fillna(0).to_dict()
+	num_filters = new_frame.fillna(0).round(2).astype(str).to_dict()
 	#num_filters['Order Date'] = frame.OrderDate.sort_values().astype(str).unique().tolist()
-	print(num_filters)
+	
 	return num_filters
 
 def frame_filters(frame,filters):
@@ -109,7 +111,6 @@ class Highcharts:
 		#if date string is requested
 		if highchart.date_string:
 			data = data.reset_index()
-			print(data)
 			data['OrderDate'] = pd.to_datetime(data['OrderDate'])
 			data = data.set_index('OrderDate')
 			if highchart.date_string == 'quarter':
