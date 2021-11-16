@@ -27,7 +27,6 @@ def numeric_filters(frame):
 	new_frame = new_frame.groupby(new_frame.index).sum()
 	new_frame = new_frame.aggregate(['max','min'])
 	new_frame['Price'] = frame.Price.aggregate(['max','min'])
-
 	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min'])
 
 	#print(frame.OrderDate.aggregate(['max','min']))
@@ -53,8 +52,16 @@ def frame_filters(frame,filters):
 	
 	subindices = list(set.intersection(*subindices)) if len(subindices) > 0 else frame.OrderDetailID.tolist()
 	indices = list(set.intersection(*indices)) if len(indices) > 0 else frame.OrderID.tolist()
+	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
+	#print(frame[['OrderID','ProductName','Price','Total']].sort_values('OrderID'))
 	frame = frame[(frame.OrderDetailID.isin(subindices))]
+	print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
 	frame = frame[(frame.OrderID.isin(indices))]
+	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
+	
+	#print(frame[['OrderID','ProductName','Price','Total']].sort_values('OrderID'))
+	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
+	
 	return frame
 
 

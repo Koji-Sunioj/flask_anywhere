@@ -257,7 +257,7 @@ function bi_dashboard()
                 var param = filterArr[1].trim()
                 if (!isNaN(param))
                 {
-                    param = parseInt(param)
+                    param = Number(param)
                 }
                 filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
             })

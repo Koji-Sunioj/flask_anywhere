@@ -28,6 +28,8 @@ def bi_data():
 		col_array = list(set(col_array))
 		'date_string' in send_values and col_array.append('OrderDate')
 		
+		print(col_array)
+		print(filters)
 		query.db_rel(col_array,filters)
 		data = db_functions.custom_query(query.command,query.joins,query.wheres)
 		
@@ -66,6 +68,15 @@ def bi_data():
 			keys =  external_functions.translate_category_map()
 			if 'City' in highchart.category: data = data.rename(columns={highchart.category: keys[highchart.category]}) 
 			for_next['category'] = keys[for_next['category']]
+		
+		
+		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+		numeric_feedback = external_functions.numeric_filters(for_feedback)
+		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
+		json_feedback = {**string_feedback, **numeric_feedback} 
+		
+		preferred = for_feedback.columns.tolist()
+		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
 			
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
@@ -86,6 +97,7 @@ def bi_data():
 		new_json['num_filters'] = num_filters
 		new_json['warnings'] = True
 		new_json['wheres'] = False
+		new_json['feedback'] = json_feedback
 		
 		#save attributes to cookies
 		session['state'] = for_next
@@ -106,6 +118,8 @@ def bi_data():
 		for_next = session['state']
 		if for_next['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
+			print(for_next['category'])
+			print(keys[for_next['category']])
 			if 'City' in for_next['category']: data = data.rename(columns={for_next['category']: keys[for_next['category']]}) 
 			for_next['category'] = keys[for_next['category']]
 		
@@ -115,6 +129,7 @@ def bi_data():
 		
 		#handle filtered data to be shown as feedback to what data is available for filtering
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+		print(for_feedback.columns)
 		numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 		json_feedback = {**string_feedback, **numeric_feedback} 
@@ -157,6 +172,7 @@ def frame_filter():
 	json_filters = json.loads(request.form['filterData'])
 	data = db_functions.sales()
 	data = external_functions.frame_filters(data,json_filters)
+	
 	for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 	numeric_feedback = external_functions.numeric_filters(for_feedback)
 	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()

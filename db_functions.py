@@ -26,7 +26,6 @@ def custom_query(command,joins,wheres=False):
 	statement = 'select {} from orders {}'.format(command,joins)
 	if wheres:
 		statement = statement +' '+ wheres 
-	print(statement)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
@@ -37,8 +36,6 @@ def custom_query(command,joins,wheres=False):
 	sales['OrderID'] = sales['OrderID'].astype(str)
 	if 'OrderDetailID' in sales.columns:
 		sales['OrderDetailID'] = sales['OrderDetailID'].astype(str)
-	#print('\n')
-	#print(statement)
 	return sales
 
 
