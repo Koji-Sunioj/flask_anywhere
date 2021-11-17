@@ -24,14 +24,16 @@ def bi_data():
 		
 		#initialize query constructor, with list from ajax request
 		query = db_functions.Db_command()
+		
 		col_array = [val for key,val in send_values.items() if key in ['category','value']]
 		col_array = list(set(col_array))
 		'date_string' in send_values and col_array.append('OrderDate')
 		
-		print(col_array)
 		print(filters)
 		query.db_rel(col_array,filters)
-		data = db_functions.custom_query(query.command,query.joins,query.wheres)
+		print(filters)
+		#print(vars(query))
+		data = db_functions.custom_query(query.command,query.joins,query.wheres,query.havings)
 		
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['visual'],send_values['agg_type'])
@@ -69,6 +71,11 @@ def bi_data():
 			if 'City' in highchart.category: data = data.rename(columns={highchart.category: keys[highchart.category]}) 
 			for_next['category'] = keys[for_next['category']]
 		
+		#create the frame and json array. meta data and state for html interfacing
+		new_data = highchart.agg_frame(data)
+		new_json = highchart.agg_to_json(new_data)
+		
+		if 'point' in "".join(data.columns): data = data.rename(columns={"".join(data.columns[data.columns.str.contains('point')]):highchart.category})
 		
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		numeric_feedback = external_functions.numeric_filters(for_feedback)
@@ -77,13 +84,7 @@ def bi_data():
 		
 		preferred = for_feedback.columns.tolist()
 		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
-			
-		#create the frame and json array. meta data and state for html interfacing
-		new_data = highchart.agg_frame(data)
-		new_json = highchart.agg_to_json(new_data)
 		
-		check_point = "".join(data.columns)
-		if 'point' in check_point: data = data.rename(columns={"".join(data.columns[data.columns.str.contains('point')]):highchart.category})
 		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 	
 		#we need metadata for the html elements and save in cookies
@@ -116,20 +117,20 @@ def bi_data():
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
-		if for_next['visual'] == 'map':
+		if for_next['visual'] == 'map' and 'City' in for_next['category']:
 			keys =  external_functions.translate_category_map()
-			print(for_next['category'])
-			print(keys[for_next['category']])
-			if 'City' in for_next['category']: data = data.rename(columns={for_next['category']: keys[for_next['category']]}) 
+			data = data.rename(columns={for_next['category']: keys[for_next['category']]}) 
 			for_next['category'] = keys[for_next['category']]
 		
 		highchart = external_functions.Highcharts(**for_next)
 		
 		if session['wheres']: data = external_functions.frame_filters(data,session['wheres'])
 		
-		#handle filtered data to be shown as feedback to what data is available for filtering
+		new_data = highchart.agg_frame(data)
+		new_json = highchart.agg_to_json(new_data)
+		
+		if 'point' in "".join(data.columns): data = data.rename(columns={for_next['category']:highchart.category}) 
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
-		print(for_feedback.columns)
 		numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 		json_feedback = {**string_feedback, **numeric_feedback} 
@@ -137,12 +138,6 @@ def bi_data():
 		preferred = for_feedback.columns.tolist()
 		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
 		
-		new_data = highchart.agg_frame(data)
-		new_json = highchart.agg_to_json(new_data)
-		
-		check_point = "".join(data.columns)
-		
-		if 'point' in check_point: data = data.rename(columns={for_next['category']:highchart.category}) 
 		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		
 		#we need metadata for the html elements and save in cookies
@@ -171,9 +166,8 @@ def bi_page():
 def frame_filter():
 	json_filters = json.loads(request.form['filterData'])
 	data = db_functions.sales()
-	data = external_functions.frame_filters(data,json_filters)
-	
-	for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+	data = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+	for_feedback = external_functions.frame_filters(data,json_filters)
 	numeric_feedback = external_functions.numeric_filters(for_feedback)
 	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 	json_feedback = {**string_feedback, **numeric_feedback} 

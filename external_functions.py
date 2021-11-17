@@ -43,25 +43,22 @@ def frame_filters(frame,filters):
 
 	for i in filters:
 		query = "{} {} {}".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
+		print(query)
 		if i['column'] in ['Total','Quantity']:
 			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index.values
 			indices.append(set(selected))
 		else:
-			selected = frame.query(query).OrderDetailID.values
-			subindices.append(set(selected))
+			selected = frame.query(query).OrderID.values
+			indices.append(set(selected))
 	
-	subindices = list(set.intersection(*subindices)) if len(subindices) > 0 else frame.OrderDetailID.tolist()
+	#subindices = list(set.intersection(*subindices)) if len(subindices) > 0 else frame.OrderDetailID.tolist()
 	indices = list(set.intersection(*indices)) if len(indices) > 0 else frame.OrderID.tolist()
+	print(indices)
+	#frame = frame[(frame.OrderDetailID.isin(subindices))]
 	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
-	#print(frame[['OrderID','ProductName','Price','Total']].sort_values('OrderID'))
-	frame = frame[(frame.OrderDetailID.isin(subindices))]
-	print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
 	frame = frame[(frame.OrderID.isin(indices))]
-	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
-	
-	#print(frame[['OrderID','ProductName','Price','Total']].sort_values('OrderID'))
-	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
-	
+	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}).agg(['max','min']))
+	#print(frame[['OrderID','CategoryName']].sort_values('OrderID'))
 	return frame
 
 
@@ -149,8 +146,6 @@ class Highcharts:
 			data = data.aggregate({values:highchart.agg_type})
 			data = pd.DataFrame(data) if len(data) == 1 and type(data).__name__ == 'Series' else data
 			data.columns = [highchart.agg_type]  if highchart.agg_type != 'nunique' else ['count']
-			
-			
 			
 			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
