@@ -24,9 +24,11 @@ def custom_query(command,joins,wheres=False,havings=False):
 	con.connect()
 	select_main = con.cursor()
 	statement = 'select {} from orders {}'.format(command,joins)
+	
 	if wheres or havings:
 		end_statement = " and orders.OrderID IN ".join([*wheres,*havings]) 
 		statement = statement +' where orders.OrderID IN ' + end_statement
+	print(statement)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()

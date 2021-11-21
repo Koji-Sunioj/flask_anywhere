@@ -17,7 +17,6 @@ def bi_data():
 		send_values = {key:val for key,val in request.form.items()}
 		filters = json.loads(send_values['filters']) if 'filters' in send_values else False
 		
-		
 		if send_values['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
 			send_values['category'] = keys[send_values['category']]
@@ -28,13 +27,11 @@ def bi_data():
 		col_array = [val for key,val in send_values.items() if key in ['category','value']]
 		col_array = list(set(col_array))
 		'date_string' in send_values and col_array.append('OrderDate')
-		
 		print(filters)
+		print(col_array)
 		query.db_rel(col_array,filters)
-		print(filters)
-		#print(vars(query))
 		data = db_functions.custom_query(query.command,query.joins,query.wheres,query.havings)
-		
+		print(data)
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['visual'],send_values['agg_type'])
 		highchart.value = send_values['value'] if 'value' in send_values else False
@@ -117,9 +114,10 @@ def bi_data():
 		
 		#get the attributes stored in session, send to the class structure. no changes to cookies are made here.
 		for_next = session['state']
-		if for_next['visual'] == 'map' and 'City' in for_next['category']:
-			keys =  external_functions.translate_category_map()
-			data = data.rename(columns={for_next['category']: keys[for_next['category']]}) 
+		
+		if for_next['visual'] == 'map':
+			keys = external_functions.translate_category_map()
+			if 'City' in for_next['category']: data = data.rename(columns={for_next['category']: keys[for_next['category']]}) 
 			for_next['category'] = keys[for_next['category']]
 		
 		highchart = external_functions.Highcharts(**for_next)
@@ -129,7 +127,8 @@ def bi_data():
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
-		if 'point' in "".join(data.columns): data = data.rename(columns={for_next['category']:highchart.category}) 
+		if 'point' in "".join(data.columns): data = data.rename(columns={for_next['category']:highchart.category})
+		
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
@@ -166,7 +165,7 @@ def bi_page():
 def frame_filter():
 	json_filters = json.loads(request.form['filterData'])
 	data = db_functions.sales()
-	data = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	for_feedback = external_functions.frame_filters(data,json_filters)
 	numeric_feedback = external_functions.numeric_filters(for_feedback)
 	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()

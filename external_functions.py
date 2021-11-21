@@ -37,28 +37,29 @@ def numeric_filters(frame):
 
 def frame_filters(frame,filters):
 	#filter by values by OrderID per sales order, or OrderDetailID for rows in sales order
-	indices = []
-	subindices = []
+	tester = {}
 	translator = {'=':'==','>':'>','<':'<'}
-
-	for i in filters:
-		query = "{} {} {}".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
-		print(query)
-		if i['column'] in ['Total','Quantity']:
-			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index.values
-			indices.append(set(selected))
-		else:
-			selected = frame.query(query).OrderID.values
-			indices.append(set(selected))
 	
-	#subindices = list(set.intersection(*subindices)) if len(subindices) > 0 else frame.OrderDetailID.tolist()
-	indices = list(set.intersection(*indices)) if len(indices) > 0 else frame.OrderID.tolist()
-	print(indices)
-	#frame = frame[(frame.OrderDetailID.isin(subindices))]
-	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}))
-	frame = frame[(frame.OrderID.isin(indices))]
-	#print(frame.groupby('OrderID').aggregate({'Total':'sum'}).agg(['max','min']))
-	#print(frame[['OrderID','CategoryName']].sort_values('OrderID'))
+	for i in filters:
+		if i['column'] in ['Total','Quantity']:
+			query = ("(frame.groupby(frame.index).aggregate({'%s':'sum'}))['%s']%s%s" % (i['column'],i['column'],i['operand'],i['parameter']))
+		else:
+			query = "(frame['{}'] {} {})".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
+		if i['column'] in tester:
+			tester[i['column']].append(query)
+		else:
+			tester[i['column']] = [query]
+	
+	frame = frame.set_index('OrderID')
+	
+	
+	for key,val in tester.items():
+		command = eval("|".join(tester[key]))
+		frame = frame[~frame.index.isin(command[command == False].index)]
+	frame = frame.reset_index()
+	print(frame)
+	
+	
 	return frame
 
 
@@ -149,7 +150,7 @@ class Highcharts:
 			
 			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
-			
+
 		data = data.fillna(0).round(2).sort_index()
 		return data
 
