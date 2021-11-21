@@ -19,30 +19,27 @@ def sales():
 	sales['OrderDate'] = pd.to_datetime(sales['OrderDate'])
 	return sales
 
-def custom_query(command,joins,wheres=False,havings=False):
-	#query constructed from table names, joins as attributed by Db_command class
-	con.connect()
-	select_main = con.cursor()
-	statement = 'select {} from orders {}'.format(command,joins)
-	
-	if wheres or havings:
-		end_statement = " and orders.OrderID IN ".join([*wheres,*havings]) 
-		statement = statement +' where orders.OrderID IN ' + end_statement
-	print(statement)
-	select_main.execute(statement)
-	field_names = [i[0] for i in select_main.description]
-	rows = select_main.fetchall()
-	con.commit()
-	con.close()
-	sales = pd.DataFrame(rows,columns=field_names)
-	sales = sales.loc[:,~sales.columns.duplicated()]
-	sales['OrderID'] = sales['OrderID'].astype(str)
-	return sales
-
+def custom_query(command,joins=False,ins=False):
+    #query constructed from table names, joins as attributed by Db_command class
+    con.connect()
+    select_main = con.cursor()
+    statement = 'select {} from orders {}'.format(command,joins)
+    if ins:
+        statement = statement + " where orders.OrderID IN " + ins
+        #statement = statement +' where orders.OrderID IN ' + end_statement
+    select_main.execute(statement)
+    field_names = [i[0] for i in select_main.description]
+    rows = select_main.fetchall()
+    con.commit()
+    con.close()
+    sales = pd.DataFrame(rows,columns=field_names)
+    sales = sales.loc[:,~sales.columns.duplicated()]
+    sales['OrderID'] = sales['OrderID'].astype(str)
+    return sales
 
 class Db_command:
 	#a class structure for creating an sql query depending on the requests column names
-	def __init__(query,keys=False,command=False,joins=False,wheres=False,havings=False):
+	def __init__(query,keys=False,command=False,joins=False,wheres=False,havings=False,ins=False):
 		#get the table names and column names from database
 		con.connect()
 		select_main = con.cursor()
@@ -51,6 +48,7 @@ class Db_command:
 		con.commit()
 		con.close()
 		keys = {i[1]:{"command":i[0]+"."+ i[1],"link":i[0]} for i in rows}
+
 		del keys['Country']
 		del keys['iso_code']
 		del keys['City']
@@ -73,8 +71,10 @@ class Db_command:
 		query.joins = joins
 		query.wheres = []
 		query.havings = []
+		query.ins = ins
 
 	def db_rel(query,col_array,filters=False):
+
 		ord_ord = 'join order_details on order_details.OrderID = orders.OrderID'
 		pro_ord = 'join products on order_details.ProductID = products.ProductID'
 		pro_cat = 'join categories on products.CategoryID = categories.CategoryID'
@@ -108,29 +108,40 @@ class Db_command:
 		rels_copy = rels.copy()
 		
 		if filters:
-			cat_wheres = "(SELECT orders.OrderID FROM orders {} where {} {} {})"
-			cat_haves = """(SELECT orders.OrderID FROM orders 
-			JOIN order_details ON order_details.OrderID = orders.OrderID 
-			JOIN products ON order_details.ProductID = products.ProductID  
-			GROUP BY orders.OrderID HAVING {})"""
+			cat_wheres = "(SELECT orders.OrderID FROM orders {} GROUP BY orders.OrderID HAVING {})"
+			tester = {}
 			for i in filters:
-				is_grouper = i['column'] in ['Total','Quantity']
 				command = query.keys[i['column']]['command']
-				parameter = i['parameter']
 				if ' as ' in command: command = command.split(' as ')[0]
-				if not is_grouper:
-					cat_link = refs[query.keys[ i['column']]['link']]
-					cat_link = [indexer[i] for i in cat_link]
-					cat_link = " ".join(cat_link)
-					if isinstance(parameter,str): parameter = f"'{i['parameter']}'"
-					final_cat = cat_wheres.format(cat_link,command,i['operand'],parameter)
-					query.wheres.append(final_cat)
-				elif is_grouper == True:
-					final_group = "SUM({}) {} {}".format(command,i['operand'],parameter)
-					query.havings.append(final_group)
-					
+				cat_link = refs[query.keys[ i['column']]['link']]
+				query.wheres.extend(cat_link)
+				if command in tester:
+					tester[command]['values'].append( str(i['parameter']) )
+				else:
+					tester[command] = {'values':[ str(i['parameter']) ],'operand':i['operand'],'origin':i['column']}
+			
+			for key,val in tester.items():
+				if val['origin'] not in ['Total','Quantity']:
+					command = "SUM({} not in ({})) {} 0"
+					values = ("'"+"','".join(val['values']) + "'")
+					final = command.format(key,values,val['operand'])
+					query.havings.append(final)
+				else:
+					if len(val['values']) > 1:
+						command = "SUM({}) between {}"
+						values = " and ".join(val['values'])
+						final = command.format(key,values)
+						query.havings.append(final)
+					else:
+						final = "SUM({}){}{}".format(key,val['operand'],"".join(val['values']))
+						query.havings.append(final)
+				
+			query.wheres = list(set(query.wheres))
+			query.wheres.sort()
+			query.wheres = [indexer[i] for i in query.wheres]
+			query.wheres = " ".join(query.wheres)
 			query.havings = " and ".join(query.havings)
-			query.havings = [cat_haves.format(query.havings)] if len(query.havings) > 0 else []
+			query.ins = cat_wheres.format(query.wheres,query.havings)
 		
 		#get the index of sequencial join clauses for relevant columns
 		joins = [num for i in rels for num in refs[i['link']]]
@@ -142,6 +153,7 @@ class Db_command:
 		#join query string into one
 		command = [i['command'] for i in rels_copy]
 		command = "orders.OrderID, " + ",".join(command) if len(command) > 0 else "orders.OrderID"
+
 		#add them to the class
 		query.command = command
 		query.joins = joins

@@ -49,17 +49,12 @@ def frame_filters(frame,filters):
 			tester[i['column']].append(query)
 		else:
 			tester[i['column']] = [query]
-	
+			
 	frame = frame.set_index('OrderID')
-	
-	
 	for key,val in tester.items():
 		command = eval("|".join(tester[key]))
 		frame = frame[~frame.index.isin(command[command == False].index)]
 	frame = frame.reset_index()
-	print(frame)
-	
-	
 	return frame
 
 

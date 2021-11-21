@@ -27,11 +27,10 @@ def bi_data():
 		col_array = [val for key,val in send_values.items() if key in ['category','value']]
 		col_array = list(set(col_array))
 		'date_string' in send_values and col_array.append('OrderDate')
-		print(filters)
-		print(col_array)
+
 		query.db_rel(col_array,filters)
-		data = db_functions.custom_query(query.command,query.joins,query.wheres,query.havings)
-		print(data)
+		data = db_functions.custom_query(query.command,query.joins,query.ins)
+
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['visual'],send_values['agg_type'])
 		highchart.value = send_values['value'] if 'value' in send_values else False
