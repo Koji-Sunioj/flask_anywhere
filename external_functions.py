@@ -10,9 +10,10 @@ def translate_category_map():
 	return keys
 
 def check_eval(value):
-	if isinstance(value,int):
+	print(value)
+	if isinstance(value,(float, int)):
 		result = value
-	elif str.isdigit(value) == False:
+	else: #str.isdigit(value) == False:
 		result = '"{}"'.format(value)
 	return result
 
@@ -36,7 +37,6 @@ def numeric_filters(frame):
 	return num_filters
 
 def frame_filters(frame,filters):
-	print(filters)
 	#filter by values by OrderID per sales order, or OrderDetailID for rows in sales order
 	tester = {}
 	translator = {'=':'==','>':'>','<':'<'}
@@ -176,7 +176,7 @@ class Highcharts:
 		elif highchart.visual != 'map':
 			print(new_data)
 			flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
-			if all(flip_bool):  new_data = new_data.T
+			#if all(flip_bool):  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 				series.append(stuff)

@@ -2,6 +2,7 @@ import datetime
 import pymysql
 import pandas as pd
 import numpy as np
+import external_functions
 con = pymysql.connect(host='localhost', user='root',password='Karelia',database= 'w3')
 
 def sales():
@@ -27,7 +28,6 @@ def custom_query(command,joins,ins=False):
 	if ins:
 		statement = statement + " where orders.OrderID IN " + ins
 		#statement = statement +' where orders.OrderID IN ' + end_statement
-	print(statement)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
@@ -110,6 +110,7 @@ class Db_command:
 		
 		if filters:
 			cat_wheres = "(SELECT orders.OrderID FROM orders {} GROUP BY orders.OrderID HAVING {})"
+			translator =  {'>':'min','<':'max'}
 			tester = {}
 			for i in filters:
 				command = query.keys[i['column']]['command']
@@ -117,25 +118,30 @@ class Db_command:
 				cat_link = refs[query.keys[ i['column']]['link']]
 				query.wheres.extend(cat_link)
 				if command in tester:
-					tester[command]['values'].append( str(i['parameter']) )
+					tester[command]['values'].append(str(i['parameter']))
+					tester[command]['operand'].append(i['operand'])
 				else:
-					tester[command] = {'values':[ str(i['parameter']) ],'operand':i['operand'],'origin':i['column']}
-			
+					tester[command] = {'values':[ str(i['parameter']) ],'operand':[i['operand']],'origin':i['column']}
 			for key,val in tester.items():
-				if val['origin'] not in ['Total','Quantity']:
-					command = "SUM({} not in ({})) {} 0"
-					values = ("'"+"','".join(val['values']) + "'")
-					final = command.format(key,values,val['operand'])
-					query.havings.append(final)
-				else:
+				if val['origin'] in ['Total','Quantity']:
 					if len(val['values']) > 1:
 						command = "SUM({}) between {}"
 						values = " and ".join(val['values'])
 						final = command.format(key,values)
 						query.havings.append(final)
 					else:
-						final = "SUM({}){}{}".format(key,val['operand'],"".join(val['values']))
+						final = "SUM({}){}{}".format(key,"".join(val['operand']),"".join(val['values']))
 						query.havings.append(final)
+				elif val['origin'] in ['Price','OrderDate']:
+					target = query.keys[val['origin']]['command']
+					for shit,piss in zip(val['values'],val['operand']) :
+						command = "%s(%s)%s%s" % (translator[piss],target,piss,external_functions.check_eval(shit))
+						query.havings.append(command)
+				else:
+					command = "SUM({} not in ({})) = 0"
+					values = ("'"+"','".join(val['values']) + "'")
+					final = command.format(key,values)
+					query.havings.append(final)
 				
 			query.wheres = list(set(query.wheres))
 			query.wheres.sort()
