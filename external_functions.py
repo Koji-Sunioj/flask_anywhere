@@ -36,6 +36,7 @@ def numeric_filters(frame):
 	return num_filters
 
 def frame_filters(frame,filters):
+	print(filters)
 	#filter by values by OrderID per sales order, or OrderDetailID for rows in sales order
 	tester = {}
 	translator = {'=':'==','>':'>','<':'<'}
@@ -44,17 +45,20 @@ def frame_filters(frame,filters):
 		if i['column'] in ['Total','Quantity']:
 			query = ("(frame.groupby(frame.index).aggregate({'%s':'sum'}))['%s']%s%s" % (i['column'],i['column'],i['operand'],i['parameter']))
 		else:
-			query = "(frame['{}'] {} {})".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
-		if i['column'] in tester:
-			tester[i['column']].append(query)
-		else:
-			tester[i['column']] = [query]
-			
+			query = ("(frame['%s'] %s %s)" % (i['column'],translator[i['operand']],check_eval(i['parameter'])) )
+		tester[i['column']] = [query] if i['column'] not in tester else tester[i['column']] + [query]	
 	frame = frame.set_index('OrderID')
+	
 	for key,val in tester.items():
-		command = eval("|".join(tester[key]))
-		frame = frame[~frame.index.isin(command[command == False].index)]
+		if key in ['Total','Quantity']:
+			for thing in tester[key]:
+				command = eval(thing)
+				frame = frame[~frame.index.isin(command[command == False].index)]
+		else:
+			command = eval("&".join(tester[key])) if key in ['Price','OrderDate'] else eval("|".join(tester[key]))
+			frame = frame[~frame.index.isin(command[command == False].index)]
 	frame = frame.reset_index()
+	
 	return frame
 
 

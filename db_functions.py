@@ -19,23 +19,24 @@ def sales():
 	sales['OrderDate'] = pd.to_datetime(sales['OrderDate'])
 	return sales
 
-def custom_query(command,joins=False,ins=False):
-    #query constructed from table names, joins as attributed by Db_command class
-    con.connect()
-    select_main = con.cursor()
-    statement = 'select {} from orders {}'.format(command,joins)
-    if ins:
-        statement = statement + " where orders.OrderID IN " + ins
-        #statement = statement +' where orders.OrderID IN ' + end_statement
-    select_main.execute(statement)
-    field_names = [i[0] for i in select_main.description]
-    rows = select_main.fetchall()
-    con.commit()
-    con.close()
-    sales = pd.DataFrame(rows,columns=field_names)
-    sales = sales.loc[:,~sales.columns.duplicated()]
-    sales['OrderID'] = sales['OrderID'].astype(str)
-    return sales
+def custom_query(command,joins,ins=False):
+	#query constructed from table names, joins as attributed by Db_command class
+	con.connect()
+	select_main = con.cursor()
+	statement = 'select {} from orders {}'.format(command,joins)
+	if ins:
+		statement = statement + " where orders.OrderID IN " + ins
+		#statement = statement +' where orders.OrderID IN ' + end_statement
+	print(statement)
+	select_main.execute(statement)
+	field_names = [i[0] for i in select_main.description]
+	rows = select_main.fetchall()
+	con.commit()
+	con.close()
+	sales = pd.DataFrame(rows,columns=field_names)
+	sales = sales.loc[:,~sales.columns.duplicated()]
+	sales['OrderID'] = sales['OrderID'].astype(str)
+	return sales
 
 class Db_command:
 	#a class structure for creating an sql query depending on the requests column names
