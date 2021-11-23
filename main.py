@@ -43,7 +43,6 @@ def bi_data():
 		
 		#remove last cookie, reload it with new attributes
 		session['state'] = vars(highchart)
-		session['warnings'] = json.loads(send_values['warnings'])
 		session['wheres'] = filters
 		
 		return jsonify(new_json)
@@ -92,18 +91,17 @@ def bi_data():
 		new_json['meta_data'] = meta_data
 		new_json['filters'] = category_datalist
 		new_json['num_filters'] = num_filters
-		new_json['warnings'] = True
 		new_json['wheres'] = False
 		new_json['feedback'] = json_feedback
 		
 		#save attributes to cookies
 		session['state'] = for_next
-		session['warnings'] = True
 		session['wheres'] = False
 		
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' in session:
+		print(session)
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
@@ -147,7 +145,6 @@ def bi_data():
 		new_json['meta_data'] = meta_data
 		new_json['filters'] = category_datalist
 		new_json['num_filters'] = num_filters
-		new_json['warnings'] = session['warnings']
 		new_json['wheres'] = session['wheres']
 		new_json['feedback'] = json_feedback
 		

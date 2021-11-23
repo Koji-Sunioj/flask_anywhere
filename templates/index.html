@@ -6,7 +6,7 @@
 }
 </style>
 
-<body onload="bi_dashboard()" style="background-color: lightblue">
+<body onload="bi_dashboard()" style="background-color: rgb(146, 194, 245)">
 <!-- Button trigger modal -->
 
 
@@ -22,25 +22,31 @@
         <li class="nav-item">
           <a class="nav-link active" href="#"data-bs-toggle="modal" data-bs-target="#info" id="modalshow">About</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link active" href="#"data-bs-toggle="modal" data-bs-target="#settings" id="modalsettings">Settings</a>
-        </li>
       </ul>
     </div>
   </div>
 </nav>
 <div class="modal fade" id="info" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
+  <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">The Data</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p>This data represented here is based on the <a href="https://www.w3schools.com/sql/default.asp">W3 schools SQL tutorial</a>, which is a fictional company with customers, suppliers and several other details common in a business.</p>
-        <p>The use case for this interface is a sales associate or decision maker in the company wanting to visualize the performance, in which case all values and categories are centered around the client's order details.</p> 
-        <p>If you just want pure sales total, or any sales value from the sales order table: mark off the category column.</p>
+        <p>This data represented here is based on the <a href="https://www.w3schools.com/sql/default.asp">W3 schools SQL tutorial</a>,which is a MySQL database schema featuring a fictional company with customers, suppliers and several other business attribues. Geographic data has been added to the schema to integrate with the Highcharts.js map module.</p>
+        <p>Use case is a business associate wanting to visualize sales order performance. As with many business intelligence platforms: the user has the ability to drill down or filter data based on categorical or numerical data types which are related to the sales order.</p> 
+        <p>Careful consideration has been made on performance and that only neccesary data is loaded when needed. This could be explained in the following ways:</p>
+        <ul>
+          <li>A stored procedure is called when the page is loaded filling all labels, filters, and finally the graph.</li>
+          <li>Changes to the graph or filters is done by asynchronous POST requests which constructs a MySQL query in the backend (no stored procedure).</li>
+          <li>Requested changes are stored in session data - next page load will show the exact same data filtered in the stored procedure.</li>
+        </ul>
       </div>
+      <figure class="text-center" > 
+        <img src="{{ url_for('static', filename = 'schema.png') }}" style="border: 1px solid #d1d6dc;" class="img-fluid rounded" alt="Responsive image">
+        <figcaption>MySQL database schema for this project.</figcaption>
+      </figure>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         
@@ -48,39 +54,8 @@
     </div>
   </div>
 </div>
-<div class="modal fade" id="warning" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      
-      <div class="modal-body">
-        <p id="warning-text"></p>
-        <p>How would you like to proceed?</p> 
-      </div>
-     
-      <div class="modal-footer">
-        <button type="button" id="resume_ajax" class="btn btn-primary" data-bs-dismiss="modal">Accept</button>
-        <button type="button" id="cancel_ajax" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
-<div class="modal fade" id="settings" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-body">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="" id="warning-ignore">
-          <label class="form-check-label" for="warning-ignore">
-            Warnings: a message will show if categorical labels will not fit the graph axes.
-          </label>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="resume_ajax" class="btn btn-primary" data-bs-dismiss="modal">Accept</button>
-      </div>
-    </div>
-  </div>
-</div>
+
+
   <div class="container " id = "content" >
    
     <br>
@@ -181,12 +156,9 @@
         </div>
       </div>
     </div>
-  
-    <div class="row rounded" role="toolbar"  style="padding:20px" >
-   
+    <div class="row rounded" id="filtersinterface" role="toolbar"  style="padding:20px; display: none;" >
         <div class="btn-toolbar" role="toolbar" id="filters">
         </div>
-     
     </div>
    <br>
     <div  class="row rounded" id="feedback" style="background-color: white; padding:20px">

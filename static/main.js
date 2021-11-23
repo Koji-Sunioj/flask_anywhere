@@ -78,7 +78,7 @@ function bi_dashboard()
 
         
         //1. set the warnings
-        $('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
+        //$('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
         
         //2. set the columns
         $(data.meta_data).each(function(index,value)
@@ -167,7 +167,10 @@ function bi_dashboard()
 
         //5. send filter buttons if stored in session
         if (data.wheres)
-        {   $('#filters').parent().css('background-color','white')
+
+    
+        {   $('#filtersinterface').css('background-color','white');
+            $('#filtersinterface').show();
             $(data.wheres).each(function(index,value){
                 $('#filters').append(`
                 <div class="btn-group me-2" role="group" style="padding:5px;">
@@ -245,7 +248,7 @@ function bi_dashboard()
         }
 
         //warnings 
-        data.warnings  = ($('#warning-ignore').is(':checked')) ? true:false;
+        //data.warnings  = ($('#warning-ignore').is(':checked')) ? true:false;
 
         if ( $('#filters button').length > 0)
         {
@@ -381,15 +384,37 @@ function bi_dashboard()
                     var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
                     fixed_name = fixed_name.join(' ').trim();
                     var card = $('#feedback .card').find(`.card-title:contains(${fixed_name})`)
+                    var card_value =  card.next();
                     if ('max' in value.values)
                     {
                         // <p class="card-text">${value.values.min} -> ${value.values.max}</p>
-                        card.next().text(`${value.values.min} -> ${value.values.max}`)
+                        //card_value.text(card_value.text()).fadeOut(100).delay(200); 
+                        
+                        var card_text = `${value.values.min} -> ${value.values.max}`
+                       
                     }
                     else if ('count' in value.values)
                     {
-                        card.next().text(value.values.count)
+                        var card_text = value.values.count
+                        //card_value.text(card_value.text()).animate({ opacity: 0,duration:100});    
+                       // card_value.delay(200).text(value.values.count)
+                        //card_value.animate({ opacity: 1,duration:100}); 
+                        
+                        /*card_value.fadeOut('slow',function(){
+                            $(this).text(value.values.count).fadeIn('slow');
+                       });*/
                     }
+                    console.log(card_value.text())
+                    console.log(card_text)
+
+                    if (card_value.text() !=  String(card_text)) 
+                    {
+                        card_value.animate({ opacity: 0},500,function(){
+                            $(this).text(card_text).animate({ opacity: 1});
+                       });
+                    }
+
+                    
                 })
             }  
             });
@@ -428,20 +453,9 @@ function bi_dashboard()
 
     //ajax request for new chart visual from server
     $(document).on('click','#send_values', function() {
-       // $('#send_values').prop('disabled',true);
+        $('#send_values').prop('disabled',true);
         $('#sales').css('opacity',0.5)
         ajax_data();
-    })
-
-    $('#resume_ajax').on('click',function()
-    {
-        ajax_data(); 
-    })
-
-    $('#cancel_ajax').on('click',function()
-    {
-        $('#send_values').prop('disabled',false);
-        $('#sales').css('opacity',1)
     })
   
     //!!anything past here is for select input handling and  button visibility!!
@@ -643,6 +657,7 @@ function bi_dashboard()
                 if ($('#NumericFilterField').is(':visible'))
                 {
                     var parameter = $('#NumericFilterField').val() 
+                    $('#NumericFilterField').val('').keyup()
                 }
 
                 else if  ($('#DateFilter').is(':visible'))
@@ -650,6 +665,7 @@ function bi_dashboard()
                     var fixed_name = column.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
                     column = fixed_name.join(' '); 
                     var parameter = $('#DateFilter').val()
+                    $('#DateFilter').val('').keyup()
                 }
 
                 $('#filters').parent().css('background-color','white')
@@ -658,9 +674,13 @@ function bi_dashboard()
                         <button class="btn btn-primary btn-sm button_filter" operand="${operand}" type="filter">${column +' '+ operand +' '+ parameter}</button>
                     </div>`)
                 
-                $('#DateFilter').val('').keyup()
+                    
+                //$('#DateFilter').val('').keyup()
                 $('#NumericMath').change();
             }
+            
+            $('#filtersinterface').show();
+            //console.log($('button[type=filter]').length)
         ajax_filters() 
         }
     })
@@ -678,8 +698,6 @@ function bi_dashboard()
                 { 
                     var numvars = $(value).text().split(/>|</g)[0].replace(/ /g,'')
                     var operand = $(value).text().charAt($(value).text().search(/<|>/))
-                    console.log(numvars)
-                    console.log(operand)
                     if ($('#NumericMath').val() == operand && $('#NumericSelect').val() == numvars.trim())
                     {   
                         $('#addFilter').prop('disabled',true)
@@ -750,8 +768,9 @@ function bi_dashboard()
         $(this).parent().remove();
         var buttonFilter = $(this).text();
         if ($('#filters button').length == 0)
-        {
-            $('#filters').parent().css('background-color','') 
+        {  
+            $('#filtersinterface').hide();
+            $('#filtersinterface').css('background-color',''); 
             //$('#filters').attr('empty',true); 
         }
 
