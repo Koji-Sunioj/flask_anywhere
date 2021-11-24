@@ -387,25 +387,12 @@ function bi_dashboard()
                     var card_value =  card.next();
                     if ('max' in value.values)
                     {
-                        // <p class="card-text">${value.values.min} -> ${value.values.max}</p>
-                        //card_value.text(card_value.text()).fadeOut(100).delay(200); 
-                        
-                        var card_text = `${value.values.min} -> ${value.values.max}`
-                       
+                        var card_text = `${value.values.min} -> ${value.values.max}`   
                     }
                     else if ('count' in value.values)
                     {
                         var card_text = value.values.count
-                        //card_value.text(card_value.text()).animate({ opacity: 0,duration:100});    
-                       // card_value.delay(200).text(value.values.count)
-                        //card_value.animate({ opacity: 1,duration:100}); 
-                        
-                        /*card_value.fadeOut('slow',function(){
-                            $(this).text(value.values.count).fadeIn('slow');
-                       });*/
                     }
-                    console.log(card_value.text())
-                    console.log(card_text)
 
                     if (card_value.text() !=  String(card_text)) 
                     {
@@ -418,37 +405,41 @@ function bi_dashboard()
                 })
             }  
             });
-        var reduce_arr = []
-        $('#feedback .card-text').each(function(index,value)
-        {
-            var range_or = $(value).text().split('->')
-           
-            if (range_or.length > 1 && !isNaN(range_or[0]))
+
+        setTimeout(function() {
+                
+            var reduce_arr = []
+            $('#feedback .card-text').each(function(index,value)
             {
-                range_or = Number(range_or[0]) + Number(range_or[1])
-                reduce_arr.push(range_or)
+                var range_or = $(value).text().split('->')
+            
+                if (range_or.length > 1 && !isNaN(range_or[0]))
+                {
+                    range_or = Number(range_or[0]) + Number(range_or[1])
+                    reduce_arr.push(range_or)
+                }
+                else 
+                {
+                    range_or = Number(range_or[0])
+                    reduce_arr.push(range_or)
+                }
+            })
+            var result =  reduce_arr.reduce((a, b) => a + b, 0)
+            if (result == 0)
+            {   
+                $('#filters_dashboard').find('input, select').prop('disabled',true)
+                $('#customizer').find('input, select').prop('disabled',true)
+                $('#send_values').prop('disabled',true)
             }
+
             else 
             {
-                range_or = Number(range_or[0])
-                reduce_arr.push(range_or)
+                $('#filters_dashboard').find('input, select').prop('disabled',false)
+                $('#customizer').find('input, select').prop('disabled',false).change()
+                $('#send_values').prop('disabled',false)
             }
-        })
-        
-        var result =  reduce_arr.reduce((a, b) => a + b, 0)
-        if (result == 0)
-        {   
-            $('#filters_dashboard').find('input, select').prop('disabled',true)
-            $('#customizer').find('input, select').prop('disabled',true)
-            $('#send_values').prop('disabled',true)
-        }
-
-        else 
-        {
-            $('#filters_dashboard').find('input, select').prop('disabled',false)
-            $('#customizer').find('input, select').prop('disabled',false).change()
-            $('#send_values').prop('disabled',false)
-        }
+            
+        }, 600);
     }
 
     //ajax request for new chart visual from server
