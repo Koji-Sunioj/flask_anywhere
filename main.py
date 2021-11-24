@@ -16,7 +16,6 @@ def bi_data():
 		#send the form to a dictionary
 		send_values = {key:val for key,val in request.form.items()}
 		filters = json.loads(send_values['filters']) if 'filters' in send_values else False
-		
 		if send_values['visual'] == 'map':
 			keys =  external_functions.translate_category_map()
 			send_values['category'] = keys[send_values['category']]
@@ -29,7 +28,7 @@ def bi_data():
 		'date_string' in send_values and col_array.append('OrderDate')
 
 		query.db_rel(col_array,filters)
-		data = db_functions.custom_query(query.command,query.joins,query.ins)
+		data = db_functions.custom_query(query.command,query.joins,query.wheres)
 
 		#set the attributes from the data
 		highchart = external_functions.Highcharts(send_values['visual'],send_values['agg_type'])
@@ -101,7 +100,7 @@ def bi_data():
 		return jsonify(new_json)
 		
 	elif request.method == 'GET' and 'state' in session:
-		print(session)
+
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
@@ -163,11 +162,13 @@ def frame_filter():
 	data = db_functions.sales()
 	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	for_feedback = external_functions.frame_filters(data,json_filters)
-	numeric_feedback = external_functions.numeric_filters(for_feedback)
+	sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).round(2).astype(str).T.to_dict()
+	ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).astype(str).astype(str).aggregate(['min','max'])).to_dict()
 	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
-	json_feedback = {**string_feedback, **numeric_feedback} 
+	json_feedback = {**string_feedback, **sums,**ranges} 
 	preferred = for_feedback.columns.tolist()
 	json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
+	print(json_feedback)
 	
 	return jsonify(json_feedback)
 	

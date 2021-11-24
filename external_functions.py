@@ -10,11 +10,7 @@ def translate_category_map():
 	return keys
 
 def check_eval(value):
-	print(value)
-	if isinstance(value,(float, int)):
-		result = value
-	else: #str.isdigit(value) == False:
-		result = '"{}"'.format(value)
+	result = value if isinstance(value,(float, int)) else '"{}"'.format(value)
 	return result
 
 def category_datalist(frame):
@@ -24,15 +20,14 @@ def category_datalist(frame):
 	return cols
 
 def numeric_filters(frame):
+	
 	new_frame = frame[frame.columns[~frame.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64','datetime64[ns]'])
 	new_frame = new_frame.groupby(new_frame.index).sum()
 	new_frame = new_frame.aggregate(['max','min'])
 	new_frame['Price'] = frame.Price.aggregate(['max','min'])
 	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min'])
-
-	#print(frame.OrderDate.aggregate(['max','min']))
+	print(new_frame)
 	num_filters = new_frame.fillna(0).round(2).astype(str).to_dict()
-	#num_filters['Order Date'] = frame.OrderDate.sort_values().astype(str).unique().tolist()
 	
 	return num_filters
 
@@ -42,21 +37,15 @@ def frame_filters(frame,filters):
 	translator = {'=':'==','>':'>','<':'<'}
 	
 	for i in filters:
-		if i['column'] in ['Total','Quantity']:
-			query = ("(frame.groupby(frame.index).aggregate({'%s':'sum'}))['%s']%s%s" % (i['column'],i['column'],i['operand'],i['parameter']))
-		else:
-			query = ("(frame['%s'] %s %s)" % (i['column'],translator[i['operand']],check_eval(i['parameter'])) )
-		tester[i['column']] = [query] if i['column'] not in tester else tester[i['column']] + [query]	
+		query = ("(frame['%s'] %s %s)" % (i['column'],translator[i['operand']],check_eval(i['parameter'])) )
+		tester[i['column']] = [query] if i['column'] not in tester else tester[i['column']] + [query]
+		
 	frame = frame.set_index('OrderID')
 	
 	for key,val in tester.items():
-		if key in ['Total','Quantity']:
-			for thing in tester[key]:
-				command = eval(thing)
-				frame = frame[~frame.index.isin(command[command == False].index)]
-		else:
-			command = eval("&".join(tester[key])) if key in ['Price','OrderDate'] else eval("|".join(tester[key]))
-			frame = frame[~frame.index.isin(command[command == False].index)]
+		command = eval("&".join(tester[key])) if key in ['Price','OrderDate','Total','Quantity'] else eval("|".join(tester[key]))
+		frame = frame[command]
+	print(frame)
 	frame = frame.reset_index()
 	
 	return frame
@@ -176,7 +165,7 @@ class Highcharts:
 		elif highchart.visual != 'map':
 			print(new_data)
 			flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
-			#if all(flip_bool):  new_data = new_data.T
+			if all(flip_bool):  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 				series.append(stuff)

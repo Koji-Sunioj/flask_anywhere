@@ -2,8 +2,14 @@ import datetime
 import pymysql
 import pandas as pd
 import numpy as np
+import re
 import external_functions
 con = pymysql.connect(host='localhost', user='root',password='Karelia',database= 'w3')
+
+def check_eval(value):
+    result = str(value) if isinstance(value,(float, int)) else '"{}"'.format(value)
+    return result
+
 
 def sales():
 	#call stored procedure for the highcharts array
@@ -20,14 +26,14 @@ def sales():
 	sales['OrderDate'] = pd.to_datetime(sales['OrderDate'])
 	return sales
 
-def custom_query(command,joins,ins=False):
+def custom_query(command,joins,wheres=False):
 	#query constructed from table names, joins as attributed by Db_command class
 	con.connect()
 	select_main = con.cursor()
 	statement = 'select {} from orders {}'.format(command,joins)
-	if ins:
-		statement = statement + " where orders.OrderID IN " + ins
-		#statement = statement +' where orders.OrderID IN ' + end_statement
+	if wheres:
+		statement = statement + ' where '+ "and".join(wheres) 
+	print(statement)
 	select_main.execute(statement)
 	field_names = [i[0] for i in select_main.description]
 	rows = select_main.fetchall()
@@ -40,7 +46,7 @@ def custom_query(command,joins,ins=False):
 
 class Db_command:
 	#a class structure for creating an sql query depending on the requests column names
-	def __init__(query,keys=False,command=False,joins=False,wheres=False,havings=False,ins=False):
+	def __init__(query,keys=False,command=False,joins=False,wheres=False):
 		#get the table names and column names from database
 		con.connect()
 		select_main = con.cursor()
@@ -71,11 +77,8 @@ class Db_command:
 		query.command = command
 		query.joins = joins
 		query.wheres = []
-		query.havings = []
-		query.ins = ins
 
 	def db_rel(query,col_array,filters=False):
-
 		ord_ord = 'join order_details on order_details.OrderID = orders.OrderID'
 		pro_ord = 'join products on order_details.ProductID = products.ProductID'
 		pro_cat = 'join categories on products.CategoryID = categories.CategoryID'
@@ -105,61 +108,45 @@ class Db_command:
 		refs['supplier_point'] = [0,1,3,10]
 
 		#take the values from array and parse it with the specified keys
-		rels = [query.keys[column] for column in col_array]
+		rels = query.keys
+		rels = [rels[column] for column in col_array]
 		rels_copy = rels.copy()
-		
+
 		if filters:
-			cat_wheres = "(SELECT orders.OrderID FROM orders {} GROUP BY orders.OrderID HAVING {})"
-			translator =  {'>':'min','<':'max'}
 			tester = {}
 			for i in filters:
+				rels.append(query.keys[i['column']])
 				command = query.keys[i['column']]['command']
 				if ' as ' in command: command = command.split(' as ')[0]
-				cat_link = refs[query.keys[ i['column']]['link']]
-				query.wheres.extend(cat_link)
 				if command in tester:
-					tester[command]['values'].append(str(i['parameter']))
+					tester[command]['values'].append(i['parameter'])
 					tester[command]['operand'].append(i['operand'])
 				else:
-					tester[command] = {'values':[ str(i['parameter']) ],'operand':[i['operand']],'origin':i['column']}
+					tester[command] = {'values':[ i['parameter'] ],'operand':[i['operand']],'origin':i['column']}
+			
+			date_pattern = "^([0-9]{4})[-]([0]?[1-9]|[1][0-2])[-]([0][1-9]|[1|2][0-9]|[3][0|1])$"
 			for key,val in tester.items():
-				if val['origin'] in ['Total','Quantity']:
-					if len(val['values']) > 1:
-						command = "SUM({}) between {}"
-						values = " and ".join(val['values'])
-						final = command.format(key,values)
-						query.havings.append(final)
-					else:
-						final = "SUM({}){}{}".format(key,"".join(val['operand']),"".join(val['values']))
-						query.havings.append(final)
-				elif val['origin'] in ['Price','OrderDate']:
-					target = query.keys[val['origin']]['command']
-					for shit,piss in zip(val['values'],val['operand']) :
-						command = "%s(%s)%s%s" % (translator[piss],target,piss,external_functions.check_eval(shit))
-						query.havings.append(command)
-				else:
-					command = "SUM({} not in ({})) = 0"
-					values = ("'"+"','".join(val['values']) + "'")
-					final = command.format(key,values)
-					query.havings.append(final)
+				is_dates = all([bool(re.search(date_pattern,str(i))) for i in val['values']])
+				is_nums = all([isinstance(i,(float,int)) for i in val['values']])
+				if not is_nums and not is_dates:
+					values = [ '"%s"'%(cat) for cat in val['values']]
+					command = "(%s in(%s))" %(key,",".join(values))
+					query.wheres.append(command)
+				elif is_nums or is_dates:
+					command = [key+o+check_eval(v) for o,v in zip(val['operand'],val['values'])]
+					command = "(%s)" %" and ".join(command)
+					query.wheres.append(command)
 				
-			query.wheres = list(set(query.wheres))
-			query.wheres.sort()
-			query.wheres = [indexer[i] for i in query.wheres]
-			query.wheres = " ".join(query.wheres)
-			query.havings = " and ".join(query.havings)
-			query.ins = cat_wheres.format(query.wheres,query.havings)
-		
 		#get the index of sequencial join clauses for relevant columns
 		joins = [num for i in rels for num in refs[i['link']]]
 		joins = list(set(joins))
 		joins.sort()
 		joins = [indexer[i] for i in joins]
 		joins = " ".join(joins)
-		
+
 		#join query string into one
 		command = [i['command'] for i in rels_copy]
-		command = "orders.OrderID, " + ",".join(command) if len(command) > 0 else "orders.OrderID"
+		command = ",".join(command) + ",orders.OrderID" if len(command) > 0 else "orders.OrderID"
 
 		#add them to the class
 		query.command = command

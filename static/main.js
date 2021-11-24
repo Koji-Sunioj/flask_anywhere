@@ -427,14 +427,14 @@ function bi_dashboard()
             var result =  reduce_arr.reduce((a, b) => a + b, 0)
             if (result == 0)
             {   
-                $('#filters_dashboard').find('input, select').prop('disabled',true)
+                //$('#filters_dashboard').find('input, select').prop('disabled',true)
                 $('#customizer').find('input, select').prop('disabled',true)
                 $('#send_values').prop('disabled',true)
             }
 
             else 
             {
-                $('#filters_dashboard').find('input, select').prop('disabled',false)
+               // $('#filters_dashboard').find('input, select').prop('disabled',false)
                 $('#customizer').find('input, select').prop('disabled',false).change()
                 $('#send_values').prop('disabled',false)
             }
