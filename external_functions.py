@@ -26,7 +26,7 @@ def numeric_filters(frame):
 	new_frame = new_frame.aggregate(['max','min'])
 	new_frame['Price'] = frame.Price.aggregate(['max','min'])
 	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min'])
-	print(new_frame)
+	
 	num_filters = new_frame.fillna(0).round(2).astype(str).to_dict()
 	
 	return num_filters
@@ -45,7 +45,7 @@ def frame_filters(frame,filters):
 	for key,val in tester.items():
 		command = eval("&".join(tester[key])) if key in ['Price','OrderDate','Total','Quantity'] else eval("|".join(tester[key]))
 		frame = frame[command]
-	print(frame)
+	
 	frame = frame.reset_index()
 	
 	return frame

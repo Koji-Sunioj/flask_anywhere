@@ -218,6 +218,17 @@ function bi_dashboard()
                         </div>
                     </div>`) 
                 }
+
+                else if ('sum' in value.values)
+                {
+                    $('#feedback').append(`<div class="card col-3 rounded" style="background-color: white; ">
+                        <div class="card-body">
+                            <h5 class="card-title">${fixed_name}</h5>
+                            <p class="card-text">${value.values.sum}</p>
+                        </div>
+                    </div>`) 
+                }
+
             })
         }
     })
@@ -392,6 +403,11 @@ function bi_dashboard()
                     else if ('count' in value.values)
                     {
                         var card_text = value.values.count
+                    }
+
+                    else if ('sum' in value.values)
+                    {
+                        var card_text = value.values.sum
                     }
 
                     if (card_value.text() !=  String(card_text)) 

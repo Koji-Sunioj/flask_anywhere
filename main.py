@@ -72,9 +72,11 @@ def bi_data():
 		if 'point' in "".join(data.columns): data = data.rename(columns={"".join(data.columns[data.columns.str.contains('point')]):highchart.category})
 		
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
-		numeric_feedback = external_functions.numeric_filters(for_feedback)
+		sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).round(2).astype(str).T.to_dict()
+		ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).astype(str).astype(str).aggregate(['min','max'])).to_dict()
+		#numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
-		json_feedback = {**string_feedback, **numeric_feedback} 
+		json_feedback = {**sums, **string_feedback,**ranges} 
 		
 		preferred = for_feedback.columns.tolist()
 		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
@@ -126,9 +128,12 @@ def bi_data():
 		if 'point' in "".join(data.columns): data = data.rename(columns={for_next['category']:highchart.category})
 		
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
-		numeric_feedback = external_functions.numeric_filters(for_feedback)
+		
+		sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).round(2).astype(str).T.to_dict()
+		ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).astype(str).astype(str).aggregate(['min','max'])).to_dict()
+		#numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
-		json_feedback = {**string_feedback, **numeric_feedback} 
+		json_feedback = {**sums, **string_feedback,**ranges} 
 		
 		preferred = for_feedback.columns.tolist()
 		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
@@ -168,7 +173,7 @@ def frame_filter():
 	json_feedback = {**string_feedback, **sums,**ranges} 
 	preferred = for_feedback.columns.tolist()
 	json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
-	print(json_feedback)
+	
 	
 	return jsonify(json_feedback)
 	
