@@ -32,6 +32,7 @@ def numeric_filters(frame):
 	return num_filters
 
 def frame_filters(frame,filters):
+	print(filters)
 	#filter by values by OrderID per sales order, or OrderDetailID for rows in sales order
 	tester = {}
 	translator = {'=':'==','>':'>','<':'<'}
@@ -39,14 +40,15 @@ def frame_filters(frame,filters):
 	for i in filters:
 		query = ("(frame['%s'] %s %s)" % (i['column'],translator[i['operand']],check_eval(i['parameter'])) )
 		tester[i['column']] = [query] if i['column'] not in tester else tester[i['column']] + [query]
-		
-	frame = frame.set_index('OrderID')
+	
+	print(tester)
 	
 	for key,val in tester.items():
-		command = eval("&".join(tester[key])) if key in ['Price','OrderDate','Total','Quantity'] else eval("|".join(tester[key]))
+		check_dtype = frame[key].dtype.name != 'object'
+		command = eval("&".join(tester[key])) if check_dtype else eval("|".join(tester[key]))
 		frame = frame[command]
 	
-	frame = frame.reset_index()
+	#frame = frame.fillna(0)
 	
 	return frame
 
@@ -108,6 +110,7 @@ class Highcharts:
 			data = data.set_index('OrderDate')
 			if highchart.date_string == 'quarter':
 				data.index = data.index.to_period('Q').astype(str)
+			
 			else:
 				data.index = data.index.strftime(highchart.date_string)
 			grouper.insert(0,'OrderDate')
@@ -118,6 +121,8 @@ class Highcharts:
 			unique_or = 'count' if  highchart.agg_type == 'nunique' else highchart.agg_type
 			data.columns = [unique_or] if len(data.columns) == 1 else data.columns
 			data = data.sort_index().fillna(0)
+			fuckyou = {'1':'Monday','2':'Tuesday','3':'Wednesday','4':'Thursday','5':'Friday','6':'Saturday','7':'Sunday'}
+			if highchart.date_string == '%w': data.index = data.index.map(fuckyou)
 			highchart.title = '{}'.format(highchart.handle_title(data.index))
 			
 		#no date string, normal aggregate
@@ -139,10 +144,12 @@ class Highcharts:
 			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
 
-		data = data.fillna(0).round(2).sort_index()
+		data = data.fillna(0).round(2) 
 		return data
 
 	def agg_to_json(highchart,new_data):
+		
+		print(new_data)
 		#series list is the array highcharts will interact with
 		series = []
 		
@@ -163,9 +170,8 @@ class Highcharts:
 			series.append({'name':y_label,'animation':False,'type':'mapbubble','minSize':3,'maxSize':10,'data':data}) 
 		
 		elif highchart.visual != 'map':
-			print(new_data)
-			flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
-			if all(flip_bool):  new_data = new_data.T
+			#flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
+			#if all(flip_bool):  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
 				series.append(stuff)
@@ -175,7 +181,7 @@ class Highcharts:
 		json_data = {'series':series,'title':highchart.title,'yAxis':{'title': {'text':y_label.title()}},'type':highchart.visual}
 		x_label = 'OrderDate' if highchart.date_string else highchart.category
 		x_label = 'Orders' if x_label == False else highchart.regex_labels(x_label)
-		categories = [i for i in new_data.index ] if len(new_data.index) > 1 else ['']
+		categories = [i for i in new_data.index ] #if len(new_data.index) > 1 else ['']
 		xAxis = {'categories':categories,'title': {'text':x_label}}
 		json_data['xAxis'] = xAxis
 		

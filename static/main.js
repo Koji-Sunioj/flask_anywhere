@@ -269,6 +269,7 @@ function bi_dashboard()
                 var filterArr = $(value).text().split(/:|<|>/)
                 var target = filterArr[0].trim().replace(/\s/g, '')
                 var param = filterArr[1].trim()
+                
                 if (!isNaN(param))
                 {
                     param = Number(param)
@@ -371,9 +372,10 @@ function bi_dashboard()
             var filterArr = $(value).text().split(/:|<|>/)
             var target = filterArr[0].trim().replace(/\s/g, '')
             var param = filterArr[1].trim()
-            if (!isNaN(param))
+            //console.log(typeof(param) )
+            if (!isNaN(param) && !target.includes('ID'))
             {
-                param = parseInt(param)
+                param = Number(param)
             }
             filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
         })
@@ -441,6 +443,7 @@ function bi_dashboard()
                 }
             })
             var result =  reduce_arr.reduce((a, b) => a + b, 0)
+            console.log(result)
             if (result == 0)
             {   
                 //$('#filters_dashboard').find('input, select').prop('disabled',true)
@@ -824,41 +827,16 @@ function bi_dashboard()
      })
 
      $(document).on('keydown','#NumericFilterField',function(event)
-    {   
-        var max_length = $('#NumericFilterField').attr('maxlength')
-        console.log(max_length)
-        console.log($('#NumericFilterField').val().length)
-       
-        if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 45 && event.keyCode < 58) || event.keyCode == 8  || $('#NumericFilterField').val().length > max_length)) 
+    {  
+    
+        
+        if(event.keyCode == 107 || event.keyCode == 109 ) 
         {
             return false;
         }
     })
 
-    $(document).on('keyup','#NumericFilterField',function()
-    {   
-        var mins = Number($('#NumericFilterField').attr('min'));
-        var maxs = Number($('#NumericFilterField').attr('max'));
-        var actual = Number($('#NumericFilterField').val());
-       
-        if (actual >= mins &&  actual <= maxs) 
-        {   
-            $('#NumericFilterField').css('color','black');
-            check_num_filters() 
-        }
-
-        else if (actual < mins ||  actual > maxs) 
-        {   
-            $('#NumericFilterField').css('color','red');
-        }
-
-        else if ($('#NumericFilterField').val().length == 0) 
-        {
-            $('#NumericFilterField').css('color','black')
-            $('#addFilter').prop('disabled',true)
-        }
-        
-    })
+  
 };
 
 

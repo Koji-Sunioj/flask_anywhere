@@ -130,7 +130,7 @@ def bi_data():
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		
 		sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).round(2).astype(str).T.to_dict()
-		ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).astype(str).astype(str).aggregate(['min','max'])).to_dict()
+		ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).aggregate(['min','max']).astype(str)).to_dict()
 		#numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 		json_feedback = {**sums, **string_feedback,**ranges} 
@@ -164,16 +164,16 @@ def bi_page():
 @app.route("/frame_filter/",methods=['POST','GET'])
 def frame_filter():
 	json_filters = json.loads(request.form['filterData'])
+	
 	data = db_functions.sales()
 	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	for_feedback = external_functions.frame_filters(data,json_filters)
-	sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).round(2).astype(str).T.to_dict()
-	ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).astype(str).astype(str).aggregate(['min','max'])).to_dict()
+	sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).fillna(0).round(2).astype(str).T.to_dict()
+	ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].aggregate(['min','max']).fillna(0).round(2).astype(str)).to_dict()
 	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 	json_feedback = {**string_feedback, **sums,**ranges} 
 	preferred = for_feedback.columns.tolist()
 	json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
-	
 	
 	return jsonify(json_feedback)
 	
