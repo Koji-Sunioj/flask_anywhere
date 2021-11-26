@@ -121,8 +121,7 @@ class Highcharts:
 			unique_or = 'count' if  highchart.agg_type == 'nunique' else highchart.agg_type
 			data.columns = [unique_or] if len(data.columns) == 1 else data.columns
 			data = data.sort_index().fillna(0)
-			fuckyou = {'1':'Monday','2':'Tuesday','3':'Wednesday','4':'Thursday','5':'Friday','6':'Saturday','7':'Sunday'}
-			if highchart.date_string == '%w': data.index = data.index.map(fuckyou)
+			if highchart.date_string == '%w': data.index = data.index.map({'1':'Monday','2':'Tuesday','3':'Wednesday','4':'Thursday','5':'Friday','6':'Saturday','7':'Sunday'})
 			highchart.title = '{}'.format(highchart.handle_title(data.index))
 			
 		#no date string, normal aggregate
