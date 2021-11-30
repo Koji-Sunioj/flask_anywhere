@@ -16,10 +16,20 @@
 }
 
 #table_target > tr > td{
-  font-size: 9px;
-
+  font-size: 10px;
   padding: 2px;
   text-align: center;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
 }
 </style>
 
@@ -187,47 +197,26 @@
     </div>
     <br>
     <div  class="row rounded table-responsive" id="table_area" style="background-color: white; ">
-      <table class="table table">
+      <table class="table" >
         <thead>
           <tr id="table_header">
            
           </tr>
         </thead>
         <tbody id="table_target">
-          <tr> 
-        
-          </tr>
           
-          <tr>
-          
-          </tr>
-          <tr>
-           
-          </tr>
-          <tr>
-           
-          </tr>
-          <tr>
-           
-          </tr>
-          <tr>
-           
-          </tr>
-          <tr>
-           
-          </tr>
-          <tr>
-           
-          </tr>
-          <tr>
-           
-          </tr>
-          <tr>
-           
-          </tr>
         </tbody>
       </table>
+      <div class="col-2 offset-5  " > 
+        <div class="input-group input-group-sm mb-3 flex-nowrap " >
+          <button class="btn btn-outline-secondary" id="pageDown"><</button>
+          <input  type="number" class="form-control" id="paginAtor" style="text-align: center; border-top: #6c7a7d 1px solid; border-bottom: #6c7a7d 1px solid; ">
+       
+          <button class="btn btn-outline-secondary" id="pagUp">></button>
+        </div>
+      </div>
     </div>
+    
     <br>
   </div>
   

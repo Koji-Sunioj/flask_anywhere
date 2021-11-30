@@ -9,7 +9,6 @@ import re
 def html_table(table,page):
 	table = table[table.columns[~table.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).round(0).astype(str)
 	table = table.iloc[page * 20 - 20:page * 20]
-	print(table)
 	test = []
 	customers = table.CustomerName.tolist()
 	for dat in table:
@@ -20,8 +19,7 @@ def html_table(table,page):
 				new_data['values'][-1]['span']  += 1
 			else:
 				new_data['values'].append({'name':str(value),'span':1,'index':num})
-		test.append(new_data)
-				
+		test.append(new_data)		
 	return test
 
 def translate_category_map():
