@@ -5,6 +5,25 @@ import matplotlib
 from matplotlib import cm
 import re
 
+
+def html_table(table,page):
+	table = table[table.columns[~table.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).round(0).astype(str)
+	table = table.iloc[page * 20 - 20:page * 20]
+	print(table)
+	test = []
+	customers = table.CustomerName.tolist()
+	for dat in table:
+		selected = table[dat]
+		new_data = {'column':dat,'values':[]}
+		for num,value in enumerate(selected.values):
+			if len(new_data['values'])> 0 and value == new_data['values'][-1]['name'] and customers[num-1] == customers[num]:
+				new_data['values'][-1]['span']  += 1
+			else:
+				new_data['values'].append({'name':str(value),'span':1,'index':num})
+		test.append(new_data)
+				
+	return test
+
 def translate_category_map():
 	keys = {'CustomerCountry':'customer_iso','SupplierCountry':'supplier_iso','CustomerCity':'customer_point','SupplierCity':'supplier_point'}
 	return keys
@@ -32,7 +51,6 @@ def numeric_filters(frame):
 	return num_filters
 
 def frame_filters(frame,filters):
-	print(filters)
 	#filter by values by OrderID per sales order, or OrderDetailID for rows in sales order
 	tester = {}
 	translator = {'=':'==','>':'>','<':'<'}
@@ -41,14 +59,10 @@ def frame_filters(frame,filters):
 		query = ("(frame['%s'] %s %s)" % (i['column'],translator[i['operand']],check_eval(i['parameter'])) )
 		tester[i['column']] = [query] if i['column'] not in tester else tester[i['column']] + [query]
 	
-	print(tester)
-	
 	for key,val in tester.items():
 		check_dtype = frame[key].dtype.name != 'object'
 		command = eval("&".join(tester[key])) if check_dtype else eval("|".join(tester[key]))
 		frame = frame[command]
-	
-	#frame = frame.fillna(0)
 	
 	return frame
 
@@ -142,13 +156,12 @@ class Highcharts:
 			
 			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
-
+	
+		#print(data / data.values.sum() * 100)
 		data = data.fillna(0).round(2) 
 		return data
 
 	def agg_to_json(highchart,new_data):
-		
-		print(new_data)
 		#series list is the array highcharts will interact with
 		series = []
 		
@@ -183,8 +196,6 @@ class Highcharts:
 		categories = [i for i in new_data.index ] #if len(new_data.index) > 1 else ['']
 		xAxis = {'categories':categories,'title': {'text':x_label}}
 		json_data['xAxis'] = xAxis
-		
-		
 		return json_data
 
 '''

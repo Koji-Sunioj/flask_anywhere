@@ -26,6 +26,13 @@ function bi_dashboard()
             }
         }
         
+
+       var check_dataLabel =  (data.xAxis.categories.length + data.series.length >= 30) ? false : true;
+       //alert(data.xAxis.categories.length + data.series.length)
+       //console.log((data.series.length > 10 ))
+       //console.log((data.xAxis.categories.length > 10 ))
+       //console.log((data.series.length > 10 && data.xAxis.categories.length > 10))
+
         Highcharts.chart('sales', {
            
             title: {text: data.title},
@@ -36,6 +43,13 @@ function bi_dashboard()
             series: data.series,
             plotOptions: {
                 series: {
+                    dataLabels: {
+                        enabled: check_dataLabel,
+                        color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'black',
+                        formatter: function(){
+                        return (this.y!=0)?this.y:"";
+                        }
+                    },
                     marker: {
                         enabled: false
                     }
@@ -192,6 +206,7 @@ function bi_dashboard()
              $("#NumericSelect").val($("#NumericSelect option:first").val());
         }
 
+        //.7 feedback divs
         if (data.feedback)
         {
             $(data.feedback).each(function(index,value){
@@ -230,6 +245,28 @@ function bi_dashboard()
                 }
 
             })
+        }
+
+        if (data.table_data)
+        {
+            var trs =  data.table_data[0].values.map(item => item.span).reduce((pv, cv) => pv + cv, 0)
+            for (let i = 0; i < trs; i++) 
+            {
+                $('#table_target').append('<tr></tr>')
+            }
+
+            $(data.table_data).each(function(key,value){
+                var fixed_name = value.column.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g);
+                fixed_name = fixed_name.join(' ');
+                $('#table_header').append(`<th scope="col">${fixed_name}</th>`)
+
+                $(value.values).each(function(index,data)
+                {
+                    var cell = `<td rowspan=${data.span}>${data.name}</td>`
+                    $(`#table_target tr:eq(${data.index})`).append(cell)
+                    
+                })
+            });
         }
     })
 
@@ -840,7 +877,7 @@ function bi_dashboard()
 };
 
 
-/*
+
 function test()
 {
 

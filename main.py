@@ -68,6 +68,7 @@ def bi_data():
 		#create the frame and json array. meta data and state for html interfacing
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
+		table = external_functions.html_table(data,page=1)
 		
 		if 'point' in "".join(data.columns): data = data.rename(columns={"".join(data.columns[data.columns.str.contains('point')]):highchart.category})
 		
@@ -94,10 +95,12 @@ def bi_data():
 		new_json['num_filters'] = num_filters
 		new_json['wheres'] = False
 		new_json['feedback'] = json_feedback
+		new_json['table_data'] = table
 		
 		#save attributes to cookies
 		session['state'] = for_next
 		session['wheres'] = False
+		session['table_page'] = 1
 		
 		return jsonify(new_json)
 		
@@ -105,6 +108,7 @@ def bi_data():
 
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
+		table = external_functions.html_table(data,page=session['table_page'])
 		
 		#get the values for the html data list elements
 		category_datalist = external_functions.category_datalist(data)
@@ -121,6 +125,7 @@ def bi_data():
 		highchart = external_functions.Highcharts(**for_next)
 		
 		if session['wheres']: data = external_functions.frame_filters(data,session['wheres'])
+		
 		
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
@@ -151,6 +156,7 @@ def bi_data():
 		new_json['num_filters'] = num_filters
 		new_json['wheres'] = session['wheres']
 		new_json['feedback'] = json_feedback
+		new_json['table_data'] = table
 		
 		return jsonify(new_json)
 
@@ -158,6 +164,7 @@ def bi_data():
 def bi_page():
 	#session.pop('state',None)
 	#session.pop('wheres',None)
+	#session.pop('table_page',None)
 	return render_template('index.html')
 
 

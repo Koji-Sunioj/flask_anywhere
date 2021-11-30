@@ -4,6 +4,23 @@
   .filtergroup::-webkit-calendar-picker-indicator {
   display:none !important;
 }
+
+#table_header > th
+{
+  
+  font-size: 10px;
+  padding: 2px;
+  text-align: center; 
+  vertical-align: top;
+ 
+}
+
+#table_target > tr > td{
+  font-size: 9px;
+
+  padding: 2px;
+  text-align: center;
+}
 </style>
 
 <body onload="bi_dashboard()" style="background-color: rgb(146, 194, 245)">
@@ -168,6 +185,50 @@
     <div  class="row rounded" id="feedback" style="background-color: white; padding:20px">
       <h3>Current Selection</h3>
     </div>
+    <br>
+    <div  class="row rounded table-responsive" id="table_area" style="background-color: white; ">
+      <table class="table table">
+        <thead>
+          <tr id="table_header">
+           
+          </tr>
+        </thead>
+        <tbody id="table_target">
+          <tr> 
+        
+          </tr>
+          
+          <tr>
+          
+          </tr>
+          <tr>
+           
+          </tr>
+          <tr>
+           
+          </tr>
+          <tr>
+           
+          </tr>
+          <tr>
+           
+          </tr>
+          <tr>
+           
+          </tr>
+          <tr>
+           
+          </tr>
+          <tr>
+           
+          </tr>
+          <tr>
+           
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <br>
   </div>
   
 </body>
