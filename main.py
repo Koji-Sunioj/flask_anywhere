@@ -113,10 +113,6 @@ def bi_data():
 		#the stored procedure serves both the meta data, and session requested chart
 		data = db_functions.sales()
 		
-		#html table with relational spans and pages
-		table = external_functions.html_table(data,page=session['table_page'])
-		pages = math.ceil(len(data) / 20)
-		
 		#get the values for the html data list elements
 		category_datalist = external_functions.category_datalist(data)
 		num_filters = external_functions.numeric_filters(data)
@@ -133,11 +129,14 @@ def bi_data():
 		
 		if session['wheres']: data = external_functions.frame_filters(data,session['wheres'])
 		
-		
 		new_data = highchart.agg_frame(data)
 		new_json = highchart.agg_to_json(new_data)
 		
 		if 'point' in "".join(data.columns): data = data.rename(columns={for_next['category']:highchart.category})
+		
+		#html table with relational spans and pages
+		table = external_functions.html_table(data,page=session['table_page'])
+		pages = math.ceil(len(data) / 20)
 		
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		
@@ -176,10 +175,26 @@ def bi_page():
 	return render_template('index.html')
 
 
+@app.route("/frame_page/",methods=['POST'])
+def ajax_tables():
+	page_request = {key:val for key,val in request.form.items()}
+	print(page_request)
+	data = db_functions.sales()
+	#data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
+	if 'filterData' in page_request: data = external_functions.frame_filters(data, json.loads(page_request['filterData']) )
+	
+	table = external_functions.html_table(data,page=int(page_request['page']))
+	print(table)
+	#for_feedback = external_functions.frame_filters(data,json_filters)
+	#page = json.loads(request.form['page'])
+	#print(page)
+	shit = {'eat':'shit'}
+	return jsonify(shit)
+
+
 @app.route("/frame_filter/",methods=['POST','GET'])
 def frame_filter():
 	json_filters = json.loads(request.form['filterData'])
-	
 	data = db_functions.sales()
 	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	for_feedback = external_functions.frame_filters(data,json_filters)

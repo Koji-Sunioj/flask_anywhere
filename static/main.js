@@ -275,16 +275,10 @@ function bi_dashboard()
         {
             $('#paginAtor').val(data.table_pages.current)
             $('#paginAtor').attr('max',data.table_pages.max)
+            $('#paginAtor').attr('current',data.table_pages.current)
+            $('#whereami').text("\u00A0\u00A0\u00A0"+'of '+data.table_pages.max + "\u00A0\u00A0\u00A0")
 
-            if (data.table_pages.current == 1)
-            {
-                $('#pageDown').prop('disabled',true)
-            }
-
-            else if (data.table_pages.current == data.table_pages.max)
-            {
-                $('#pageUp').prop('disabled',true)
-            }
+           
         }
     })
 
@@ -359,6 +353,55 @@ function bi_dashboard()
             }  
         });
     }
+
+    function ajax_tables()
+    {
+
+        let page_request = { page: $('#paginAtor').val()} 
+
+        if ($('button[type=filter]').length > 0)
+        {
+            var filters = []
+            $('button[type=filter]').each(function(index,value)
+            {  
+                var filterArr = $(value).text().split(/:|<|>/)
+                var target = filterArr[0].trim().replace(/\s/g, '')
+                var param = filterArr[1].trim()
+                //console.log(typeof(param) )
+                if (!isNaN(param) && !target.includes('ID'))
+                {
+                    param = Number(param)
+                }
+                filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
+            })
+
+            Object.assign(page_request, {filterData: JSON.stringify(filters)});
+           // page_request.filterData = ) 
+        }
+
+        
+
+
+        
+
+        $.ajax({
+            data :  page_request,
+            type : 'POST',
+            async : false,
+            url : '/frame_page/'
+        })
+    
+        .done(function(data){ 
+            {
+                //update the table
+               alert(data.eat)
+            }  
+            });
+
+
+
+    }
+
 
     //handle normal string category type
     function handleCategory()
@@ -881,18 +924,30 @@ function bi_dashboard()
         }
      })
 
+     $('#pageGo').on('click',function(){
+        ajax_tables()
+     })
      
+     $(document).on('keyup', '#paginAtor',function(event)
+     {  
+        if ( $('#paginAtor').val() !=  $('#paginAtor').attr('current') && $('#paginAtor').val().length != 0 ) 
+        {
+            $('#pageGo').prop('disabled',false)
+        }
 
+        else 
+        {
+            $('#pageGo').prop('disabled',true)
+        }
+     })
 
      $(document).on('keydown', '#paginAtor',function(event)
      {  
-        var real_val = Number($('#paginAtor').val() + String.fromCharCode( event.keyCode) )  
-        console.log(real_val)
-       // console.log($('#paginAtor').val() > parseInt($('#paginAtor').attr('max')))
-         if(event.keyCode == 107 || event.keyCode == 109 || real_val > parseInt($('#paginAtor').attr('max'))) 
-         {
-             return false;
-         }
+        var real_val = Number($('#paginAtor').val() +  event.key)  
+        if(event.keyCode == 107 || event.keyCode == 109 ||  real_val == 0 || real_val > parseInt($('#paginAtor').attr('max'))) 
+        {
+            return false;
+        }
      })
 
      $(document).on('keydown', '#NumericFilterField',function(event)
