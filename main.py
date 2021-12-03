@@ -182,14 +182,13 @@ def ajax_tables():
 	data = db_functions.sales()
 	#data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	if 'filterData' in page_request: data = external_functions.frame_filters(data, json.loads(page_request['filterData']) )
-	
 	table = external_functions.html_table(data,page=int(page_request['page']))
-	print(table)
+	#print(table)
 	#for_feedback = external_functions.frame_filters(data,json_filters)
 	#page = json.loads(request.form['page'])
 	#print(page)
-	shit = {'eat':'shit'}
-	return jsonify(shit)
+	table_feedback = {'table':table}
+	return jsonify(table_feedback)
 
 
 @app.route("/frame_filter/",methods=['POST','GET'])
@@ -198,13 +197,14 @@ def frame_filter():
 	data = db_functions.sales()
 	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	for_feedback = external_functions.frame_filters(data,json_filters)
+	table = external_functions.html_table(for_feedback,page=int(request.form['page']))
 	sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).fillna(0).round(2).astype(str).T.to_dict()
 	ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].aggregate(['min','max']).fillna(0).round(2).astype(str)).to_dict()
 	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 	json_feedback = {**string_feedback, **sums,**ranges} 
 	preferred = for_feedback.columns.tolist()
-	json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
-	
+	filter_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
+	json_feedback = {'filters':filter_feedback,'table':table,'pages':math.ceil(len(for_feedback) / 20)} 
 	return jsonify(json_feedback)
 	
 

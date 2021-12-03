@@ -357,6 +357,8 @@ function bi_dashboard()
     function ajax_tables()
     {
 
+        $('#paginAtor').attr('current',$('#paginAtor').val())
+        $('#paginAtor').keyup()
         let page_request = { page: $('#paginAtor').val()} 
 
         if ($('button[type=filter]').length > 0)
@@ -379,11 +381,6 @@ function bi_dashboard()
            // page_request.filterData = ) 
         }
 
-        
-
-
-        
-
         $.ajax({
             data :  page_request,
             type : 'POST',
@@ -392,14 +389,21 @@ function bi_dashboard()
         })
     
         .done(function(data){ 
-            {
+            {   
+                
                 //update the table
-               alert(data.eat)
+                $('#table_target tr').empty();
+                $(data.table).each(function(key,value){
+                    $(value.values).each(function(index,data)
+                    {
+                        var cell = `<td rowspan=${data.span}>${data.name}</td>`
+                        $(`#table_target tr:eq(${data.index})`).append(cell)
+                        
+                    })
+                });
+                
             }  
             });
-
-
-
     }
 
 
@@ -478,7 +482,7 @@ function bi_dashboard()
             filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
         })
         data = {
-            filterData : JSON.stringify(filters) 
+            filterData : JSON.stringify(filters), page: $('#paginAtor').attr('current')
         }
         $.ajax({
             data :  data,
@@ -490,7 +494,7 @@ function bi_dashboard()
         .done(function(data){ 
             {
                 //update the table
-                $(data).each(function(index,value){
+                $(data.filters).each(function(index,value){
                 
                     var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
                     fixed_name = fixed_name.join(' ').trim();
@@ -518,7 +522,20 @@ function bi_dashboard()
                     }
 
                     
-                })
+                }) 
+                $('#paginAtor').attr('max',data.pages)
+                $('#paginAtor').val($('#paginAtor').attr('current')).keyup()
+                $('#whereami').text("\u00A0\u00A0\u00A0"+'of '+data.pages + "\u00A0\u00A0\u00A0")    
+                $('#table_target tr').empty();
+                $(data.table).each(function(key,value){
+                    $(value.values).each(function(index,data)
+                    {
+                        var cell = `<td rowspan=${data.span}>${data.name}</td>`
+                        $(`#table_target tr:eq(${data.index})`).append(cell)
+                        
+                    })
+                });
+
             }  
             });
 
@@ -541,7 +558,7 @@ function bi_dashboard()
                 }
             })
             var result =  reduce_arr.reduce((a, b) => a + b, 0)
-            console.log(result)
+
             if (result == 0)
             {   
                 //$('#filters_dashboard').find('input, select').prop('disabled',true)
