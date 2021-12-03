@@ -355,10 +355,10 @@ function bi_dashboard()
     }
 
     function ajax_tables()
-    {
-
-        $('#paginAtor').attr('current',$('#paginAtor').val())
-        $('#paginAtor').keyup()
+    {   
+        var page = Number($('#paginAtor').val())
+        $('#paginAtor').attr('current',page)
+        $('#paginAtor').val(page).keyup()
         let page_request = { page: $('#paginAtor').val()} 
 
         if ($('button[type=filter]').length > 0)
@@ -376,9 +376,7 @@ function bi_dashboard()
                 }
                 filters.push({column: target, parameter: param,origin:$(value).text(),operand:$(value).attr('operand')}) 
             })
-
             Object.assign(page_request, {filterData: JSON.stringify(filters)});
-           // page_request.filterData = ) 
         }
 
         $.ajax({
@@ -390,18 +388,15 @@ function bi_dashboard()
     
         .done(function(data){ 
             {   
-                
                 //update the table
                 $('#table_target tr').empty();
-                $(data.table).each(function(key,value){
+                $(data.table_data).each(function(key,value){
                     $(value.values).each(function(index,data)
                     {
                         var cell = `<td rowspan=${data.span}>${data.name}</td>`
-                        $(`#table_target tr:eq(${data.index})`).append(cell)
-                        
+                        $(`#table_target tr:eq(${data.index})`).append(cell)  
                     })
-                });
-                
+                }); 
             }  
             });
     }
@@ -474,7 +469,6 @@ function bi_dashboard()
             var filterArr = $(value).text().split(/:|<|>/)
             var target = filterArr[0].trim().replace(/\s/g, '')
             var param = filterArr[1].trim()
-            //console.log(typeof(param) )
             if (!isNaN(param) && !target.includes('ID'))
             {
                 param = Number(param)
@@ -523,11 +517,12 @@ function bi_dashboard()
 
                     
                 }) 
-                $('#paginAtor').attr('max',data.pages)
-                $('#paginAtor').val($('#paginAtor').attr('current')).keyup()
-                $('#whereami').text("\u00A0\u00A0\u00A0"+'of '+data.pages + "\u00A0\u00A0\u00A0")    
+                $('#paginAtor').attr('max',data.max)
+                $('#paginAtor').attr('current',data.current)
+                $('#paginAtor').val(data.current).keyup()
+                $('#whereami').text("\u00A0\u00A0\u00A0"+'of '+data.max + "\u00A0\u00A0\u00A0")    
                 $('#table_target tr').empty();
-                $(data.table).each(function(key,value){
+                $(data.table_data).each(function(key,value){
                     $(value.values).each(function(index,data)
                     {
                         var cell = `<td rowspan=${data.span}>${data.name}</td>`
@@ -947,7 +942,7 @@ function bi_dashboard()
      
      $(document).on('keyup', '#paginAtor',function(event)
      {  
-        if ( $('#paginAtor').val() !=  $('#paginAtor').attr('current') && $('#paginAtor').val().length != 0 ) 
+        if ( $('#paginAtor').val() !=  $('#paginAtor').attr('current') && $('#paginAtor').val().length != 0  && $('#paginAtor').val() >0) 
         {
             $('#pageGo').prop('disabled',false)
         }

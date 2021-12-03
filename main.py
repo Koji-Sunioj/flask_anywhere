@@ -177,87 +177,38 @@ def bi_page():
 
 @app.route("/frame_page/",methods=['POST'])
 def ajax_tables():
+	#pull data and filter before making the table, no need to update html input attributes
 	page_request = {key:val for key,val in request.form.items()}
-	print(page_request)
 	data = db_functions.sales()
-	#data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	if 'filterData' in page_request: data = external_functions.frame_filters(data, json.loads(page_request['filterData']) )
 	table = external_functions.html_table(data,page=int(page_request['page']))
-	#print(table)
-	#for_feedback = external_functions.frame_filters(data,json_filters)
-	#page = json.loads(request.form['page'])
-	#print(page)
-	table_feedback = {'table':table}
+	table_feedback = {'table_data':table}
 	return jsonify(table_feedback)
 
 
 @app.route("/frame_filter/",methods=['POST','GET'])
 def frame_filter():
+	#pull data and filter it
 	json_filters = json.loads(request.form['filterData'])
 	data = db_functions.sales()
 	data = data[data.columns[~data.columns.str.contains('iso|lat|lon')]].copy()
 	for_feedback = external_functions.frame_filters(data,json_filters)
-	table = external_functions.html_table(for_feedback,page=int(request.form['page']))
+	
+	#assign page based on available pages and the html table
+	pages = math.ceil(len(for_feedback) / 20)
+	page = pages if int(request.form['page']) > pages else int(request.form['page'])
+	table = external_functions.html_table(for_feedback,page=page)
+	
+	#this is for the divs showing the data
 	sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).fillna(0).round(2).astype(str).T.to_dict()
 	ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].aggregate(['min','max']).fillna(0).round(2).astype(str)).to_dict()
 	string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 	json_feedback = {**string_feedback, **sums,**ranges} 
 	preferred = for_feedback.columns.tolist()
 	filter_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
-	json_feedback = {'filters':filter_feedback,'table':table,'pages':math.ceil(len(for_feedback) / 20)} 
+	
+	#return everything together
+	json_feedback = {'filters':filter_feedback,'table_data':table,'max':pages,'current':page} 
 	return jsonify(json_feedback)
 	
 
-@app.route("/test/")
-def test():
-	data = db_functions.sales()
-	
-	pages = math.ceil(len(data) / 10)
-	page = 1
-	table = data[data.columns[~data.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).head(10).astype(str)
-	print(table)
-	
-	new_data = {}
-	customers = table.CustomerName.tolist()
-	for dat in table:
-		selected = table[dat]
-		new_data[dat] = []
-		for num,value in enumerate(selected.values):
-			if len(new_data[dat])> 0 and value == new_data[dat][-1]['name'] and customers[num-1] == customers[num]:
-				new_data[dat][-1]['span']  += 1
-			else:
-				new_data[dat].append({'name':value,'span':1,'index':num}) 
-	
-	print(new_data)
-	
-	date_cols = data.OrderDate.sort_values().astype(str).unique()
-	#print(date_cols)
-	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
-	
-	data = data[data.nunique().sort_values().index]
-	cols = [" ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", col)).strip() +': '+str(value) for col in data.columns for value in data[col].unique()]
-	
-	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	return render_template('test.html',cols=cols,meta_data=meta_data,new_data=json.dumps(new_data),page=page,pages=pages,date_cols=date_cols) #
-	
-@app.route("/filter/",methods=['POST'])
-def filter():
-	json_filters = json.loads(request.form['filterData'])
-	data = db_functions.sales()
-	data = data.sort_values('OrderDate').select_dtypes(include=['object'])
-	data = data[data.nunique().sort_values().index]
-	command = "&".join(["(data['{}'] == '{}')".format(value['column'],value['parameter']) for value in json_filters])
-	data = data[eval(command)] if command else data
-	meta_data = [{'name': " ".join(re.split("(^[A-Z][a-z]+|[A-Z][A-Z]+)", i[0])).strip(),'count':int(i[1])}   for i in zip(data.nunique().index,data.nunique().values)]
-	
-	return jsonify(meta_data)
-
-	
-if (__name__ == "__main__"):
-	app.run(port = 5000, debug=True)
-
-
-
-#translator = {'=':'==','>':'>','<':'<'}
-#command = "&".join(["(data['{}'] {} {})".format(value['column'],translator[value['operand']],external_functions.check_eval(value['parameter']) ) for value in 
-#data = data[eval(command)] if command else data
