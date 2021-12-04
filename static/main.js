@@ -388,17 +388,31 @@ function bi_dashboard()
     
         .done(function(data){ 
             {   
-                //update the table
-                $('#table_target tr').empty();
-                $(data.table_data).each(function(key,value){
-                    $(value.values).each(function(index,data)
-                    {
-                        var cell = `<td rowspan=${data.span}>${data.name}</td>`
-                        $(`#table_target tr:eq(${data.index})`).append(cell)  
-                    })
-                }); 
+                
+                $('#table_target').animate({ opacity: 0}, 500, function() {
+                    $('#table_target tr').empty();
+                    //check if rows are less than incoming
+                    var trs =  data.table_data[0].values.map(item => item.span).reduce((pv, cv) => pv + cv, 0)
+                    if ( trs > $('#table_target tr').length ) 
+                    {   var needed_length = trs - $('#table_target tr').length
+                        for (let i = 0; i < needed_length; i++) 
+                        {   
+                            $('#table_target').append('<tr></tr>')
+                        }
+                    }
+                   
+                    //append the values
+                    $(data.table_data).each(function(key,value){
+                        $(value.values).each(function(index,data)
+                        {
+                            var cell = `<td rowspan=${data.span}>${data.name}</td>`
+                            $(`#table_target tr:eq(${data.index})`).append(cell)  
+                        })
+                    }); 
+                    $('#table_target').animate({opacity:1})    
+                }) 
             }  
-            });
+        });
     }
 
 
@@ -487,7 +501,7 @@ function bi_dashboard()
     
         .done(function(data){ 
             {
-                //update the table
+                //update the cards
                 $(data.filters).each(function(index,value){
                 
                     var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
@@ -514,23 +528,35 @@ function bi_dashboard()
                             $(this).text(card_text).animate({ opacity: 1});
                        });
                     }
-
-                    
-                }) 
+                })
+                
+                //update the table
                 $('#paginAtor').attr('max',data.max)
                 $('#paginAtor').attr('current',data.current)
                 $('#paginAtor').val(data.current).keyup()
                 $('#whereami').text("\u00A0\u00A0\u00A0"+'of '+data.max + "\u00A0\u00A0\u00A0")    
-                $('#table_target tr').empty();
-                $(data.table_data).each(function(key,value){
-                    $(value.values).each(function(index,data)
-                    {
-                        var cell = `<td rowspan=${data.span}>${data.name}</td>`
-                        $(`#table_target tr:eq(${data.index})`).append(cell)
-                        
-                    })
+                $('#table_target').animate({ opacity: 0}, 500, function() {
+                    $('#table_target tr').empty();
+                    //check if rows are less than incoming
+                    var trs =  data.table_data[0].values.map(item => item.span).reduce((pv, cv) => pv + cv, 0)
+                    if ( trs > $('#table_target tr').length ) 
+                    {   var needed_length = trs - $('#table_target tr').length
+                        for (let i = 0; i < needed_length; i++) 
+                        {   
+                            $('#table_target').append('<tr></tr>')
+                        }
+                    }
+                    
+                    //append the values
+                    $(data.table_data).each(function(key,value){
+                        $(value.values).each(function(index,data)
+                        {
+                            var cell = `<td rowspan=${data.span}>${data.name}</td>`
+                            $(`#table_target tr:eq(${data.index})`).append(cell)
+                        })
+                    });
+                    $('#table_target').animate({opacity:1})
                 });
-
             }  
             });
 
@@ -556,14 +582,12 @@ function bi_dashboard()
 
             if (result == 0)
             {   
-                //$('#filters_dashboard').find('input, select').prop('disabled',true)
                 $('#customizer').find('input, select').prop('disabled',true)
                 $('#send_values').prop('disabled',true)
             }
 
             else 
             {
-               // $('#filters_dashboard').find('input, select').prop('disabled',false)
                 $('#customizer').find('input, select').prop('disabled',false).change()
                 $('#send_values').prop('disabled',false)
             }
@@ -590,7 +614,6 @@ function bi_dashboard()
         {
             handleCategory()
         }
- 
     });
 
     
@@ -975,393 +998,3 @@ function bi_dashboard()
   
 };
 
-
-
-function test()
-{
-
-     $('#NumericFilter').on('change',function(){
-        if ($(this).is(':checked')) 
-        {
-            $('#NumFilterRow').show();
-            $('#CatFilterRow').hide();
-        }
-
-     })
-
-     $('#CategoricFilter').on('change',function(){
-        if ($(this).is(':checked')) 
-        {
-            $('#NumFilterRow').hide();
-            $('#CatFilterRow').show();
-        }
-
-     })
-
-     $(document).on('change','#NumericSelect',function(){
-        //alert($(this).val() )
-        if ($(this).val() == 'Date')
-        {
-            $('#NumberFilterField').hide();
-            $('#DateFilter').show()
-        }
-
-        else 
-        {
-            $('#NumberFilterField').show();
-            $('#DateFilter').hide()
-        }
-
-     })
-
-
-     var table_data = JSON.parse($('#table_data').val())
-    
-     $.each(table_data, function(key,value){
-        var fixed_name = key.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
-        fixed_name = fixed_name.join(' ');
-        var table_header = `<th scope="col">${fixed_name}</th>`
-
-        $('#table_header').append(table_header)
-    
-        $(value).each(function(index,data)
-        {
-            var cell = `<td rowspan=${data.span}>${data.name}</td>`
-            $(`#table_target tr:eq(${data.index})`).append(cell)
-            
-        });
-    });
-    //$(document).ready( function () {
-    //    $('#table_id').DataTable();
-    //} );
-    
-    $(document).on('keyup','#params',function(){
-        var params = $('#params').val();
-       // var buttonTexts = $.map($('#filters button'), function(val) {  
-       //     return $(val).text()
-       // });  
-
-        var values = []
-
-        $('.dataOption').each(function(index,value){
-            values.push($(value).val())
-        })
-  
-        if (values.includes(params) )
-        {
-            $('#addFilter').prop('disabled',false)
-        }
-
-        else 
-        {
-            $('#addFilter').prop('disabled',true)
-        }
-    })
-
-
-    function ajax_filters()
-    {
-        var filters = []
-        $('#filters button').each(function(index,value)
-        {  
-           var filterArr = $(value).text().split(':')
-           var target = filterArr[0].trim().replace(/\s/g, '')
-           var param = filterArr[1].trim()
-           filters.push({column: target, parameter: param}) 
-
-        })
-
-       data = {
-           filterData : JSON.stringify(filters) 
-       }
-        
-      
-       //send to server
-        $.ajax({
-           data :data,
-           type : 'POST',
-           url : '/filter/'
-       })
-
-
-       .done(function(data){ 
-           {
-               //update the table
-               $('.metaColumn').each(function(index,value)
-               {
-                   if (data[index]['name'] == $(value).attr('header'))
-                   { 
-                       $(value).text(data[index]['count'])
-                   }
-               })
-               
-           }  
-          
-       });
-
-       
-    }
-
-
-    $(document).on('click','#addFilter',function(){
-        {   
-           
-            //disable selected value in data list
-            $('.dataOption').each(function(index,value){
-                if ($(value).val() == $('#params').val())
-                {
-                    $(value).prop('disabled',true)
-                }
-            })
-
-            //send to filters list
-            $('#filters').parent().css('background-color','white')
-            $('#filters').append(`
-                <div class="btn-group me-2" role="group" style="padding:5px;">
-                    <button class="btn btn-primary btn-sm" type="filter">${$('#params').val()}</button>
-                </div>`)
-            $('#params').val('');
-            $('#addFilter').prop('disabled',true);
-
-            //send text of filters in div to an array
-            ajax_filters()
-            
-        }
-    })
-
-    $(document).on('click','button[type=filter]',function()
-    {
-
-        
-        $(this).parent().remove();
-        var buttonFilter = $(this).text();
-        if ($('#filters button').length == 0)
-        {
-            $('#filters').parent().css('background-color','') 
-            //$('#filters').empty(); 
-        }
-        $('.dataOption').each(function(index,value){
-            if ($(value).val() == buttonFilter)
-            {
-                $(value).prop('disabled',false)
-            }
-        })
-        ajax_filters()
-    })
-
-    $(document).on('keyup','#paginAtor',function(event)
-    {  
-        if ($('#paginAtor').val() >  52)
-        {   
-            $('#paginAtor').val(52);
-            
-        }
-        else if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 47 && event.keyCode < 58) || event.keyCode == 8)) 
-        {
-          return false;
-        }
-    })
-
-    $(document).on('keydown','#paginAtor',function(event)
-    {  
-       if(!((event.keyCode > 95 && event.keyCode < 106) || (event.keyCode > 47 && event.keyCode < 58) || event.keyCode == 8)) 
-        {
-          return false;
-        }
-    })
- 
-
-}
-
-
-
- //http://jsfiddle.net/dnbtkmyz/
-    /*
-    $(function () {
-    var mapData = Highcharts.maps['custom/world'];
-
-    $('#container').highcharts('Map', {
-        series: [{
-            name: 'Countries',
-            mapData: mapData,
-        }, {
-            name: 'Points',
-            type: 'mappoint',
-            data: [{
-                name: 'London',
-                lat: 51.507222,
-                lon: -0.1275
-            }, {
-                name: 'Moscow',
-                lat: 55.7500,
-                lon: 37.6167
-            }, {
-                name: 'Beijing',
-                lat: 39.9167,
-                lon: 116.3833
-            }, {
-                name: 'Washington D.C.',
-                lat: 38.889931,
-                lon: -77.00900,
-                color: 'red',
-                marker: {
-                            radius: 2
-                        }
-            }]
-        }],
-        legend: {
-            enabled: true
-        },
-        title: {
-            text: 'World map'
-        }
-    });
-http://jsfiddle.net/BlackLabel/gbduyLo9/
-});
-
-function update_highchart(data)
-{   
-    data.yAxis.scrollbar =  {
-        enabled: true
-    }
-    
-    if (data.type == 'scatter')
-    {
-        var marker = 
-           {
-                symbol: 'circle',
-                radius: 3,
-                
-             }
-        //var symbol = 'circle';
-    }
-    else 
-    {
-        var marker = {
-            enabled: false
-        };
-    }
-    
-
-    if (data.yAxis.categories && data.yAxis.categories.length * 20 < 400 || !data.yAxis.categories)
-    {
-        var new_height = 400  
-    }
-
-    else 
-    {
-        var new_height = data.yAxis.categories.length * 20
-    }
-
-    if (data.series.length > 12)
-    {
-        var new_legend = {
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'middle',
-            title: {text: data.legend}
-        }
-
-    }
-
-    else 
-    {
-        var new_legend = {
-            title: {text: data.legend}
-        }
-    }
-   //render the chartlet chart = 
-    Highcharts.chart('sales', {
-       
-        title: {text: data.title},
-        chart: {type: data.type, animation: false},
-        chart: {type: data.type, animation: false,height:new_height},
-        yAxis: data.yAxis,
-        xAxis: data.xAxis,
-        legend: new_legend,
-        plotOptions: { 
-            
-            series: {
-                marker: marker,
-                }
-                
-                point: {
-                    events: {
-                        click: function () {
-                            console.log('Category: ' + this.category + ', value: ' + this.y);
-                        }
-                    }
-                },
-            }
-        },
-        colorAxis: {
-            min: 0,
-            max: 20
-        },
-        series: data.series,
-        tooltip: {
-            
-            formatter: function (tooltip) {
-                
-                if (data.type == 'scatter' && data.xAxis.categories && data.yAxis.categories) {
-                    
-                    return `<strong style='color:${this.point.color}'>&#9679</strong> ${data.legend}: <strong>`+this.series.name + '</strong><br>'+data.xAxis.title.text +': '+ this.series.xAxis.categories[this.point.x] +'<br>'+data.yAxis.title.text +': '+this.series.yAxis.categories[this.point.y];
-                }
-                // If not null, use the default formatter
-               // console.log(tooltip)
-                return tooltip.defaultFormatter.call(this, tooltip);
-            }
-        }
-       
-    //highchart ends here 
-    });
-    
-   
-}
-
-$(function () {
-    var mapData = Highcharts.maps['custom/world'];
-
-    $('#container').highcharts('Map', {
-    mapNavigation: {
-        enabled: true
-    },colorAxis: {
-                min: 0 ,stops: [
-                    [0, '#0000ff'],
-                    [0.5, '#ffffff'],
-                    [1, '#ff0000'] 
-                
-                ]
-            },
-        series: [{
-            name: 'Countries',
-            mapData: mapData,
-        }, {
-            name: 'Points',
-            maxSize: '1%',
-            minSize: 2,
-            type: 'mapbubble',
-            data: [{
-                name: 'London',
-                lat: 51.507222,
-                lon: -0.1275,
-                z: 1,
-               
-            },
-            {
-                name: 'London',
-                lat: 60.507222,
-                lon: -0.1275,
-                z: 1
-            },]
-        }],
-        legend: {
-            enabled: false
-        },
-        title: {
-            text: 'World map'
-        }
-    });
-
-});
-*/ 
