@@ -99,12 +99,11 @@ def bi_data():
 		new_json['wheres'] = False
 		new_json['feedback'] = json_feedback
 		new_json['table_data'] = table
-		new_json['table_pages'] = pages
+		new_json['table_pages'] = {'max':pages,'current':1} 
 		
 		#save attributes to cookies
 		session['state'] = for_next
 		session['wheres'] = False
-		new_json['table_pages'] = {'max':pages,'current':1} 
 		
 		return jsonify(new_json)
 		
@@ -135,7 +134,7 @@ def bi_data():
 		if 'point' in "".join(data.columns): data = data.rename(columns={for_next['category']:highchart.category})
 		
 		#html table with relational spans and pages
-		table = external_functions.html_table(data,page=session['table_page'])
+		table = external_functions.html_table(data,page=1)
 		pages = math.ceil(len(data) / 20)
 		
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
@@ -163,7 +162,7 @@ def bi_data():
 		new_json['wheres'] = session['wheres']
 		new_json['feedback'] = json_feedback
 		new_json['table_data'] = table
-		new_json['table_pages'] = {'max':pages,'current':session['table_page']} 
+		new_json['table_pages'] = {'max':pages,'current':1} 
 
 		return jsonify(new_json)
 
@@ -171,7 +170,6 @@ def bi_data():
 def bi_page():
 	#session.pop('state',None)
 	#session.pop('wheres',None)
-	#session.pop('table_page',None)
 	return render_template('index.html')
 
 
