@@ -57,10 +57,11 @@ input[type=number] {
   <div class="modal-dialog  modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">The Data</h5>
+        <h5 class="modal-title">About</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
+        <p><strong>How does this project work?</strong></p>
         <p>This data represented here is based on the <a href="https://www.w3schools.com/sql/default.asp">W3 schools SQL tutorial</a>,which is a MySQL database schema featuring a fictional company with customers, suppliers and several other business attribues. Geographic data has been added to the schema to integrate with the Highcharts.js map module.</p>
         <p>Use case is a business associate wanting to visualize sales order performance. As with many business intelligence platforms: the user has the ability to drill down or filter data based on categorical or numerical data types which are related to the sales order.</p> 
         <p>Careful consideration has been made on performance and that only neccesary data is loaded when needed. This could be explained in the following ways:</p>
@@ -69,11 +70,27 @@ input[type=number] {
           <li>Changes to the graph or filters is done by asynchronous POST requests which constructs a MySQL query in the backend (no stored procedure).</li>
           <li>Requested changes are stored in session data - next page load will show the exact same data filtered in the stored procedure.</li>
         </ul>
+        <p>This project uses:</p>
+        <ol>
+          <li>Python's Flask web application library to serve the page and data requests between webpage and database.</li>
+          <li>Python's Pandas library to structure, organize and index data from the MySQL database</li>
+          <li>JavaScript and Jquery to manage interface displays, including data requests to the server</li>
+          <li>Highchart.js to visualize the data</li>
+          <li>and finally: MySQL to store and serve the data from queries requested by Flask.</li>
+        </ol>
+        <figure class="text-center" > 
+          <img src="{{ url_for('static', filename = 'schema.png') }}" style="border: 1px solid #d1d6dc;" class="img-fluid rounded" alt="Responsive image">
+          <figcaption>MySQL database schema for this project.</figcaption>
+        </figure>
+        <p><strong>Why did I start this project?</strong></p>
+        <p>I had studied Business Intelligence with various softwares and Database Administration in Haaga-Helia AMK, since the topic of data visualizations to address business decisions and structuring data was very interesting to me.</p>
+        <p>However, I quickly found that finding an internship or trainee position to start my career with those specific skills was very challenging. The only solutions I can find to address this, was to learn more skills. </p>
+        <p>With a little research and advice, I discovered that Python was a popular programming language for data analysis with easy to understand syntax. I read the book <i>Python Crash Course</i> by Eric Matthes and found myself sucked into this scripting language.</p>
+        <p>I thought it would benefit me if I complimented my studies with Python rather than replace it to make myself a strong candidate in the data realm. One of my challenges was also displaying my Business Intelligence skills while the popular softwares often entailed an expensive license, and being meant for Windows OS (I have Linux).</p>
+        <p>So I thought: why not take a business-like database schema and integrate it into a web platform which functioned in a programmatic way similar to a BI tool?</p>
+        <p>... and down that path I went. It helped me learn to code in a more functional way while integrating JavaScript, Python and MySQL into one place. In the end I hope to demonstrate that not only am I comfortable using Python as a data analytics tool, but also able to integrate them on a web platform with a server and client side interfacing if needed.</p>
       </div>
-      <figure class="text-center" > 
-        <img src="{{ url_for('static', filename = 'schema.png') }}" style="border: 1px solid #d1d6dc;" class="img-fluid rounded" alt="Responsive image">
-        <figcaption>MySQL database schema for this project.</figcaption>
-      </figure>
+    
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         

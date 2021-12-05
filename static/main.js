@@ -26,13 +26,7 @@ function bi_dashboard()
             }
         }
         
-
-       var check_dataLabel =  (data.xAxis.categories.length + data.series.length >= 30) ? false : true;
-       //alert(data.xAxis.categories.length + data.series.length)
-       //console.log((data.series.length > 10 ))
-       //console.log((data.xAxis.categories.length > 10 ))
-       //console.log((data.series.length > 10 && data.xAxis.categories.length > 10))
-
+        var check_dataLabel =  (data.xAxis.categories.length + data.series.length >= 30) ? false : true;
         Highcharts.chart('sales', {
            
             title: {text: data.title},
@@ -89,12 +83,8 @@ function bi_dashboard()
     }
     //initial load based on on the data loaded either from the flask session or the fresh load without cookies
     $.get( "bi_data", function(data) {
-
         
-        //1. set the warnings
-        //$('#warning-ignore').prop('checked', JSON.parse(data.warnings)).change();
-        
-        //2. set the columns
+        //1. set the columns
         $(data.meta_data).each(function(index,value)
         {   
             var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
@@ -114,7 +104,7 @@ function bi_dashboard()
 
         });
 
-        //3. if there is a value
+        //2. if there is a value
         if (data.state.value)
         {
             $('#values').val(data.state.value);
@@ -164,7 +154,7 @@ function bi_dashboard()
            
         }
         
-        //update highcharts here
+        //3. update highcharts here
         if (data.state.visual != 'map')
         {
             update_highchart(data);
@@ -210,39 +200,23 @@ function bi_dashboard()
         if (data.feedback)
         {
             $(data.feedback).each(function(index,value){
-                
+              
                 var fixed_name = value.name.split(/(^[A-Z][a-z]+|[A-Z][A-Z]+)/g)
                 fixed_name = fixed_name.join(' ').trim();
-               
-               
-                if ('count' in value.values)
-                {
-                    $('#feedback').append(`<div class="card col-3 rounded" style="background-color: white;">
-                        <div class="card-body">
-                            <h5 class="card-title">${fixed_name}</h5>
-                            <p class="card-text">${value.values.count}</p>
-                        </div>
-                    </div>`)
+                if (('count' in value.values || 'sum' in value.values) &&  Object.keys(value.values).length == 1)
+                {   
+                    var card_text = value.values[Object.keys(value.values)]
                 }
                 else if ('max' in value.values)
                 {
-                    $('#feedback').append(`<div class="card col-3 rounded" style="background-color: white; ">
-                        <div class="card-body">
-                            <h5 class="card-title">${fixed_name}</h5>
-                            <p class="card-text">${value.values.min} -> ${value.values.max}</p>
-                        </div>
-                    </div>`) 
+                    var card_text = `${value.values.min} -> ${value.values.max}`
                 }
-
-                else if ('sum' in value.values)
-                {
-                    $('#feedback').append(`<div class="card col-3 rounded" style="background-color: white; ">
-                        <div class="card-body">
-                            <h5 class="card-title">${fixed_name}</h5>
-                            <p class="card-text">${value.values.sum}</p>
-                        </div>
-                    </div>`) 
-                }
+                $('#feedback').append(`<div class="card col-3 rounded" style="background-color: white; ">
+                    <div class="card-body">
+                        <h5 class="card-title">${fixed_name}</h5>
+                        <p class="card-text">${card_text}</p>
+                    </div>
+                </div>`) 
 
             })
         }
@@ -277,8 +251,6 @@ function bi_dashboard()
             $('#paginAtor').attr('max',data.table_pages.max)
             $('#paginAtor').attr('current',data.table_pages.current)
             $('#whereami').text("\u00A0\u00A0\u00A0"+'of '+data.table_pages.max + "\u00A0\u00A0\u00A0")
-
-           
         }
     })
 
@@ -290,26 +262,14 @@ function bi_dashboard()
             agg_type : $('#aggregate_column').val()
         }
         //if value is viewable, send it
-        if ($('#values').prop('disabled') == false)
-        {
-            data.value = $('#values').val()
-        }
-
+        if ($('#values').prop('disabled') == false) data.value = $('#values').val()
+       
         //if category not marked off, send it
-        if ($('#isCategory').is(':checked') )
-        {
-            data.category = $('#categories').val();
-        }
+        if ($('#isCategory').is(':checked') )  data.category = $('#categories').val();
 
         //if a date string is specified
-        if ($('#isDate').is(':checked') && $('#isDate').prop('disabled') == false)
-        {
-            data.date_string = $('#date_column').val();
-        }
-
-        //warnings 
-        //data.warnings  = ($('#warning-ignore').is(':checked')) ? true:false;
-
+        if ($('#isDate').is(':checked') && $('#isDate').prop('disabled') == false) data.date_string = $('#date_column').val();
+      
         if ( $('#filters button').length > 0)
         {
             var filters = []
@@ -388,7 +348,6 @@ function bi_dashboard()
     
         .done(function(data){ 
             {   
-                
                 $('#table_target').animate({ opacity: 0}, 500, function() {
                     $('#table_target tr').empty();
                     //check if rows are less than incoming
@@ -508,20 +467,16 @@ function bi_dashboard()
                     fixed_name = fixed_name.join(' ').trim();
                     var card = $('#feedback .card').find(`.card-title:contains(${fixed_name})`)
                     var card_value =  card.next();
-                    if ('max' in value.values)
-                    {
-                        var card_text = `${value.values.min} -> ${value.values.max}`   
+                
+                    if (('count' in value.values || 'sum' in value.values) &&  Object.keys(value.values).length == 1)
+                    {   
+                        var card_text = value.values[Object.keys(value.values)]
                     }
-                    else if ('count' in value.values)
+                    else if ('max' in value.values)
                     {
-                        var card_text = value.values.count
+                        var card_text = `${value.values.min} -> ${value.values.max}`
                     }
-
-                    else if ('sum' in value.values)
-                    {
-                        var card_text = value.values.sum
-                    }
-
+                  
                     if (card_value.text() !=  String(card_text)) 
                     {
                         card_value.animate({ opacity: 0},500,function(){
@@ -881,13 +836,14 @@ function bi_dashboard()
         }
    }
 
-
+   
     $(document).on('change','#NumericMath',function()
     {   
         check_operand_num() 
         check_num_filters()  
     });
 
+    //numeric filter changes value of input field depending on drop down
     $(document).on('change','#NumericSelect', function(){
         var target =  $('#NumericSelect').val()
         if (!target.includes('Date'))
@@ -906,6 +862,7 @@ function bi_dashboard()
         check_num_filters()  
     })
 
+    //when removing a filter, it will update the data summary and table
     $(document).on('click','button[type=filter]',function()
     {   
         $(this).parent().remove();
@@ -914,7 +871,6 @@ function bi_dashboard()
         {  
             $('#filtersinterface').hide();
             $('#filtersinterface').css('background-color',''); 
-            //$('#filters').attr('empty',true); 
         }
 
         if(buttonFilter.includes(':')) 
@@ -931,11 +887,10 @@ function bi_dashboard()
         {
             check_num_filters()        
         }
-
        ajax_filters()
     });
 
-
+    //radio button for filter interface if numeric
     $('#NumericCheck').on('change',function(){
         if ($(this).is(':checked')) 
         {
@@ -949,20 +904,22 @@ function bi_dashboard()
         }
      })
 
+     //radio button for the filter interface if categoric
      $('#CategoricCheck').on('change',function(){
         if ($(this).is(':checked')) 
         {
             $('.NumericFilter').hide();
             $('#DateFilter').hide()
-            $('#params').show();
-           
+            $('#params').show();     
         }
      })
 
+     //trigger ajax request on click paginator 
      $('#pageGo').on('click',function(){
         ajax_tables()
      })
      
+     //hand visibility of page interface if page number is not the current
      $(document).on('keyup', '#paginAtor',function(event)
      {  
         if ( $('#paginAtor').val() !=  $('#paginAtor').attr('current') && $('#paginAtor').val().length != 0  && $('#paginAtor').val() >0) 
@@ -976,6 +933,7 @@ function bi_dashboard()
         }
      })
 
+     //no plus or minus sign in number input for page, and if value is larger than total number of pages
      $(document).on('keydown', '#paginAtor',function(event)
      {  
         var real_val = Number($('#paginAtor').val() +  event.key)  
@@ -985,10 +943,9 @@ function bi_dashboard()
         }
      })
 
+     //no plus or minus sign in number input for filter
      $(document).on('keydown', '#NumericFilterField',function(event)
     {  
-    
-        
         if(event.keyCode == 107 || event.keyCode == 109 ) 
         {
             return false;

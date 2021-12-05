@@ -120,11 +120,7 @@ class Highcharts:
 			data = data.reset_index()
 			data['OrderDate'] = pd.to_datetime(data['OrderDate'])
 			data = data.set_index('OrderDate')
-			if highchart.date_string == 'quarter':
-				data.index = data.index.to_period('Q').astype(str)
-			
-			else:
-				data.index = data.index.strftime(highchart.date_string)
+			data.index = data.index.to_period('Q').astype(str) if highchart.date_string == 'quarter' else data.index.strftime(highchart.date_string)
 			grouper.insert(0,'OrderDate')
 			columns = highchart.category if highchart.category else None
 			if highchart.value and highchart.value != 'Price':
