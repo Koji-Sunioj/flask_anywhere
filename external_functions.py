@@ -7,7 +7,7 @@ import re
 
 
 def html_table(table,page):
-	table = table[table.columns[~table.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).round(0).astype(str)
+	table = table[table.columns[~table.columns.str.contains('iso|lat|lon|OrderDetailID')]].sort_values(['OrderDate','OrderID']).round(2).astype(str)
 	table = table.iloc[page * 20 - 20:page * 20]
 	test = []
 	customers = table.CustomerName.tolist()
@@ -37,13 +37,11 @@ def category_datalist(frame):
 	return cols
 
 def numeric_filters(frame):
-	
 	new_frame = frame[frame.columns[~frame.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64','datetime64[ns]'])
 	new_frame = new_frame.groupby(new_frame.index).sum()
 	new_frame = new_frame.aggregate(['max','min'])
 	new_frame['Price'] = frame.Price.aggregate(['max','min'])
 	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min'])
-	
 	num_filters = new_frame.fillna(0).round(2).astype(str).to_dict()
 	
 	return num_filters
@@ -90,7 +88,6 @@ class Highcharts:
 			colors.append(matplotlib.colors.rgb2hex(rgba))
 		return colors
 		
-		
 	def translate_map_category(highchart):
 		keys = translate_category_map()
 		keys = dict((value,key) for key,value in keys.items())
@@ -107,7 +104,6 @@ class Highcharts:
 		label = label + ': between {} and {}'.format(date_index[0],date_index[-1]) if highchart.date_string and len(date_index) > 1 else label
 		return label
 			
-	
 	def agg_frame(highchart,data):
 		#grouping revolves around OrderID for sales view
 		grouper = [highchart.category,'OrderID']
@@ -151,7 +147,6 @@ class Highcharts:
 			highchart.translate_map_category()
 			highchart.title = '{}'.format(highchart.handle_title())
 	
-		#print(data / data.values.sum() * 100)
 		data = data.fillna(0).round(2) 
 		return data
 
@@ -174,43 +169,25 @@ class Highcharts:
 			series.append({'name':'Cities'})
 			y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
 			series.append({'name':y_label,'animation':False,'type':'mapbubble','minSize':3,'maxSize':10,'data':data}) 
-		
+			
+		elif highchart.visual == 'pie' and highchart.date_string == False:
+			if len(new_data.index) == 1: new_data.index.name = new_data.index[0]
+			unique_or = 'count' if  highchart.agg_type == 'nunique' else highchart.agg_type
+			data = [{'name':name,'y':float(value)} for name,value in zip(new_data.index, new_data[unique_or].values) ] 
+			series = [{'data':data,'name':highchart.regex_labels(new_data.index.name) }]
+			
+			
 		elif highchart.visual != 'map':
-			#flip_bool = ([len(new_data.columns) > 1,len(new_data.index) <= 3,len(new_data.columns) <= 10,highchart.visual !='line'])
-			#if all(flip_bool):  new_data = new_data.T
 			for i in np.arange(0,len(new_data.columns)):
 				stuff = {'name':str(new_data.columns[i]),'data':[round(col,2) for col in new_data[new_data.columns[i]] ]}
-				series.append(stuff)
-				
+				series.append(stuff)	
 		
 		y_label = 'count' if highchart.agg_type == 'nunique' else highchart.value
 		json_data = {'series':series,'title':highchart.title,'yAxis':{'title': {'text':y_label.title()}},'type':highchart.visual}
 		x_label = 'OrderDate' if highchart.date_string else highchart.category
 		x_label = 'Orders' if x_label == False else highchart.regex_labels(x_label)
-		categories = [i for i in new_data.index ] #if len(new_data.index) > 1 else ['']
+		categories = [i for i in new_data.index ]
 		xAxis = {'categories':categories,'title': {'text':x_label}}
 		json_data['xAxis'] = xAxis
 		return json_data
 
-'''
-for i in filters:
-		query = "{} {} {}".format(i['column'],translator[i['operand']],check_eval(i['parameter']))
-		boolindic = len(indices) > 0
-		boolsub = len(subindices) > 0
-		
-		
-		
-		if i['column'] in ['Total','Quantity']:
-			selected = (frame.groupby('OrderID').aggregate({i['column']:'sum'})).query(query).index.values
-			#print(type(selected))
-			indices = selected if not boolindic else  np.intersect1d(selected, indices)
-		else:
-			selected = frame.query(query).OrderDetailID.tolist()
-			print(not boolsub)
-			#print(selected)
-			subindices = selected if not boolsub else  np.intersect1d(selected, subindices)
-	print(subindices)
-	boolboth = [len(indices)> 0,len(subindices)> 0]
-	#https://www.kite.com/python/answers/how-to-find-the-intersection-of-multiple-sets-in-python
-	#print(boolboth)
-'''

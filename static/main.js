@@ -47,6 +47,21 @@ function bi_dashboard()
                     marker: {
                         enabled: false
                     }
+                }, area: {
+                    stacking: 'percent',
+                    lineColor: '#ffffff',
+                    lineWidth: 1,
+                    marker: {
+                        lineWidth: 1,
+                        lineColor: '#ffffff'
+                    }
+                }, pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b>: {point.y}'
+                    }
                 }
             },
         });
@@ -131,7 +146,8 @@ function bi_dashboard()
 
         
         //visuals always exists
-        $('#visuals').val(data.state.visual).change();
+    
+        //$('#visuals').val(data.state.visual).change();
 
         //aggregate column always exist, but disable value if unique
         $('#aggregate_column').val(data.state.agg_type).change();
@@ -154,6 +170,7 @@ function bi_dashboard()
            
         }
         
+        $('#visuals').val(data.state.visual).change();
         //3. update highcharts here
         if (data.state.visual != 'map')
         {
@@ -552,7 +569,7 @@ function bi_dashboard()
 
     //ajax request for new chart visual from server
     $(document).on('click','#send_values', function() {
-        $('#send_values').prop('disabled',true);
+        //$('#send_values').prop('disabled',true);
         $('#sales').css('opacity',0.5)
         ajax_data();
     })
@@ -612,6 +629,7 @@ function bi_dashboard()
             {
                 $('#send_values').prop('disabled',true)
             }
+            $('#pie_type').show()
         }
         else
         {
@@ -635,17 +653,40 @@ function bi_dashboard()
         }        
     });
 
+
+    function handle_pie_area()
+    {
+        console.log('shit')
+        if ( $('#isDate').is(':checked') && $('#visuals').val() == 'pie')
+        {
+            $("#visuals").val($("#visuals option:first").val()).change();
+        } 
+
+        else if (!$('#isDate').is(':checked') && $('#visuals').val() == 'area') 
+        {
+           
+            $("#visuals").val($("#visuals option:first").val()).change();
+        }
+    }
+
+
     $(document).on('change','#isDate',function()
     { 
         //disable date column on check
         if ($(this).is(':checked'))
         {
             $('#date_column').prop('disabled',false);
+            $('#pie_type').hide();
+            $('#area_type').show();
+            handle_pie_area()
         }
 
         else 
         {
             $('#date_column').prop('disabled',true);
+            $('#pie_type').show();
+            $('#area_type').hide();
+            handle_pie_area()
         }
     });
 

@@ -78,7 +78,6 @@ def bi_data():
 		for_feedback = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
 		sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).round(2).astype(str).T.to_dict()
 		ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).astype(str).astype(str).aggregate(['min','max'])).to_dict()
-		#numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 		json_feedback = {**sums, **string_feedback,**ranges} 
 		
@@ -141,7 +140,6 @@ def bi_data():
 		
 		sums = pd.DataFrame(for_feedback[['Total','Quantity']].sum(),columns=['sum']).round(2).astype(str).T.to_dict()
 		ranges = pd.DataFrame(for_feedback[['OrderDate','Price']].round(2).aggregate(['min','max']).astype(str)).to_dict()
-		#numeric_feedback = external_functions.numeric_filters(for_feedback)
 		string_feedback = pd.DataFrame(for_feedback.select_dtypes(include=['object']).nunique(),columns=['count']).T.to_dict()
 		json_feedback = {**sums, **string_feedback,**ranges} 
 		
