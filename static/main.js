@@ -27,6 +27,15 @@ function bi_dashboard()
         }
         
         var check_dataLabel =  (data.xAxis.categories.length + data.series.length >= 30) ? false : true;
+
+
+        Highcharts.setOptions({
+            lang: {
+              decimalPoint: '.',
+              thousandsSep: ','
+            }
+        });
+
         Highcharts.chart('sales', {
            
             title: {text: data.title},
@@ -36,12 +45,14 @@ function bi_dashboard()
             legend: new_legend,
             series: data.series,
             plotOptions: {
-                series: {
+                series: { 
                     dataLabels: {
+                       
+                        //format: '{point.y:,f}',
                         enabled: check_dataLabel,
                         color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'black',
                         formatter: function(){
-                        return (this.y!=0)?this.y:"";
+                        return (this.y!=0)?this.y.toLocaleString():"";
                         }
                     },
                     marker: {
@@ -60,7 +71,7 @@ function bi_dashboard()
                     cursor: 'pointer',
                     dataLabels: {
                         enabled: true,
-                        format: '<b>{point.name}</b>: {point.y}'
+                        format: '<b>{point.name}</b>: {point.y:,f}',
                     }
                 }
             },
@@ -71,6 +82,14 @@ function bi_dashboard()
     //map update type
     function update_map(data)
     {
+
+        Highcharts.setOptions({
+            lang: {
+              decimalPoint: '.',
+              thousandsSep: ','
+            }
+        });
+
         Highcharts.mapChart('sales', {
             chart: { 
                 map: 'custom/world'
@@ -592,12 +611,18 @@ function bi_dashboard()
 
     $(document).on('change','#categories',function()
     {   
+        console.log('asd')
         //handle map option based on category value
         var category = $(this).val().toLowerCase()
 
         if (category.includes('country') || category.includes('city'))
         {
             $('#map_type').show()
+            if($('#isDate').is(':checked')) 
+            {   
+                
+                $('#cum_type').show();
+            }
             $('#aggregate_column').find('option').show()
             handleCategory()
         }
@@ -606,12 +631,18 @@ function bi_dashboard()
         {
             $('#map_type').hide()
             handle_orderID()
+            $('#cum_type').hide();
             check_map()
         }
 
         else if (!category.includes('country') || !category.includes('order')) 
         {
             $('#map_type').hide()
+           
+            if($('#isDate').is(':checked')) 
+            { 
+                $('#cum_type').show();
+            }
             $('#aggregate_column').find('option').show()
             handleCategory()
             check_map()  
@@ -656,7 +687,6 @@ function bi_dashboard()
 
     function handle_pie_area()
     {
-        console.log('shit')
         if ( $('#isDate').is(':checked') && $('#visuals').val() == 'pie')
         {
             $("#visuals").val($("#visuals option:first").val()).change();
@@ -669,24 +699,39 @@ function bi_dashboard()
         }
     }
 
+    function handle_cumsum()
+    {
+        if ( !$('#isDate').is(':checked') && $('#aggregate_column').val() == 'cumsum')
+        {
+            $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
+        } 
+    }
 
     $(document).on('change','#isDate',function()
     { 
+    
         //disable date column on check
         if ($(this).is(':checked'))
         {
             $('#date_column').prop('disabled',false);
             $('#pie_type').hide();
+            if ( !$('#categories').val().toLowerCase().includes('order') )
+            {
+                $('#cum_type').show();
+            } 
             $('#area_type').show();
             handle_pie_area()
+            handle_cumsum()
         }
 
         else 
         {
             $('#date_column').prop('disabled',true);
             $('#pie_type').show();
+            $('#cum_type').hide();
             $('#area_type').hide();
             handle_pie_area()
+            handle_cumsum()
         }
     });
 

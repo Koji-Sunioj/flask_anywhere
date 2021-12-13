@@ -119,9 +119,15 @@ class Highcharts:
 			data.index = data.index.to_period('Q').astype(str) if highchart.date_string == 'quarter' else data.index.strftime(highchart.date_string)
 			grouper.insert(0,'OrderDate')
 			columns = highchart.category if highchart.category else None
-			if highchart.value and highchart.value != 'Price':
-				data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
-			data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc=highchart.agg_type)
+			if highchart.value and highchart.value != 'Price': data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
+			
+			#data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc=highchart.agg_type)
+			if highchart.agg_type == 'cumsum':
+				data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc='sum').fillna(0).cumsum()
+			else:
+				data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc=highchart.agg_type)
+			#pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc='sum').fillna(0).cumsum()
+			print(data)
 			unique_or = 'count' if  highchart.agg_type == 'nunique' else highchart.agg_type
 			data.columns = [unique_or] if len(data.columns) == 1 else data.columns
 			data = data.sort_index().fillna(0)
