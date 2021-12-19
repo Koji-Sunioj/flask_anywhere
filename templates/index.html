@@ -122,10 +122,10 @@ input[type=number] {
           <select class="form-select form-select" id="visuals" >
             <option value="column">Column</option>
             <option value="bar">Bar</option>
-            <option value="line">Line</option>
-            <option value="pie" style="display: none;" id="pie_type">Pie</option>
-            <option value="area" style="display: none;" id="area_type">Area</option>
-            <option value="map" style="display: none;" id="map_type">Map</option>
+            <option value="line" class="onlydate">Line</option>
+            <option value="pie" class="nondate">Pie</option>
+            <option value="area" class="onlydate">Area</option>
+            <option value="map" class="nondate">Map</option>
           </select>
         </div>
         <div class="col">
@@ -136,15 +136,16 @@ input[type=number] {
             <option value="max">Max</option>
             <option value="min">Min</option>
             <option value="nunique">Count of Orders</option>
-            <option value="cumsum" id="cum_type" style="display: none;">Cummulative Sum</option>
+            <option class="onlydate" value="cumsum" >Cummulative Sum</option>
           </select>
         </div>
-        <div class="col">
+        <div class="col" id="dateDiv" style="visibility: hidden;">
           <label class="form-check-label" for="flexCheckDefault">
             Date
           </label>
+        
           <input class="form-check-input" type="checkbox" value="" id="isDate">
-          <select class="form-select form-select" id="date_column" disabled >
+          <select class="form-select form-select" id="date_column" >
             <option value="%Y">Year</option>
             <option value="%Y-%m">Year-Month</option>
             <option value="%Y-%m-%d">Year-Month-Day</option>

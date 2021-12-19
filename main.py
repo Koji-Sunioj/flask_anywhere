@@ -85,9 +85,14 @@ def bi_data():
 		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
 		
 		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+		
 	
 		#we need metadata for the html elements and save in cookies
-		meta_data = [{'name':i[0],'count':int(i[1]),'dtype':i[2].name}   for i in zip(meta_raw.nunique().index,meta_raw.nunique().values,meta_raw.dtypes)]
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+		meta_data = pd.DataFrame(meta_raw.dtypes.astype(str),columns=['meta'])
+		meta_data.loc['Price'] = 'agg_cat'
+		meta_data.loc['OrderID'] = 'index'
+		meta_data = [{'name':i[0],'dtype':i[1]}  for i in zip(meta_data.index,meta_data.meta.values)]
 		meta_data.reverse()
 		
 		#assign variables to json serializable dictionary
@@ -146,10 +151,12 @@ def bi_data():
 		preferred = for_feedback.columns.tolist()
 		json_feedback = [{'name':i,'values':json_feedback[i]} for i in preferred]
 		
-		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
-		
 		#we need metadata for the html elements and save in cookies
-		meta_data = [{'name':i[0],'dtype':i[1].name}   for i in zip(meta_raw.nunique().index,meta_raw.dtypes)]
+		meta_raw = data[data.columns[~data.columns.str.contains('iso|OrderDetailID|lat|lon')]].copy()
+		meta_data = pd.DataFrame(meta_raw.dtypes.astype(str),columns=['meta'])
+		meta_data.loc['Price'] = 'agg_cat'
+		meta_data.loc['OrderID'] = 'index'
+		meta_data = [{'name':i[0],'dtype':i[1]}  for i in zip(meta_data.index,meta_data.meta.values)]
 		meta_data.reverse()
 		
 		#assign variables to json serializable dictionary

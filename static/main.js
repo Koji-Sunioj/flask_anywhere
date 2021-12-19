@@ -125,15 +125,21 @@ function bi_dashboard()
             fixed_name = fixed_name.join(' ');
             var option = `<option value=${value.name} dtype=${value.dtype}>${fixed_name}</option>`
 
-            if (value.dtype.includes('int64') || value.dtype.includes('float64'))
+            if (value.dtype.includes('int64') || value.dtype.includes('float64') || value.dtype.includes('agg_cat'))
             {
                 //$('#NumericSelect').append(option)
                 $('#values').append(option);
             }
 
-            else if (value.dtype.includes('object'))
+            else if (value.dtype.includes('object') || value.dtype.includes('index') )
             {
                 $('#categories').append(option);
+            }
+
+            else if (value.dtype.includes('date'))
+
+            {
+                $('#dateDiv').css('visibility','visible')
             }
 
         });
@@ -147,20 +153,20 @@ function bi_dashboard()
         else 
         {
             $('#values').prop('disabled',true)
-            $('#values option:first').prop("selected", true).change();
+            $('#values option:first').prop("selected", true)//.change();
         }
 
         //if there is a category
         if (!data.state.category)
         {
-            $('#categories option:first').prop("selected", true).change()
-            $('#isCategory').attr('checked',false).change()
+            $('#categories option:first').prop("selected", true)//.change()
+            $('#isCategory').attr('checked',false)//.change()
         }
 
         else if (data.state.category)
         {
-            $('#categories').val(data.state.category).change();
-            $('#isCategory').attr('checked',true).change()
+            $('#categories').val(data.state.category)//.change();
+            $('#isCategory').attr('checked',true)//.change()
         }
 
         
@@ -169,11 +175,11 @@ function bi_dashboard()
         //$('#visuals').val(data.state.visual).change();
 
         //aggregate column always exist, but disable value if unique
-        $('#aggregate_column').val(data.state.agg_type).change();
+        $('#aggregate_column').val(data.state.agg_type)//.change();
         if ($('#aggregate_column').val() == 'nunique')
         {
             $('#values').prop('disabled',true)
-            $('#values option:first').prop("selected", true).change()
+            $('#values option:first').prop("selected", true)//.change()
         } 
 
         else 
@@ -185,11 +191,11 @@ function bi_dashboard()
         if (data.state.date_string)
         {
             $('#date_column').val(data.state.date_string)
-            $('#isDate').attr('checked',true).change()
+            $('#isDate').attr('checked',true)//.change()
            
         }
         
-        $('#visuals').val(data.state.visual).change();
+        $('#visuals').val(data.state.visual)//.change();
         //3. update highcharts here
         if (data.state.visual != 'map')
         {
@@ -288,6 +294,9 @@ function bi_dashboard()
             $('#paginAtor').attr('current',data.table_pages.current)
             $('#whereami').text("\u00A0\u00A0\u00A0"+'of '+data.table_pages.max + "\u00A0\u00A0\u00A0")
         }
+
+       
+        manage_interface()
     })
 
     function ajax_data()
@@ -408,65 +417,6 @@ function bi_dashboard()
                 }) 
             }  
         });
-    }
-
-
-    //handle normal string category type
-    function handleCategory()
-    {
-        var value = $('#values').val();
-        var aggregate = $('#aggregate_column').val();
-        
-        if (value == 'Price')
-        {
-            $('#aggregate_column').find('option:contains(Sum)').hide()
-            if (aggregate == 'sum')
-            {
-                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
-            }
-        }
-
-        else 
-        {
-            $('#aggregate_column').find('option:contains(Sum)').show()
-        }
-    }
-
-    //for the html graph customizer, map type
-    function check_map()
-    {
-        if ($('#visuals').val() == 'map') 
-        {
-            $("#visuals").val($("#visuals option:first").val()).change();
-        }
-    }
-
-    //handle values for orderid in category version
-    function handle_orderID()
-    {
-        var value = $('#values').val();
-        var aggregate = $('#aggregate_column').val();
-
-        if (value == 'Total' || value == 'Quantity')
-        {
-            $('#aggregate_column').find('option:contains(Sum)').show()
-            $('#aggregate_column').find('option:not(:contains(Sum))').hide()
-            if (aggregate != 'sum')
-            {
-                $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
-            } 
-        } 
-
-        else if (value == 'Price')
-        {
-            $('#aggregate_column').find('option').show()
-            $('#aggregate_column').find('option:contains(Sum)').hide() 
-            $('#aggregate_column').find('option:contains(Count)').hide()  
-            if (aggregate == 'sum' || aggregate == 'nunique')
-            {
-                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
-            }       
-        } 
     }
 
     //collects data from the buttons and send them to the server
@@ -593,7 +543,242 @@ function bi_dashboard()
         ajax_data();
     })
   
+
+    function manage_interface()
+    {
+
+        var isCategory = $('#isCategory').is(':checked');
+        var isDate = $('#isDate').is(':checked');
+        var value = $('#values').val();
+        var category = $('#categories').val().toLowerCase();
+        var aggregate = $('#aggregate_column').val().toLowerCase();
+        var visual = $('#visuals').val().toLowerCase();
+ 
+
+        alert( $('#values').find(`option:contains(${value})`).attr('dtype')) 
+        //if the category and date is checked, hide pie and map visual. show line and area visual, cumsum aggregate
+        if (isCategory && isDate)
+        {
+            $('.onlydate').show();
+            $('.nondate').hide();
+            $('#categories').prop('disabled',false);
+            $('#date_column').prop('disabled',false);
+            if (visual == 'map' || visual == 'pie') 
+            {
+                $("#visuals").val($("#visuals option:first").val());
+            }
+
+            if (aggregate == 'nunique') 
+            {
+                $('#values').prop('disabled',true)
+            }
+
+            else
+            {
+                $('#values').prop('disabled',false)
+            }
+        }
+
+        //if the category is checked but date isn't, show pie and map visual. hide line and area visual, cumsum aggregate
+        //but if the category is mappable, show the map visual type
+        else if (isCategory && !isDate)
+        {   
+            
+            $('.onlydate').hide();
+            $('.nondate').show();
+            $('#categories').prop('disabled',false)
+            $('#date_column').prop('disabled',true)  
+
+            if (category.includes('country') == true || category.includes('city') == true)
+            {
+                $('#visuals').find('option:contains(Map)').show();
+            }
+            else
+            {
+                $('#visuals').find('option:contains(Map)').hide();  
+                
+            }
+
+            if (visual.includes('area') || visual.includes('line')) 
+            {
+                $("#visuals").val($("#visuals option:first").val());
+            }
+
+            if (aggregate.includes('cumsum'))
+            {
+                $("#aggregate_column").val($("#aggregate_column option:first").val());
+            } 
+
+            if (aggregate == 'nunique') 
+            {
+                $('#values').prop('disabled',true)
+            }
+
+            else
+            {
+                $('#values').prop('disabled',false)
+            }
+        }
+
+        //
+        else if (!isCategory && isDate)
+
+        {
+            $('.onlydate').show();
+            $('.nondate').hide();
+            $('#categories').prop('disabled',true)
+            $('#date_column').prop('disabled',false)
+            $('#visuals').find('option:contains(Area)').hide();  
+
+            if (visual.includes('area')) 
+            {
+                $("#visuals").val($("#visuals option:first").val());
+            }
+            if (aggregate == 'nunique') 
+            {
+                $('#values').prop('disabled',true)
+            }
+
+            else
+            {
+                $('#values').prop('disabled',false)
+            }
+        }
+
+
+        else if (!isCategory && !isDate) 
+        {
+            $('.onlydate').hide();
+            $('.nondate').hide();
+            $('#date_column').prop('disabled',true)
+            $('#categories').prop('disabled',true)
+
+            if (aggregate == 'nunique') 
+            {
+                $('#values').prop('disabled',true)
+            }
+
+            else
+            {
+                $('#values').prop('disabled',false)
+            }
+
+            if (visual.includes('pie')) 
+            {
+                $("#visuals").val($("#visuals option:first").val());
+            }
+
+            if (aggregate.includes('cumsum'))
+            {
+                $("#aggregate_column").val($("#aggregate_column option:first").val());
+            } 
+        }
+    }
+
+
+    
+
+    $('#values').on('change',function()
+    {
+        manage_interface()
+    });
+
+    $('#isCategory').on('change',function()
+    {
+        manage_interface()
+    });
+
+    $('#categories').on('change',function()
+    {
+        manage_interface()
+    });
+
+    $('#visuals').on('change',function()
+    {
+        manage_interface()
+    }); 
+
+    $('#aggregate_column').on('change',function()
+    {
+        manage_interface()
+    }); 
+
+
+    //$(document).on('change','#isDate',function()
+   // { 
+    //    manage_interface()
+   // });
+
+    $('#isDate').on('change',function()
+   { 
+        manage_interface()
+    });
+
+
     //!!anything past here is for select input handling and  button visibility!!
+    /*
+
+
+//handle normal string category type
+    function handleCategory()
+    {
+        var value = $('#values').val();
+        var aggregate = $('#aggregate_column').val();
+        
+        if (value == 'Price')
+        {
+            $('#aggregate_column').find('option:contains(Sum)').hide()
+            if (aggregate == 'sum')
+            {
+                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
+            }
+        }
+
+        else 
+        {
+            $('#aggregate_column').find('option:contains(Sum)').show()
+        }
+    }
+
+    //for the html graph customizer, map type
+    function check_map()
+    {
+        if ($('#visuals').val() == 'map') 
+        {
+            $("#visuals").val($("#visuals option:first").val()).change();
+        }
+    }
+
+    //handle values for orderid in category version
+    function handle_orderID()
+    {
+        var value = $('#values').val();
+        var aggregate = $('#aggregate_column').val();
+
+        if (value == 'Total' || value == 'Quantity')
+        {
+            $('#aggregate_column').find('option:contains(Sum)').show()
+            $('#aggregate_column').find('option:not(:contains(Sum))').hide()
+            if (aggregate != 'sum')
+            {
+                $("#aggregate_column").val($("#aggregate_column option:first").val()).change();
+            } 
+        } 
+
+        else if (value == 'Price')
+        {
+            $('#aggregate_column').find('option').show()
+            $('#aggregate_column').find('option:contains(Sum)').hide() 
+            $('#aggregate_column').find('option:contains(Count)').hide()  
+            if (aggregate == 'sum' || aggregate == 'nunique')
+            {
+                $("#aggregate_column").val($("#aggregate_column option:nth-child(2)").val()).change();
+            }       
+        } 
+    }
+
+
+
     $(document).on('change','#values',function()
     {
         var category = $('#categories').val().toLowerCase()
@@ -611,19 +796,24 @@ function bi_dashboard()
 
     $(document).on('change','#categories',function()
     {   
-        console.log('asd')
+        
         //handle map option based on category value
         var category = $(this).val().toLowerCase()
 
         if (category.includes('country') || category.includes('city'))
         {
-            $('#map_type').show()
+            $('.nondate').show();
+            //$('#map_type').show()
             if($('#isDate').is(':checked')) 
             {   
                 
                 $('#cum_type').show();
             }
-            $('#aggregate_column').find('option').show()
+            else 
+            {
+                $('#cum_type').hide();
+            }
+            //$('#aggregate_column').find('option').show()
             handleCategory()
         }
 
@@ -758,7 +948,7 @@ function bi_dashboard()
             $('#categories').prop('disabled',true);
         }
     });
-
+    */
 
     //FILTER FUNCTIONS
     //for the datalist which is categorical

@@ -38,11 +38,7 @@ def category_datalist(frame):
 
 def numeric_filters(frame):
 	new_frame = frame[frame.columns[~frame.columns.str.contains('lat|lon')]].set_index('OrderID').select_dtypes(include=['int64','float64','datetime64[ns]'])
-	new_frame = new_frame.groupby(new_frame.index).sum()
-	new_frame = new_frame.aggregate(['max','min'])
-	new_frame['Price'] = frame.Price.aggregate(['max','min'])
-	new_frame['OrderDate'] = frame.OrderDate.aggregate(['max','min'])
-	num_filters = new_frame.fillna(0).round(2).astype(str).to_dict()
+	num_filters = new_frame.aggregate(['max','min']).fillna(0).round(2).astype(str).to_dict()
 	
 	return num_filters
 
@@ -120,7 +116,7 @@ class Highcharts:
 			grouper.insert(0,'OrderDate')
 			columns = highchart.category if highchart.category else None
 			if highchart.value and highchart.value != 'Price': data = data.groupby(grouper).aggregate({highchart.value:'sum'}).reset_index()
-			
+		
 			#data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc=highchart.agg_type)
 			if highchart.agg_type == 'cumsum':
 				data = pd.pivot_table(data,index='OrderDate',columns=columns,values=values,aggfunc='sum').fillna(0).cumsum()
