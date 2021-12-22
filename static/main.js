@@ -296,7 +296,9 @@ function bi_dashboard()
         }
 
        
-        manage_interface()
+        manage_interface_dtype()
+        manage_interface_state()
+        hide_unhide()
     })
 
     function ajax_data()
@@ -544,250 +546,93 @@ function bi_dashboard()
     })
   
 
-    function manage_interface()
-    {
+    function hide_unhide()
 
+    {
+        var aggregate = $('#aggregate_column').val();
+        var visual = $('#visuals').val();
+        if ($('#visuals').find(`option[value=${visual}]`).css('display') == 'none') 
+        {
+            $("#visuals > option").each(function(index,value){
+                if ($(value).css('display') != 'none') 
+                {
+                    $('#visuals').val($(value).val())
+                    return false
+                }    
+            });
+        }
+        
+        if ( $('#aggregate_column').find(`option[value=${aggregate}]`).css('display') == 'none')
+        {  
+            $("#aggregate_column > option").each(function(index,value){
+                if ($(value).css('display') != 'none') 
+                {
+                    $('#aggregate_column').val($(value).val())
+                    return false
+                }    
+            });
+        }
+
+
+    }
+
+    function manage_interface_state()
+    {
+        
         var isCategory = $('#isCategory').is(':checked');
         var isDate = $('#isDate').is(':checked');
+        var render_map = ['country','city'].some(place => $('#categories').val().toLowerCase().includes(place));
         var category = $('#categories').val();
-        var aggregate = $('#aggregate_column').val().toLowerCase();
-        var visual = $('#visuals').val().toLowerCase();
+        var is_index = $('#categories').find(`option[value=${category}]`).attr('dtype') == 'index'
+        var agg_or_cat = $('#values').find(`option[value=${$('#values').val()}]`).attr('dtype')
+
+
+        $('#categories').prop('disabled',!isCategory);
+        $('#date_column').prop('disabled',!isDate);
+        $('.onlydate').css('display',(isDate) ? "inline":"none")
+        $('.nondate').css('display',(isCategory && !isDate) ? "inline":"none");
+        $('#map').css('display',(isCategory && !isDate && render_map) ? "inline":"none");
+        $('#values').prop('disabled',$('#aggregate_column').val().toLowerCase() == 'nunique')
+        $('#cumsum').css('display',(isDate) ? "inline":"none")
+        
+        if (is_index && $('#isCategory').is(':checked') && agg_or_cat.includes('64')) 
+        {   
+            $('#aggregate_column').find('option:not([value=sum])').hide()
+            $('#aggregate_column').find('option[value=sum]').show();
+        }
+
+        else if (is_index && $('#isCategory').is(':checked') && agg_or_cat.includes('agg_cat')) 
+        {
+            $('#aggregate_column').find('option:not([value=mean],[value=max],[value=min])').hide()
+            $('#aggregate_column').find('option[value=mean],[value=max],[value=min]').show()
+        }
+        
+    }
+
+
+    function manage_interface_dtype()
+    {
+
         var value_type = $('#values').find(`option[value=${$('#values').val()}]`).attr('dtype')
  
-        //if the category and date is checked, hide pie and map visual. show line and area visual, cumsum aggregate
-        if (isCategory && isDate)
+        if (value_type.includes('int64') || value_type.includes('float64')) 
         {
-            
-            $('.onlydate').show();
-            $('.nondate').hide();
-            $('#categories').prop('disabled',false);
-            $('#date_column').prop('disabled',false);
-            
-
-            if (value_type.includes('int64') || value_type.includes('float64')) 
-            {
-                    $('#aggregate_column').find('option').show();
-                    if ($('#categories').find(`option[value=${category}]`).attr('dtype') == 'index')
-                    {
-                        $('#aggregate_column').find('option[value=sum]').show();
-                        $('#aggregate_column').find('option:not([value=sum])').hide()
-                        if (aggregate != 'sum' )
-                        {
-                            $("#aggregate_column").val($("#aggregate_column option:first").val());
-                        } 
-                    }
-            }
-
-            else if (value_type.includes('agg_cat')) 
-            
-            {
-              
-                    $('#aggregate_column').find('option:not([value=sum],[value=cumsum])').show()
-                    $('#aggregate_column').find('option[value=cumsum],[value=sum]').hide()
-                    if (aggregate.includes('sum')  || aggregate.includes('nunique'))
-                    {
-                        $("#aggregate_column").val($("#aggregate_column option[value=mean]").val());
-                    } 
-                    if ($('#categories').find(`option[value=${category}]`).attr('dtype') == 'index')
-                    {
-                        $('#aggregate_column').find('option[value=nunique]').hide();
-                        if (aggregate.includes('sum')  || aggregate.includes('nunique'))
-                        {
-                            $("#aggregate_column").val($("#aggregate_column option[value=mean]").val());
-                        }   
-                    }
-            }
-
-
-            if (visual == 'map' || visual == 'pie') 
-            {
-                $("#visuals").val($("#visuals option:first").val());
-            }
-
-            if ($('#aggregate_column').val().toLowerCase() == 'nunique') 
-            {
-                $('#values').prop('disabled',true)
-            }
-
-            else
-            {
-                $('#values').prop('disabled',false)
-            }
-            
+            $('#aggregate_column').find('option').show();    
         }
 
-        //if the category is checked but date isn't, show pie and map visual. hide line and area visual, cumsum aggregate
-        //but if the category is mappable, show the map visual type
-        else if (isCategory && !isDate)
-        {   
-            
-            $('.onlydate').hide();
-            $('.nondate').show();
-            $('#categories').prop('disabled',false)
-            $('#date_column').prop('disabled',true)  
-
-            if (category.toLowerCase().includes('country') == true || category.toLowerCase().includes('city') == true)
-            {
-                $('#visuals').find('option:contains(Map)').show();
-            }
-            else
-            {
-                $('#visuals').find('option:contains(Map)').hide();  
-                if (visual.includes('map')) 
-                {
-                    $("#visuals").val($("#visuals option:first").val());
-                }
-            }
-
-            if (visual.includes('area') || visual.includes('line') ) 
-            {
-                $("#visuals").val($("#visuals option:first").val());
-            }
-
-            if (aggregate.includes('cumsum'))
-            {
-                $("#aggregate_column").val($("#aggregate_column option:first").val());
-            } 
-
-           
-
-            if (value_type.includes('int64') || value_type.includes('float64')) 
-            {
-                    $('#aggregate_column').find('option:not([value=cumsum])').show();
-                    if ($('#categories').find(`option[value=${category}]`).attr('dtype') == 'index')
-                    {
-                        $('#aggregate_column').find('option[value=sum]').show();
-                        $('#aggregate_column').find('option:not([value=sum])').hide()
-                        if (aggregate != 'sum' )
-                        {
-                            $("#aggregate_column").val($("#aggregate_column option:first").val());
-                        } 
-                    }
-            }
-
-            else if (value_type.includes('agg_cat')) 
-            
-            {
-                    $('#aggregate_column').find('option:not([value=sum],[value=cumsum])').show()
-                    $('#aggregate_column').find('option[value=cumsum],[value=sum]').hide()
-                    if (aggregate.includes('sum') )
-                    {
-                        $("#aggregate_column").val($("#aggregate_column option[value=mean]").val());
-                    }
-                    if ($('#categories').find(`option[value=${category}]`).attr('dtype') == 'index')
-                    {
-                        $('#aggregate_column').find('option[value=nunique]').hide();  
-                    }   
-            }
-
-
-            if ($('#aggregate_column').val().toLowerCase() == 'nunique') 
-            {
-                $('#values').prop('disabled',true)
-            }
-
-            else
-            {
-                $('#values').prop('disabled',false)
-            }
-        }
-
-        //
-        else if (!isCategory && isDate)
-
-        {
-            $('.onlydate').show();
-            $('.nondate').hide();
-            $('#categories').prop('disabled',true)
-            $('#date_column').prop('disabled',false)
-            $('#visuals').find('option:contains(Area)').hide();  
-            
-            if (value_type.includes('int64') || value_type.includes('float64')) 
-            {
-                    $('#aggregate_column').find('option').show();
-                   
-               
-            }
-
-            else if (value_type.includes('agg_cat')) 
-            
-            {      
-                    $('#aggregate_column').find('option:not([value=sum],[value=cumsum])').show()
-                    $('#aggregate_column').find('option[value=cumsum],[value=sum]').hide()
-                    if (aggregate.includes('sum') )
-                    {
-                        $("#aggregate_column").val($("#aggregate_column option[value=mean]").val());
-                    }
-            }
-
-
-            if (visual.includes('area')) 
-            {
-                $("#visuals").val($("#visuals option:first").val());
-            }
-            if ($('#aggregate_column').val().toLowerCase() == 'nunique') 
-            {
-                $('#values').prop('disabled',true)
-            }
-
-            else
-            {
-                $('#values').prop('disabled',false)
-            }
-        }
-
-
-        else if (!isCategory && !isDate) 
-        {
-            $('.onlydate').hide();
-            $('.nondate').hide();
-            $('#date_column').prop('disabled',true)
-            $('#categories').prop('disabled',true)
-
-            if (visual.includes('pie')) 
-            {
-                $("#visuals").val($("#visuals option:first").val());
-            }
-
-            if (aggregate.includes('cumsum'))
-            {
-                $("#aggregate_column").val($("#aggregate_column option:first").val());
-            }
-            
-            if (value_type.includes('int64') || value_type.includes('float64')) 
-            {   
-                    $('#aggregate_column').find('option:not([value=cumsum])').show();
-            }
-
-            else if (value_type.includes('agg_cat')) 
-            
-            { 
-                    $('#aggregate_column').find('option:not([value=sum],[value=cumsum])').show()
-                    $('#aggregate_column').find('option[value=cumsum],[value=sum]').hide()
-                    if (aggregate.includes('sum') )
-                    {
-                        $("#aggregate_column").val($("#aggregate_column option[value=mean]").val());
-                    } 
-            }
-
-            if ($('#aggregate_column').val().toLowerCase() == 'nunique') 
-            {
-                $('#values').prop('disabled',true)
-            }
-
-            else
-            {
-                $('#values').prop('disabled',false)
-            }
-
-            
+        else if (value_type.includes('agg_cat')) 
+        {      
+            $('#aggregate_column').find('option:not(:contains(Sum))').show()
+            $('#aggregate_column').find('option:contains(Sum)').hide()
         }
     }
 
 
     $('#values,#isCategory,#categories,#visuals,#aggregate_column,#isDate').on('change',function()
     {
-        manage_interface()
+        manage_interface_dtype()
+        manage_interface_state()
+        hide_unhide()
     });
   
 
